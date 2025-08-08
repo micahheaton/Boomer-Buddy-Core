@@ -117,6 +117,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET /api/demo-data - Get demo examples for testing
+  app.get("/api/demo-data", (req, res) => {
+    try {
+      const demoData = JSON.parse(fs.readFileSync(path.join(__dirname, "../data/demo_data.json"), "utf8"));
+      res.json(demoData);
+    } catch (error) {
+      console.error("Error loading demo data:", error);
+      res.status(500).json({ error: "Failed to load demo data" });
+    }
+  });
+
   // GET /api/states - Get available states
   app.get("/api/states", (req, res) => {
     const states = Object.keys(stateContacts).map(code => ({
