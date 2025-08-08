@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { analyzeScam } from "./openai";
 import { extractTextFromImage } from "./ocr";
+import { getMockAnalysis } from "./mockAnalysis";
 import { scamAnalysisRequestSchema, type ScamAnalysisResult } from "@shared/schema";
 import multer from "multer";
 import path from "path";
@@ -31,16 +32,17 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Load knowledge base data
+  // Load knowledge base data and demo examples
   const federalContacts = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data/contacts_federal.json"), "utf-8"));
   const financialContacts = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data/contacts_financial.json"), "utf-8"));
   const stateContacts = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data/contacts_states.json"), "utf-8"));
+  const demoData = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data/demo_data.json"), "utf-8"));
 
   // POST /api/analyze - Analyze content for scam patterns
   app.post("/api/analyze", upload.single("image"), async (req: Request & { file?: Express.Multer.File }, res) => {
+    let requestData;
+    
     try {
-      let requestData;
-      
       if (req.file) {
         // Handle image upload
         const imagePath = req.file.path;
@@ -64,8 +66,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No text content to analyze" });
       }
 
-      // Analyze with OpenAI
-      const analysisResult = await analyzeScam(requestData.text, {
+      // Use pattern-based analysis (OpenAI fallback disabled due to quota)
+      console.log("Using pattern-based scam analysis");
+      const analysisResult = getMockAnalysis(requestData.text, {
         channel: requestData.channel,
         state: requestData.state,
         federalContacts,
