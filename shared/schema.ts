@@ -48,7 +48,7 @@ export type Analysis = typeof analyses.$inferSelect;
 // Scam Analysis Types
 export const scamAnalysisRequestSchema = z.object({
   userId: z.string().nullable().optional(),
-  inputType: z.enum(["image", "text"]),
+  inputType: z.enum(["image", "text"]).optional(),
   text: z.string().optional(),
   imageUrl: z.string().optional(),
   state: z.string().optional(),

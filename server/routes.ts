@@ -71,7 +71,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
       } else {
         // Handle text/transcript input
-        requestData = scamAnalysisRequestSchema.parse(req.body);
+        const parsedData = scamAnalysisRequestSchema.parse(req.body);
+        requestData = {
+          ...parsedData,
+          inputType: parsedData.inputType || "text"
+        };
       }
 
       if (!requestData.text) {
