@@ -1,0 +1,253 @@
+Replit build prompt for Fraud and Scam Shield MVP
+
+Goal
+Build a web app where boomers can upload screenshots, paste text, or drop a phone call transcript. The app uses OpenAI to score scam probability and returns action steps, including who to contact in law enforcement, which financial institutions to notify, and state and local resources.
+
+Stack
+
+Frontend React Vite Typescript
+
+Backend Node Express Typescript
+
+Database SQLite via Prisma
+
+Auth simple magic link by email optional for MVP
+
+File storage local uploads folder in Replit for prototype
+
+AI OpenAI API with a single model call and a strict JSON schema
+
+No external paid services beyond OpenAI
+
+
+Core user flows
+
+User lands on a single page.
+
+User selects input type screenshot image or raw text or transcript text.
+
+User clicks Analyze.
+
+Backend calls OpenAI with a rubric prompt and returns a structured JSON result.
+
+UI renders a clean report showing a scam score zero to one hundred, confidence, reasons, and next steps.
+
+User can save the report which creates a timeline item and a short link.
+
+
+Data contracts
+
+ScamAnalysisRequest
+
+{
+  "userId": "string or null",
+  "inputType": "image or text",
+  "text": "string optional",
+  "imageUrl": "string optional",
+  "state": "two letter code optional",
+  "phoneNumber": "string optional",
+  "emailFrom": "string optional",
+  "channel": "sms or email or phone or social or web optional"
+}
+
+ScamAnalysisResult
+
+{
+  "scam_score": 0,
+  "confidence": 0,
+  "label": "Likely scam or Unclear or Likely legitimate",
+  "top_signals": ["string", "string"],
+  "explanation": "short clear paragraph",
+  "recommended_actions": [
+    {"title": "Call bank fraud line", "steps": ["step one", "step two"], "when": "now or within 24 hours"},
+    {"title": "Report to law enforcement", "steps": ["step one"], "when": "optional"}
+  ],
+  "contacts": {
+    "law_enforcement": [{"name": "FBI IC3", "contact": "ic3.gov", "type": "federal"}],
+    "financial": [{"name": "Your bank", "contact": "use back of card", "type": "bank"}],
+    "state_local": [{"name": "State AG consumer protection", "contact": "url or phone", "state": "WA"}]
+  },
+  "legal_language": "short disclaimer about not being legal or financial advice",
+  "version": "v1"
+}
+
+Risk scoring rubric passed to OpenAI
+
+Start at zero.
+
+Add points for classic patterns urgent tone gift cards crypto wire transfer pressure secrecy spoofed branding misspelled domains requests for personal data.
+
+If user uploads an image run OCR first then apply the same rubric.
+
+If channel is phone and transcript contains threats or tax jail keywords raise score.
+
+Clamp score to zero to one hundred.
+
+Confidence is low medium high.
+
+Output must be valid JSON matching ScamAnalysisResult exactly. Do not include markdown.
+
+
+Knowledge base seed file
+Create data directory with three JSON files.
+
+contacts_federal.json
+
+FBI IC3
+
+FTC ReportFraud
+
+USPS inspection service for mail fraud
+
+
+contacts_financial.json
+
+Generic guidance to call bank fraud line on the card
+
+Visa and Mastercard dispute starters
+
+Three credit bureaus fraud alert starter
+
+
+contacts_states.json
+
+For a starter set include CA TX FL NY WA
+
+For each provide Attorney General consumer protection phone and website and a generic elder abuse hotline where applicable
+
+
+Backend routes
+
+POST api analyze
+
+Accepts ScamAnalysisRequest
+
+Runs OCR for images using Tesseract node wrapper
+
+Calls OpenAI with rubric and returns ScamAnalysisResult
+
+Saves request and result in SQLite
+
+
+GET api report id
+
+Returns a saved analysis
+
+
+GET api states
+
+Returns state list from contacts
+
+
+
+Database models Prisma
+
+User id email createdAt
+
+Analysis id userId inputType text imagePath state phoneNumber emailFrom channel resultJson createdAt
+
+Lookup tables not required for MVP
+
+
+OpenAI call
+
+Model gpt five or closest available
+
+Temperature zero
+
+System prompt You are a careful consumer protection reviewer for seniors.
+
+Function style forcing of the JSON schema. Reject any model output that is not valid JSON.
+
+
+UI spec
+
+Single page three cards Upload Text Transcript
+
+Drag and drop for images with preview
+
+Textareas for text input and transcript input
+
+State selector and optional phone number field
+
+Analyze button then a spinner
+
+Results view shows a large score with color band green yellow red
+
+Accordion for explanation and top signals
+
+Action list with copy buttons and click to call links where possible
+
+Save button that returns a short link route share id
+
+
+Accessibility and clarity
+
+Large font sizes and high contrast
+
+Plain language
+
+Explain why something looks risky in a sentence or two
+
+
+Safety and privacy
+
+Never store credit card numbers or SSNs if detected
+
+Redact common sensitive patterns before saving
+
+Display a clear disclaimer that this is guidance only
+
+
+Testing
+
+Seed three fixtures
+
+Obvious scam IRS payment demand
+
+Likely legitimate package notification
+
+Unclear charity donation request
+
+
+Include one unit test that verifies JSON schema from the model
+
+Include one route test for POST api analyze with a small text sample
+
+
+Environment variables
+
+OPENAI_API_KEY
+
+SESSION_SECRET
+
+
+Project scripts
+
+dev run both client and server with concurrent
+
+build production build
+
+start start server and serve client build
+
+
+Deliverables
+
+Working Replit with client and server folders
+
+README with setup steps and a five minute demo script
+
+Sample exports of the three fixture analyses
+
+Clear comments at the top of the AI prompt file with the rubric
+
+
+Finish criteria
+
+I can paste text or upload an image and get a valid result with score reasons actions and contacts in under five seconds on Replit
+
+I can save a report and reload it by short link
+
+The app never returns raw model text outside the JSON structure
+
+The UI feels clean friendly and readable for seniors
