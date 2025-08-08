@@ -1,0 +1,19 @@
+{
+  "law_enforcement": [
+    {
+      "name": "FBI Internet Crime Complaint Center (IC3)",
+      "contact": "ic3.gov",
+      "type": "federal"
+    },
+    {
+      "name": "Federal Trade Commission",
+      "contact": "reportfraud.ftc.gov",
+      "type": "federal"
+    },
+    {
+      "name": "USPS Inspection Service",
+      "contact": "uspis.gov",
+      "type": "federal"
+    }
+  ]
+}

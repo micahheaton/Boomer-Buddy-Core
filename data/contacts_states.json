@@ -1,0 +1,77 @@
+{
+  "CA": {
+    "name": "California",
+    "agencies": [
+      {
+        "name": "CA Attorney General Consumer Protection",
+        "contact": "oag.ca.gov/contact/consumer-complaint-against-business-or-company",
+        "state": "CA"
+      },
+      {
+        "name": "CA Elder Abuse Hotline",
+        "contact": "1-833-401-0832",
+        "state": "CA"
+      }
+    ]
+  },
+  "TX": {
+    "name": "Texas",
+    "agencies": [
+      {
+        "name": "TX Attorney General Consumer Protection",
+        "contact": "texasattorneygeneral.gov/consumer-protection",
+        "state": "TX"
+      },
+      {
+        "name": "TX Elder Abuse Hotline",
+        "contact": "1-800-252-5400",
+        "state": "TX"
+      }
+    ]
+  },
+  "FL": {
+    "name": "Florida",
+    "agencies": [
+      {
+        "name": "FL Attorney General Consumer Protection",
+        "contact": "myfloridalegal.com",
+        "state": "FL"
+      },
+      {
+        "name": "FL Elder Abuse Hotline",
+        "contact": "1-800-962-2873",
+        "state": "FL"
+      }
+    ]
+  },
+  "NY": {
+    "name": "New York",
+    "agencies": [
+      {
+        "name": "NY Attorney General Consumer Protection",
+        "contact": "ag.ny.gov/consumer-frauds-bureau",
+        "state": "NY"
+      },
+      {
+        "name": "NY Elder Abuse Hotline",
+        "contact": "1-844-697-3505",
+        "state": "NY"
+      }
+    ]
+  },
+  "WA": {
+    "name": "Washington",
+    "agencies": [
+      {
+        "name": "WA Attorney General Consumer Protection",
+        "contact": "atg.wa.gov/consumer-protection",
+        "state": "WA"
+      },
+      {
+        "name": "WA Elder Abuse Hotline",
+        "contact": "1-866-221-4909",
+        "state": "WA"
+      }
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "financial": [
+    {
+      "name": "Your Bank Fraud Line",
+      "contact": "Number on back of your card",
+      "type": "bank"
+    },
+    {
+      "name": "Visa Fraud Reporting",
+      "contact": "1-800-VISA-911",
+      "type": "credit"
+    },
+    {
+      "name": "Mastercard Fraud Reporting",
+      "contact": "1-800-627-8372",
+      "type": "credit"
+    },
+    {
+      "name": "Experian Fraud Alert",
+      "contact": "1-888-397-3742",
+      "type": "credit"
+    },
+    {
+      "name": "Equifax Fraud Alert",
+      "contact": "1-800-525-6285",
+      "type": "credit"
+    },
+    {
+      "name": "TransUnion Fraud Alert",
+      "contact": "1-800-680-7289",
+      "type": "credit"
+    }
+  ]
+}
