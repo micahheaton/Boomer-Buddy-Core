@@ -58,6 +58,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // If no text was extracted, provide a default message for analysis
         if (!extractedText || extractedText.trim().length === 0) {
           extractedText = "Image uploaded but no readable text could be extracted. This may be a photo, screenshot, or image without clear text content.";
+          console.log("Using fallback text for image analysis");
         }
         
         requestData = {
@@ -78,7 +79,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
       }
 
-      if (!requestData.text) {
+      console.log("Request data text:", requestData.text ? `"${requestData.text.substring(0, 100)}..."` : "undefined/empty");
+      
+      if (!requestData.text || requestData.text.trim().length === 0) {
+        console.log("Error: No text content available for analysis");
         return res.status(400).json({ error: "No text content to analyze" });
       }
 
