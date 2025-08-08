@@ -46,7 +46,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.file) {
         // Handle image upload
         const imagePath = req.file.path;
-        const extractedText = await extractTextFromImage(imagePath);
+        let extractedText = "";
+        
+        try {
+          extractedText = await extractTextFromImage(imagePath);
+          console.log("OCR extracted text:", extractedText ? extractedText.length + " characters" : "no text found");
+        } catch (ocrError: any) {
+          console.log("OCR failed, will analyze image without text extraction:", ocrError.message);
+        }
+        
+        // If no text was extracted, provide a default message for analysis
+        if (!extractedText || extractedText.trim().length === 0) {
+          extractedText = "Image uploaded but no readable text could be extracted. This may be a photo, screenshot, or image without clear text content.";
+        }
         
         requestData = {
           inputType: "image" as const,
@@ -66,15 +78,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No text content to analyze" });
       }
 
-      // Use pattern-based analysis (OpenAI fallback disabled due to quota)
-      console.log("Using pattern-based scam analysis");
-      const analysisResult = getMockAnalysis(requestData.text, {
-        channel: requestData.channel,
-        state: requestData.state,
-        federalContacts,
-        financialContacts,
-        stateContacts,
-      });
+      // Try OpenAI first, fallback to pattern-based analysis
+      let analysisResult;
+      try {
+        analysisResult = await analyzeScam(requestData.text, {
+          channel: requestData.channel,
+          state: requestData.state,
+          federalContacts,
+          financialContacts,
+          stateContacts,
+        });
+        console.log("Analysis completed with OpenAI");
+      } catch (aiError: any) {
+        console.log("OpenAI failed, using pattern-based analysis:", aiError.message);
+        analysisResult = getMockAnalysis(requestData.text, {
+          channel: requestData.channel,
+          state: requestData.state,
+          federalContacts,
+          financialContacts,
+          stateContacts,
+        });
+        console.log("Analysis completed with pattern matching");
+      }
 
       // Save analysis to database
       const analysis = await storage.createAnalysis({
