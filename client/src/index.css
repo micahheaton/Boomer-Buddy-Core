@@ -52,15 +52,21 @@
   --tracking-normal: 0em;
   --spacing: 0.25rem;
   
-  /* Custom colors for senior-friendly design */
-  --primary-blue: hsl(216 98% 52%);
-  --secondary-gray: hsl(215 14% 47%);
-  --success-green: hsl(158 64% 52%);
-  --warning-orange: hsl(25 95% 53%);
-  --danger-red: hsl(0 84% 60%);
-  --bg-primary: hsl(220 14% 96%);
-  --text-primary: hsl(215 25% 27%);
-  --border-gray: hsl(220 13% 91%);
+  /* Boomer Buddy brand colors */
+  --boomer-navy: hsl(180 69% 33%); /* #17948E converted to HSL */
+  --boomer-teal: hsl(193 63% 49%); /* #1F748C converted to HSL */
+  --boomer-orange: hsl(11 89% 47%); /* #E3400B converted to HSL */
+  --boomer-burgundy: hsl(252 3% 46%); /* #74727D */
+  --boomer-light-teal: hsl(180 60% 75%);
+  --boomer-light-navy: hsl(180 69% 85%);
+  
+  /* Update primary colors to match brand */
+  --primary: hsl(209 69% 21%); /* Navy */
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(191 63% 50%); /* Teal */
+  --secondary-foreground: hsl(0 0% 100%);
+  --accent: hsl(16 89% 45%); /* Orange */
+  --accent-foreground: hsl(0 0% 100%);
 }
 
 .dark {

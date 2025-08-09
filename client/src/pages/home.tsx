@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Shield, History, Play, FileText, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import Logo from "@/components/logo";
 import InputSelector from "@/components/input-selector";
 import UploadForm from "@/components/upload-form";
 import TextForm from "@/components/text-form";
@@ -79,19 +80,11 @@ export default function Home() {
         <header className="bg-white shadow-sm border-b border-gray-200">
           <div className="max-w-4xl mx-auto px-6 py-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-blue-700 rounded-lg flex items-center justify-center">
-                  <Shield className="text-white w-6 h-6" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Fraud & Scam Shield</h1>
-                  <p className="text-gray-600 text-lg">Protect yourself from online scams</p>
-                </div>
-              </div>
+              <Logo size="md" />
               <Button 
                 variant="default" 
                 size="lg"
-                className="bg-blue-700 hover:bg-blue-800 text-lg px-6 py-3"
+                className="bg-boomer-navy hover:bg-boomer-teal text-lg px-6 py-3"
               >
                 <History className="w-5 h-5 mr-2" />
                 My Reports
@@ -116,19 +109,11 @@ export default function Home() {
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-700 rounded-lg flex items-center justify-center">
-                <Shield className="text-white w-6 h-6" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Fraud & Scam Shield</h1>
-                <p className="text-gray-600 text-lg">Protect yourself from online scams</p>
-              </div>
-            </div>
+            <Logo size="md" />
             <Button 
               variant="default" 
               size="lg"
-              className="bg-blue-700 hover:bg-blue-800 text-lg px-6 py-3"
+              className="bg-boomer-navy hover:bg-boomer-teal text-lg px-6 py-3"
             >
               <History className="w-5 h-5 mr-2" />
               My Reports
@@ -139,7 +124,7 @@ export default function Home() {
 
       <main className="max-w-4xl mx-auto px-6 py-8">
         <section className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Is this message safe?</h2>
+          <h2 className="text-3xl font-bold mb-4 text-boomer-navy">Is this message safe?</h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
             Upload a screenshot, paste suspicious text, or share a phone call transcript. 
             We'll analyze it for scam patterns and give you clear next steps.
@@ -150,13 +135,13 @@ export default function Home() {
           <>
             {/* Demo Section */}
             <section className="mb-12">
-              <Card className="bg-blue-50 border-blue-200">
+              <Card className="bg-boomer-light-navy border-boomer-teal">
                 <CardHeader>
-                  <CardTitle className="text-2xl text-blue-900 flex items-center">
+                  <CardTitle className="text-2xl text-boomer-navy flex items-center">
                     <Play className="w-6 h-6 mr-2" />
                     Try Demo Examples
                   </CardTitle>
-                  <CardDescription className="text-lg text-blue-700">
+                  <CardDescription className="text-lg text-boomer-teal">
                     Test the scam detection with real examples from our database
                   </CardDescription>
                 </CardHeader>
@@ -180,7 +165,7 @@ export default function Home() {
                           channel: "phone"
                         }, "Treasury Department Tax Scam")}
                         disabled={isLoading}
-                        className="bg-red-600 hover:bg-red-700 text-white"
+                        className="bg-boomer-orange hover:bg-red-700 text-white"
                       >
                         Analyze Treasury Scam
                       </Button>
@@ -204,7 +189,7 @@ export default function Home() {
                           channel: "phone"
                         }, "Legitimate Utility Call")}
                         disabled={isLoading}
-                        className="bg-green-600 hover:bg-green-700 text-white"
+                        className="bg-boomer-teal hover:bg-green-700 text-white"
                       >
                         Analyze Utility Call
                       </Button>
@@ -244,8 +229,8 @@ export default function Home() {
 
         {isLoading && (
           <section className="bg-white rounded-xl shadow-md p-12 text-center">
-            <div className="animate-spin w-16 h-16 border-4 border-blue-700 border-t-transparent rounded-full mx-auto mb-6"></div>
-            <h3 className="text-2xl font-semibold mb-4">Analyzing Content...</h3>
+            <div className="animate-spin w-16 h-16 border-4 border-boomer-navy border-t-transparent rounded-full mx-auto mb-6"></div>
+            <h3 className="text-2xl font-semibold mb-4 text-boomer-navy">Analyzing Content...</h3>
             <p className="text-lg text-gray-600">We're checking for scam patterns and preparing your report.</p>
           </section>
         )}
@@ -267,14 +252,17 @@ export default function Home() {
 
       <footer className="bg-white border-t border-gray-200 mt-16">
         <div className="max-w-4xl mx-auto px-6 py-8">
-          <div className="text-center text-gray-600">
-            <p className="text-lg mb-4">
-              Fraud & Scam Shield helps seniors identify and respond to online scams.
+          <div className="text-center">
+            <div className="flex justify-center mb-4">
+              <Logo size="sm" showText={false} />
+            </div>
+            <p className="text-lg mb-4 text-gray-600">
+              <span className="font-semibold text-boomer-navy">Boomer Buddy</span> - Your trusted companion for staying safe online
             </p>
             <div className="flex justify-center space-x-8 text-lg">
-              <a href="#" className="hover:text-blue-700 transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-blue-700 transition-colors">Terms of Service</a>
-              <a href="#" className="hover:text-blue-700 transition-colors">Contact Support</a>
+              <a href="#" className="hover:text-boomer-teal transition-colors text-gray-600">Privacy Policy</a>
+              <a href="#" className="hover:text-boomer-teal transition-colors text-gray-600">Terms of Service</a>
+              <a href="#" className="hover:text-boomer-teal transition-colors text-gray-600">Contact Support</a>
             </div>
           </div>
         </div>

@@ -22,7 +22,7 @@ export default function RiskScore({ result }: RiskScoreProps) {
   return (
     <div className="bg-white rounded-xl shadow-md p-8 mb-8">
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold mb-4">Analysis Complete</h2>
+        <h2 className="text-3xl font-bold mb-4 text-boomer-navy">Analysis Complete</h2>
         <div className="inline-flex items-center space-x-4">
           <div className={`text-6xl font-bold ${getScoreColor(result.scam_score)}`}>
             {result.scam_score}

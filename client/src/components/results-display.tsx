@@ -1,6 +1,7 @@
 import RiskScore from "./risk-score";
 import ActionList from "./action-list";
 import ContactList from "./contact-list";
+import Logo from "./logo";
 import { Button } from "@/components/ui/button";
 import { Save, Copy, RotateCcw } from "lucide-react";
 import { useState } from "react";
@@ -80,8 +81,8 @@ export default function ResultsDisplay({ result, analysisId, onStartOver, hideSt
       {/* Legal Disclaimer */}
       <div className="bg-gray-50 border border-gray-300 rounded-lg p-6 mb-8">
         <div className="flex items-start space-x-3">
-          <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mt-0.5">
-            <span className="text-blue-600 text-sm">i</span>
+          <div className="w-6 h-6 bg-boomer-light-navy rounded-full flex items-center justify-center mt-0.5">
+            <span className="text-boomer-navy text-sm">i</span>
           </div>
           <div>
             <h4 className="font-semibold text-lg mb-2">Important Disclaimer</h4>
@@ -100,27 +101,27 @@ export default function ResultsDisplay({ result, analysisId, onStartOver, hideSt
           <Button 
             onClick={handleSaveReport}
             size="lg"
-            className="bg-blue-700 hover:bg-blue-800 text-lg px-8 py-4 w-full md:w-auto"
+            className="bg-boomer-navy hover:bg-boomer-teal text-lg px-8 py-4 w-full md:w-auto"
           >
             <Save className="w-5 h-5 mr-3" />
             Save Report
           </Button>
           
           {showShareLink && (
-            <div className="bg-green-50 border border-green-300 rounded-lg p-4 mt-4">
-              <p className="text-green-700 font-semibold mb-2">Report Saved Successfully!</p>
+            <div className="bg-boomer-light-teal border border-boomer-teal rounded-lg p-4 mt-4">
+              <p className="text-boomer-navy font-semibold mb-2">Report Saved Successfully!</p>
               <div className="flex items-center space-x-2">
                 <input 
                   type="text" 
                   value={shareLink} 
                   readOnly 
-                  className="flex-1 p-3 border border-green-300 rounded-lg text-lg bg-white"
+                  className="flex-1 p-3 border border-boomer-teal rounded-lg text-lg bg-white"
                 />
                 <Button 
                   onClick={handleCopyLink}
                   variant="outline"
                   size="lg"
-                  className="border-green-300 text-green-700 hover:bg-green-50"
+                  className="border-boomer-teal text-boomer-navy hover:bg-boomer-light-teal"
                 >
                   <Copy className="w-5 h-5" />
                 </Button>

@@ -61,15 +61,13 @@ export default {
           border: "var(--sidebar-border)",
           ring: "var(--sidebar-ring)",
         },
-        // Custom colors matching the design reference
-        'primary-blue': '#1E40AF',
-        'secondary-gray': '#6B7280',
-        'success-green': '#059669',
-        'warning-orange': '#D97706',
-        'danger-red': '#DC2626',
-        'bg-primary': '#F9FAFB',
-        'text-primary': '#1F2937',
-        'border-gray': '#E5E7EB',
+        // Boomer Buddy brand colors
+        'boomer-navy': 'var(--boomer-navy)',
+        'boomer-teal': 'var(--boomer-teal)',
+        'boomer-orange': 'var(--boomer-orange)',
+        'boomer-burgundy': 'var(--boomer-burgundy)',
+        'boomer-light-teal': 'var(--boomer-light-teal)',
+        'boomer-light-navy': 'var(--boomer-light-navy)',
       },
       fontFamily: {
         sans: ["var(--font-sans)"],
