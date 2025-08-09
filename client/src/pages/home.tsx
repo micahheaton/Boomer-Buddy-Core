@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Shield, History, Play, FileText, Phone } from "lucide-react";
+import { Shield, History, Play, FileText, Phone, Camera, Keyboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Logo from "@/components/logo";
@@ -133,70 +133,114 @@ export default function Home() {
 
         {!selectedInputType && (
           <>
-            {/* Demo Section */}
+            {/* Demo Examples Section */}
             <section className="mb-12">
-              <Card className="bg-boomer-light-navy border-boomer-teal">
-                <CardHeader>
-                  <CardTitle className="text-2xl text-boomer-navy flex items-center">
-                    <Play className="w-6 h-6 mr-2" />
-                    Try Demo Examples
-                  </CardTitle>
-                  <CardDescription className="text-lg text-boomer-teal">
-                    Test the scam detection with real examples from our database
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <h4 className="font-semibold text-lg flex items-center">
-                        <Phone className="w-5 h-5 mr-2 text-red-600" />
-                        Phone Scam (High Risk)
-                      </h4>
-                      <p className="text-gray-600">
-                        Treasury Department impersonation scam demanding gift cards for "tax reconciliation"
-                      </p>
-                      <Button 
-                        onClick={() => runDemo({
-                          inputType: "text",
-                          text: "Header\nChannel: Phone\nCaller ID shown: Treasury Dept Main 202 555 0142\nState: WA\nRecipient age: 71\nContext: Recipient received a voicemail about a tax review and called back\n\nTranscript\n00:00 Caller: Thank you for returning the call. This is David Martin with the Treasury review team. I see your file. Before we begin, do not discuss this call with anyone while the review is open. Do you understand\n00:10 Recipient: I think so. What is this about\n00:12 Caller: We completed an automated reconciliation of your 2021 through 2023 filings. There is a mismatch tied to a stimulus credit. The system shows a pending federal action if we cannot verify payment today\n00:25 Recipient: That is scary. I thought I paid everything\n00:28 Caller: I know this is frustrating. I am here to help you avoid escalation. I will give you a reference number. Are you ready\n00:34 Recipient: Yes\n00:35 Caller: Case number T R seven three nine five six. Repeat that back please\n00:41 Recipient: T R seven three nine five six\n00:43 Caller: Correct. I need to confirm the last four of your Social for identity. Please state only the last four\n00:49 Recipient: I do not feel comfortable. Can you tell me something from your side\n00:53 Caller: I understand. For security I can only see the last two of your number. It ends in three six. That matches our records. Now the last four please so I can stop the enforcement clock\n01:04 Recipient: I cannot give that. Can I call the main number for the IRS\n01:08 Caller: If you hang up the system will flag the case as non responsive. That will place a hold on your bank account for seventy two hours. I can resolve this now. We accept same day verification through certified vouchers. You will pick up government vouchers at a participating retailer and read me the codes. This clears the mismatch immediately\n01:26 Recipient: Vouchers. Like gift cards\n01:29 Caller: They are government certified cards carried by stores like Target and Walgreens. The code proves identity for this review. You must keep this private. If a cashier asks, say this is for a family purchase, not for taxes. That prevents fraud at the store level\n01:44 Recipient: This sounds odd. Can I pay on IRS dot gov\n01:48 Caller: Online payments post in three to five business days. Your file will lock today at 3 pm Pacific. If you complete the voucher verification in the next thirty minutes, the system cancels the hold. I will stay on the line to assist\n02:02 Recipient: How much is the voucher\n02:04 Caller: The reconciliation shows one thousand four hundred and eighty six dollars and twenty two cents. The system can accept two vouchers of seven hundred fifty dollars. I can split it for you\n02:14 Recipient: I do not have that money\n02:16 Caller: I understand. We can place a partial compliance note with one voucher today and a second tomorrow. If we do not post a code today, the case moves to the sheriff for a civil notice. I want to keep this private for you\n02:29 Recipient: You said sheriff\n02:31 Caller: Only a notification visit. No one wants that. Let us do the first voucher now. Do you have a car\n02:37 Recipient: I am not giving you any codes. I will call my daughter and my bank\n02:41 Caller: If you tell anyone about this open review the case will lock. I am noting refusal to comply. You will receive the visit within seventy two hours. Good day\n02:51 Recipient: I am hanging up now\n\nOutcome note\nRecipient hung up and called daughter. No payment made. Saved the case number and caller ID",
-                          state: "WA",
-                          phoneNumber: "2025550142",
-                          emailFrom: "",
-                          channel: "phone"
-                        }, "Treasury Department Tax Scam")}
-                        disabled={isLoading}
-                        className="bg-boomer-orange hover:bg-red-700 text-white"
-                      >
-                        Analyze Treasury Scam
-                      </Button>
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-bold text-boomer-navy mb-3">See How It Works</h2>
+                <p className="text-lg text-gray-600">Try these examples to understand how each option helps protect you</p>
+              </div>
+              
+              <div className="grid lg:grid-cols-3 gap-6 mb-8">
+                {/* Screenshot Upload Demo */}
+                <Card className="bg-white border-2 border-boomer-light-navy">
+                  <CardHeader className="text-center">
+                    <div className="w-12 h-12 bg-boomer-light-navy rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Camera className="text-boomer-navy w-6 h-6" />
                     </div>
-                    
-                    <div className="space-y-4">
-                      <h4 className="font-semibold text-lg flex items-center">
-                        <FileText className="w-5 h-5 mr-2 text-green-600" />
-                        Legitimate Call (Low Risk)
-                      </h4>
-                      <p className="text-gray-600">
-                        Real utility company payment reminder with proper verification methods
+                    <CardTitle className="text-xl text-boomer-navy">Upload Screenshot</CardTitle>
+                    <CardDescription className="text-base">
+                      Take a photo of suspicious messages on your phone or computer
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                      <p className="text-sm text-gray-600 mb-2"><strong>Example:</strong></p>
+                      <p className="text-sm italic">
+                        "I got a text saying my bank account will be closed. It has a link to click. 
+                        I took a screenshot - can you check if this is real?"
                       </p>
-                      <Button 
-                        onClick={() => runDemo({
-                          inputType: "text",
-                          text: "Header\nChannel: Phone\nCaller ID shown: City Utilities Billing 425 555 0199\nState: WA\nContext: Routine payment reminder. Caller offers standard payment channels and no urgency tricks\n\nTranscript\n00:00 Caller: Hello, this is City Utilities with a reminder that your water bill for account ending one two three is due on the fifteenth. You can pay on our website, by mail, or at our service center. We will never ask for gift cards\n00:15 Recipient: Thank you. What is the amount due\n00:17 Caller: Forty two dollars and ten cents. You can visit cityutilities.example slash pay or mail a check to the address on your statement\n00:26 Recipient: I will pay on the website\n00:28 Caller: Thank you. Have a nice day\n\nOutcome note\nNo payment taken on the call. Clear website reference and normal options",
-                          state: "WA",
-                          phoneNumber: "4255550199",
-                          emailFrom: "",
-                          channel: "phone"
-                        }, "Legitimate Utility Call")}
-                        disabled={isLoading}
-                        className="bg-boomer-teal hover:bg-green-700 text-white"
-                      >
-                        Analyze Utility Call
-                      </Button>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                    <Button 
+                      onClick={() => setSelectedInputType('upload')}
+                      className="w-full bg-boomer-navy hover:bg-boomer-teal"
+                    >
+                      Try Upload Demo
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Tell Us What Happened Demo */}
+                <Card className="bg-white border-2 border-boomer-light-teal">
+                  <CardHeader className="text-center">
+                    <div className="w-12 h-12 bg-boomer-light-teal rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Keyboard className="text-boomer-teal w-6 h-6" />
+                    </div>
+                    <CardTitle className="text-xl text-boomer-teal">Tell Us What Happened</CardTitle>
+                    <CardDescription className="text-base">
+                      Describe suspicious emails, texts, or experiences in your own words
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                      <p className="text-sm text-gray-600 mb-2"><strong>Example:</strong></p>
+                      <p className="text-sm italic">
+                        "Someone called saying they're from Microsoft and my computer has viruses. 
+                        They want me to download software to fix it. Should I trust them?"
+                      </p>
+                    </div>
+                    <Button 
+                      onClick={() => runDemo({
+                        inputType: "text",
+                        text: "I received an email from what looks like my bank asking me to verify my account information. The email says there's been suspicious activity and I need to click a link to secure my account. The sender shows as 'security@bankofamerica-verify.net' and it's asking for my social security number and account details. The email looks official with the bank logo but something feels off about it. Should I be worried?",
+                        state: "CA",
+                        phoneNumber: "",
+                        emailFrom: "security@bankofamerica-verify.net",
+                        channel: "email"
+                      }, "Suspicious Bank Email")}
+                      disabled={isLoading}
+                      className="w-full bg-boomer-teal hover:bg-boomer-navy"
+                    >
+                      Try Text Demo
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Phone Transcript Demo */}
+                <Card className="bg-white border-2 border-orange-200">
+                  <CardHeader className="text-center">
+                    <div className="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Phone className="text-boomer-orange w-6 h-6" />
+                    </div>
+                    <CardTitle className="text-xl text-boomer-orange">Phone Transcript</CardTitle>
+                    <CardDescription className="text-base">
+                      Copy call transcripts from Zoom, Teams, or phone apps
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                      <p className="text-sm text-gray-600 mb-2"><strong>Example:</strong></p>
+                      <p className="text-sm italic">
+                        "Caller: This is Social Security Administration. Your number has been suspended 
+                        due to suspicious activity..."
+                      </p>
+                    </div>
+                    <Button 
+                      onClick={() => runDemo({
+                        inputType: "text",
+                        text: "Transcript from suspicious call:\n\nCaller: Hello, this is Agent Johnson from the Social Security Administration. Your social security number has been suspended due to suspicious activity. We need to verify your identity immediately to prevent your benefits from being permanently cancelled.\n\nMe: What kind of suspicious activity?\n\nCaller: There are several charges and bank accounts linked to your social security number that we need to clear. For security, I need you to confirm your social security number so I can access your file.\n\nMe: I don't feel comfortable giving that over the phone.\n\nCaller: Ma'am, if you don't cooperate, we will have to issue a warrant for your arrest. This is very serious. You need to stay on the line while we resolve this matter. Do not hang up or contact anyone else about this call.\n\nMe: That sounds scary. What do I need to do?\n\nCaller: First, I need your social security number to pull up your case. Then you'll need to purchase gift cards to pay the clearance fee to unlock your account.\n\nNote: I hung up at this point because it seemed suspicious.",
+                        state: "FL",
+                        phoneNumber: "8005551234",
+                        emailFrom: "",
+                        channel: "phone"
+                      }, "Social Security Scam Call")}
+                      disabled={isLoading}
+                      className="w-full bg-boomer-orange hover:bg-red-600"
+                    >
+                      Try Transcript Demo
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
             </section>
 
             <InputSelector onSelectType={setSelectedInputType} />

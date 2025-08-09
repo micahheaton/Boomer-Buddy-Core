@@ -29,8 +29,8 @@ export default function InputSelector({ onSelectType }: InputSelectorProps) {
             <div className="w-16 h-16 bg-boomer-light-teal rounded-full flex items-center justify-center mx-auto mb-4">
               <Keyboard className="text-boomer-teal w-8 h-8" />
             </div>
-            <h3 className="text-xl font-semibold mb-2">Paste Text</h3>
-            <p className="text-gray-600 text-lg">Copy and paste suspicious text or emails</p>
+            <h3 className="text-xl font-semibold mb-2">Tell Us What Happened</h3>
+            <p className="text-gray-600 text-lg">Describe suspicious emails, texts, or experiences in your own words</p>
           </div>
         </div>
 

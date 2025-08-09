@@ -45,7 +45,7 @@ export default function TextForm({ onAnalysisComplete, onLoading, isLoading }: T
     if (!text.trim()) {
       toast({
         title: "No text entered",
-        description: "Please enter the suspicious text to analyze.",
+        description: "Please tell us what happened or paste the suspicious text.",
         variant: "destructive",
       });
       return;
@@ -65,14 +65,14 @@ export default function TextForm({ onAnalysisComplete, onLoading, isLoading }: T
   return (
     <section className="mb-12">
       <div className="bg-white rounded-xl shadow-md p-8">
-        <h3 className="text-2xl font-semibold mb-6">Paste Suspicious Text</h3>
+        <h3 className="text-2xl font-semibold mb-6 text-boomer-navy">Tell Us What Happened</h3>
         
         <div className="mb-6">
           <Textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            className="w-full h-48 p-6 text-lg resize-none focus:ring-2 focus:ring-blue-700 focus:border-blue-700"
-            placeholder="Paste the suspicious email, text message, or social media message here..."
+            className="w-full h-48 p-6 text-lg resize-none focus:ring-2 focus:ring-boomer-teal focus:border-boomer-teal"
+            placeholder="Describe what happened... For example: 'I got an email from my bank asking me to verify my account' or paste the suspicious message here."
           />
         </div>
 
@@ -114,7 +114,7 @@ export default function TextForm({ onAnalysisComplete, onLoading, isLoading }: T
             onClick={handleAnalyze}
             disabled={isLoading || !text.trim()}
             size="lg"
-            className="bg-blue-700 hover:bg-blue-800 text-xl px-12 py-4 font-bold"
+            className="bg-boomer-teal hover:bg-boomer-navy text-xl px-12 py-4 font-bold"
           >
             <Search className="w-6 h-6 mr-3" />
             Analyze for Scams
