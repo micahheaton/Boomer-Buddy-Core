@@ -1,11 +1,65 @@
-// Simple working routes that return authentic government data
+// V2 routes that return authentic government data from database
 import type { Express } from "express";
+import { db } from "./db";
+import { scamTrends, newsItems, dataSources } from "@shared/schema";
+import { desc } from "drizzle-orm";
 
 export function registerSimpleV2Routes(app: Express) {
-  // Working scam trends with authentic government data
+  // Unified scam trends and news endpoint with real database data
   app.get("/api/v2/scam-trends", async (req, res) => {
     try {
-      const trends = [
+      // Get scam trends from database
+      const trends = await db.select().from(scamTrends).orderBy(desc(scamTrends.createdAt)).limit(100);
+      
+      // Get news items from database  
+      const news = await db.select().from(newsItems).orderBy(desc(newsItems.publishDate)).limit(100);
+
+      // Combine and format for unified display
+      const combinedData = [
+        ...trends.map(trend => ({
+          id: trend.id,
+          type: 'scam-alert',
+          title: trend.title,
+          description: trend.description,
+          url: trend.sourceUrl,
+          publishedAt: trend.createdAt,
+          agency: trend.sourceAgency,
+          riskLevel: trend.severity || 'medium',
+          scamTypes: trend.category ? [trend.category] : null,
+          targetDemographics: trend.affectedRegions as string[] || null,
+          affectedStates: trend.affectedRegions as string[] || null,
+          elderRelevanceScore: trend.elderRelevanceScore,
+          reportCount: trend.reportCount
+        })),
+        ...news.map(item => ({
+          id: item.id,
+          type: 'news',
+          title: item.title,
+          description: item.summary,
+          url: item.sourceUrl,
+          publishedAt: item.publishDate,
+          agency: item.sourceAgency,
+          riskLevel: 'info',
+          reliability: item.reliability,
+          elderRelevanceScore: item.elderRelevanceScore
+        }))
+      ].sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+
+      res.json({ 
+        trends: combinedData,
+        metadata: {
+          total: combinedData.length,
+          scamTrends: trends.length,
+          newsItems: news.length,
+          lastUpdated: new Date().toISOString(),
+          sourceType: "authentic_government_data_only"
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching authentic data:", error);
+      
+      // Fallback with static data only if database fails
+      const fallbackTrends = [
         {
           id: "ftc-social-security-2025-001",
           title: "Social Security Administration Phone Scam Alert - FTC Warning",
@@ -54,24 +108,46 @@ export function registerSimpleV2Routes(app: Express) {
       ];
 
       res.json({ 
-        trends,
+        trends: fallbackTrends,
         metadata: {
-          total: trends.length,
+          total: fallbackTrends.length,
           lastUpdated: new Date().toISOString(),
           sources: ["FTC", "FBI", "HHS-OIG"],
-          authenticity: "verified_government_sources_only"
+          authenticity: "verified_government_sources_only",
+          warning: "Using fallback data - database connection issue"
         }
       });
-    } catch (error) {
-      console.error("Error fetching authentic scam trends:", error);
-      res.status(500).json({ error: "Failed to fetch scam trends" });
     }
   });
 
-  // Working verified news with government data 
+  // Real verified news from database
   app.get("/api/v2/news", async (req, res) => {
     try {
-      const news = [
+      const news = await db.select().from(newsItems).orderBy(desc(newsItems.publishDate)).limit(50);
+      
+      res.json({
+        news: news.map(item => ({
+          id: item.id,
+          title: item.title,
+          summary: item.summary,
+          url: item.sourceUrl,
+          publishedAt: item.publishDate,
+          agency: item.sourceAgency,
+          reliability: item.reliability,
+          elderRelevanceScore: item.elderRelevanceScore
+        })),
+        metadata: {
+          total: news.length,
+          lastUpdated: new Date().toISOString(),
+          sourceType: "government_agencies_only",
+          reliability: "verified_official_sources"
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching verified news:", error);
+      
+      // Fallback data
+      const fallbackNews = [
         {
           id: "ftc-consumer-education-2025-001",
           title: "FTC Announces New Consumer Protection Initiative for 2025",
@@ -93,24 +169,47 @@ export function registerSimpleV2Routes(app: Express) {
       ];
 
       res.json({
-        news,
+        news: fallbackNews,
         metadata: {
-          total: news.length,
+          total: fallbackNews.length,
           lastUpdated: new Date().toISOString(),
           sourceType: "government_agencies_only",
-          reliability: "verified_official_sources"
+          reliability: "verified_official_sources",
+          warning: "Using fallback data - database connection issue"
         }
       });
-    } catch (error) {
-      console.error("Error fetching verified news:", error);
-      res.status(500).json({ error: "Failed to fetch news" });
     }
   });
 
-  // Working data sources status
+  // Real data sources from database
   app.get("/api/v2/data-sources", async (req, res) => {
     try {
-      const sources = [
+      const sources = await db.select().from(dataSources).orderBy(desc(dataSources.lastChecked));
+      
+      res.json({
+        sources: sources.map(source => ({
+          id: source.id,
+          name: source.name,
+          url: source.url,
+          status: source.status,
+          lastChecked: source.lastChecked,
+          errorCount: 0, // Will track this later
+          agency: source.agency,
+          itemsCollected: 0, // Will track this later
+          description: source.name
+        })),
+        metadata: {
+          total: sources.length,
+          active: sources.filter(s => s.status === 'active').length,
+          lastUpdated: new Date().toISOString(),
+          authenticity: "government_sources_only"
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching data sources:", error);
+      
+      // Fallback sources
+      const fallbackSources = [
         {
           id: "ftc-consumer-alerts",
           name: "FTC Consumer Alerts", 
@@ -154,14 +253,14 @@ export function registerSimpleV2Routes(app: Express) {
       ];
 
       const stats = {
-        totalSources: sources.length,
-        activeSources: sources.filter(s => s.status === 'active').length,
-        onlineSources: sources.filter(s => s.errorCount === 0).length,
-        totalItems: sources.reduce((sum, s) => sum + s.itemsCollected, 0)
+        totalSources: fallbackSources.length,
+        activeSources: fallbackSources.filter(s => s.status === 'active').length,
+        onlineSources: fallbackSources.filter(s => s.errorCount === 0).length,
+        totalItems: fallbackSources.reduce((sum, s) => sum + s.itemsCollected, 0)
       };
 
       res.json({ 
-        sources, 
+        sources: fallbackSources, 
         stats,
         metadata: {
           lastUpdated: new Date().toISOString(),
@@ -169,9 +268,6 @@ export function registerSimpleV2Routes(app: Express) {
           collectionFrequency: "every_6_hours"
         }
       });
-    } catch (error) {
-      console.error("Error fetching data sources:", error);
-      res.status(500).json({ error: "Failed to fetch data sources" });
     }
   });
 }

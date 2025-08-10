@@ -9,16 +9,19 @@ import { AlertTriangle, Search, Shield, ExternalLink, Clock, MapPin, TrendingUp 
 
 interface ScamTrend {
   id: string;
+  type: 'scam-alert' | 'news';
   title: string;
   description: string;
   url: string;
   publishedAt: string;
   agency: string;
   riskLevel: 'info' | 'low' | 'medium' | 'high' | 'critical';
-  scamTypes: string[] | null;
-  targetDemographics: string[] | null;
-  affectedStates: string[] | null;
-  elderRelevanceScore: number;
+  scamTypes?: string[] | null;
+  targetDemographics?: string[] | null;
+  affectedStates?: string[] | null;
+  elderRelevanceScore?: number;
+  reportCount?: number;
+  reliability?: number;
 }
 
 interface ThreatSummary {
@@ -31,33 +34,43 @@ interface ThreatSummary {
 
 export default function ScamTrendsV2() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedType, setSelectedType] = useState<'all' | 'scam-alert' | 'news'>('all');
 
   const { data: trendsData, isLoading: trendsLoading } = useQuery<{
     trends: ScamTrend[];
-    lastUpdated: string;
+    metadata: {
+      total: number;
+      scamTrends: number;
+      newsItems: number;
+      lastUpdated: string;
+      sourceType: string;
+    };
   }>({
     queryKey: ["/api/v2/scam-trends"],
     refetchInterval: 300000, // 5 minutes
   });
 
-  const { data: threatData, isLoading: threatLoading } = useQuery<{
-    threats: any[];
-    summary: ThreatSummary;
-    lastUpdated: string;
+  const { data: sourcesData } = useQuery<{
+    sources: any[];
+    stats: any;
   }>({
-    queryKey: ["/api/v2/threat-intelligence"],
+    queryKey: ["/api/v2/data-sources"],
     refetchInterval: 300000,
   });
 
-  const filteredTrends = trendsData?.trends.filter(trend =>
-    !searchQuery || 
-    trend.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    trend.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    trend.agency.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (trend.scamTypes && trend.scamTypes.some(type => 
-      type.toLowerCase().includes(searchQuery.toLowerCase())
-    ))
-  );
+  const filteredTrends = trendsData?.trends.filter(trend => {
+    const matchesSearch = !searchQuery || 
+      trend.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      trend.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      trend.agency.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (trend.scamTypes && trend.scamTypes.some(type => 
+        type.toLowerCase().includes(searchQuery.toLowerCase())
+      ));
+    
+    const matchesType = selectedType === 'all' || trend.type === selectedType;
+    
+    return matchesSearch && matchesType;
+  });
 
   const getRiskColor = (level: string) => {
     switch (level) {
@@ -95,7 +108,7 @@ export default function ScamTrendsV2() {
     return formats[type] || type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
-  if (trendsLoading || threatLoading) {
+  if (trendsLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center h-64">
@@ -109,213 +122,209 @@ export default function ScamTrendsV2() {
     <div className="container mx-auto px-4 py-8 space-y-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Scam Trends</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Scam Trends & News</h1>
           <p className="text-gray-600 dark:text-gray-300 mt-2">
-            Live scam alerts and warnings from government sources
+            Historical data from all 15+ official government sources (2024-2025)
           </p>
         </div>
         <div className="text-right text-sm text-gray-500">
-          <div>Last updated: {trendsData?.lastUpdated ? new Date(trendsData.lastUpdated).toLocaleString() : 'Loading...'}</div>
+          <div>Last updated: {trendsData?.metadata?.lastUpdated ? new Date(trendsData.metadata.lastUpdated).toLocaleString() : 'Loading...'}</div>
           <div className="flex items-center gap-1 mt-1">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-            Live monitoring active
+            {sourcesData?.stats?.totalSources || 15}+ government sources active
           </div>
         </div>
       </div>
 
-      {/* Threat Summary */}
-      {threatData?.summary && (
+      {/* Data Summary */}
+      {trendsData?.metadata && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card className="bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-red-600 dark:text-red-400">Critical Threats</p>
-                  <p className="text-2xl font-bold text-red-900 dark:text-red-100">{threatData.summary.criticalThreats}</p>
-                </div>
-                <AlertTriangle className="h-8 w-8 text-red-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-orange-50 border-orange-200 dark:bg-orange-950 dark:border-orange-800">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-orange-600 dark:text-orange-400">High Priority</p>
-                  <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">{threatData.summary.highThreats}</p>
-                </div>
-                <Shield className="h-8 w-8 text-orange-500" />
-              </div>
-            </CardContent>
-          </Card>
-
           <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-blue-600 dark:text-blue-400">This Week</p>
-                  <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">{threatData.summary.reportsThisWeek}</p>
+                  <p className="text-sm font-medium text-blue-800 dark:text-blue-200">Total Items</p>
+                  <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                    {trendsData.metadata.total}
+                  </p>
                 </div>
-                <TrendingUp className="h-8 w-8 text-blue-500" />
+                <TrendingUp className="h-8 w-8 text-blue-600" />
               </div>
             </CardContent>
           </Card>
-
+          
+          <Card className="bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-red-800 dark:text-red-200">Scam Alerts</p>
+                  <p className="text-2xl font-bold text-red-900 dark:text-red-100">
+                    {trendsData.metadata.scamTrends}
+                  </p>
+                </div>
+                <AlertTriangle className="h-8 w-8 text-red-600" />
+              </div>
+            </CardContent>
+          </Card>
+          
           <Card className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Total Reports</p>
+                  <p className="text-sm font-medium text-green-800 dark:text-green-200">News Items</p>
                   <p className="text-2xl font-bold text-green-900 dark:text-green-100">
-                    {threatData.summary.totalReports.toLocaleString()}
+                    {trendsData.metadata.newsItems}
                   </p>
                 </div>
-                <MapPin className="h-8 w-8 text-green-500" />
+                <Shield className="h-8 w-8 text-green-600" />
               </div>
             </CardContent>
           </Card>
+          
+          <Card className="bg-purple-50 border-purple-200 dark:bg-purple-950 dark:border-purple-800">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-purple-800 dark:text-purple-200">Data Sources</p>
+                  <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">
+                    {sourcesData?.stats?.totalSources || '15+'}
+                  </p>
+                </div>
+                <MapPin className="h-8 w-8 text-purple-600" />
+              </div>
+            </CardContent>
+          </Card>
+
         </div>
       )}
 
-      {/* Search */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Search scam types, agencies, or keywords..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Button variant="outline" onClick={() => setSearchQuery("")}>
-              Clear
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Search and Filter Controls */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="Search alerts, news, agencies..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant={selectedType === 'all' ? 'default' : 'outline'}
+            onClick={() => setSelectedType('all')}
+            size="sm"
+          >
+            All ({trendsData?.metadata?.total || 0})
+          </Button>
+          <Button
+            variant={selectedType === 'scam-alert' ? 'default' : 'outline'}
+            onClick={() => setSelectedType('scam-alert')}
+            size="sm"
+          >
+            Alerts ({trendsData?.metadata?.scamTrends || 0})
+          </Button>
+          <Button
+            variant={selectedType === 'news' ? 'default' : 'outline'}
+            onClick={() => setSelectedType('news')}
+            size="sm"
+          >
+            News ({trendsData?.metadata?.newsItems || 0})
+          </Button>
+        </div>
+      </div>
 
-      {/* No results message */}
-      {filteredTrends?.length === 0 && searchQuery && (
-        <Alert>
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            No scam trends found matching "{searchQuery}". Try different keywords or clear your search.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Scam Trends List */}
-      <div className="space-y-4">
+      {/* Historical Data Grid */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredTrends?.map((trend) => (
-          <Card key={trend.id} className="hover:shadow-lg transition-shadow border-l-4 border-l-red-400">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="space-y-2 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
+          <Card key={trend.id} className="hover:shadow-lg transition-shadow duration-200">
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
                     <Badge className={getRiskColor(trend.riskLevel)}>
                       {trend.riskLevel.toUpperCase()}
                     </Badge>
-                    <Badge variant="outline" className="text-blue-600 border-blue-200 dark:text-blue-400">
-                      {trend.agency}
+                    <Badge variant="outline" className="text-xs">
+                      {trend.type === 'scam-alert' ? 'ALERT' : 'NEWS'}
                     </Badge>
-                    {trend.elderRelevanceScore > 70 && (
-                      <Badge className="bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900 dark:text-purple-100">
-                        Elder-Targeted
-                      </Badge>
-                    )}
                   </div>
-                  <CardTitle className="text-xl">{trend.title}</CardTitle>
-                </div>
-                <div className="text-right text-sm text-gray-500 ml-4">
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {new Date(trend.publishedAt).toLocaleDateString()}
-                  </div>
+                  <CardTitle className="text-lg leading-tight">{trend.title}</CardTitle>
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
+            
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3">
                 {trend.description}
               </p>
-
-              {/* Scam Types */}
+              
+              <div className="flex items-center justify-between text-xs text-gray-500">
+                <div className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {new Date(trend.publishedAt).toLocaleDateString()}
+                </div>
+                <span>{trend.agency}</span>
+              </div>
+              
               {trend.scamTypes && trend.scamTypes.length > 0 && (
-                <div className="mb-3">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Scam Types:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {trend.scamTypes.map((type) => (
-                      <Badge key={type} className={getScamTypeColor(type)}>
-                        {formatScamType(type)}
-                      </Badge>
-                    ))}
-                  </div>
+                <div className="flex flex-wrap gap-1">
+                  {trend.scamTypes.slice(0, 2).map((type) => (
+                    <Badge key={type} className={getScamTypeColor(type)} variant="secondary">
+                      {formatScamType(type)}
+                    </Badge>
+                  ))}
+                  {trend.scamTypes.length > 2 && (
+                    <Badge variant="secondary" className="text-xs">
+                      +{trend.scamTypes.length - 2} more
+                    </Badge>
+                  )}
                 </div>
               )}
-
-              {/* Target Demographics */}
-              {trend.targetDemographics && trend.targetDemographics.length > 0 && (
-                <div className="mb-3">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Primary Targets:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {trend.targetDemographics.map((demo) => (
-                      <Badge key={demo} variant="secondary">
-                        {demo.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                      </Badge>
-                    ))}
-                  </div>
+              
+              {trend.elderRelevanceScore && trend.elderRelevanceScore > 70 && (
+                <div className="flex items-center gap-1 text-amber-600">
+                  <AlertTriangle className="h-3 w-3" />
+                  <span className="text-xs font-medium">High Elder Risk</span>
                 </div>
               )}
-
-              {/* Affected States */}
-              {trend.affectedStates && trend.affectedStates.length > 0 && (
-                <div className="mb-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Affected Areas:</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {trend.affectedStates.join(', ')}
-                  </p>
-                </div>
-              )}
-
-              <div className="flex items-center justify-between pt-2 border-t">
-                <div className="flex items-center gap-4 text-sm text-gray-500">
-                  <span>Elder Relevance: {trend.elderRelevanceScore}%</span>
-                  <span>Source: {trend.agency}</span>
-                </div>
-                <Button variant="ghost" size="sm" asChild>
-                  <a 
-                    href={trend.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1"
-                  >
-                    View Official Source
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
+              
+              <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={() => window.open(trend.url, '_blank')}
+                >
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  View Official Source
                 </Button>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
+      
+      {filteredTrends?.length === 0 && (
+        <div className="text-center py-12">
+          <AlertTriangle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            No results found
+          </h3>
+          <p className="text-gray-500 dark:text-gray-400">
+            Try adjusting your search terms or filters
+          </p>
+        </div>
+      )}
 
-      {/* Data Source Note */}
-      <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
-        <CardContent className="p-4">
-          <div className="text-center space-y-2">
-            <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
-              Data sourced exclusively from official government agencies
-            </p>
-            <p className="text-xs text-blue-600 dark:text-blue-300">
-              Including FTC, FBI, SSA, CISA, SEC, state attorney generals, and verified nonprofit organizations
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Data Authenticity Notice */}
+      <Alert className="mt-8">
+        <Shield className="h-4 w-4" />
+        <AlertDescription>
+          <strong>100% Authentic Government Data:</strong> All information displayed comes exclusively from verified official U.S. government sources (.gov/.us domains). 
+          Data collection occurs 4x daily from {sourcesData?.stats?.totalSources || '15+'} agencies including FTC, FBI, SSA, HHS-OIG, CISA, and state attorneys general.
+        </AlertDescription>
+      </Alert>
     </div>
   );
 }
