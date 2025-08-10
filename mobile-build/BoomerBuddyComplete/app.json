@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "BoomerBuddyExpo",
-    "slug": "BoomerBuddyNative",
+    "name": "BoomerBuddyComplete",
+    "slug": "BoomerBuddyComplete",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,7 +16,7 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.boomerbuddy.app",
+      "package": "com.boomerbuddy.complete",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#17948E"
@@ -25,7 +25,6 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "owner": "micahheaton"
+    }
   }
 }
