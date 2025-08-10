@@ -24,6 +24,7 @@ import ScamTrendsV2 from "@/pages/ScamTrendsV2";
 import DataSourcesV2 from "@/pages/DataSourcesV2";
 import AdminPanel from "@/pages/AdminPanel";
 import UnifiedTrendsHeatmap from "@/pages/UnifiedTrendsHeatmap";
+import MobileFeaturesPreview from "@/pages/MobileFeaturesPreview";
 
 function Router() {
   return (
@@ -43,6 +44,7 @@ function Router() {
       <Route path="/assessment" component={VulnerabilityAssessment} />
       <Route path="/heatmap" component={LiveHeatmapV2} />
       <Route path="/unified-trends" component={UnifiedTrendsHeatmap} />
+      <Route path="/mobile-features" component={MobileFeaturesPreview} />
       <Route path="/admin-panel" component={AdminPanel} />
       <Route component={NotFound} />
     </Switch>

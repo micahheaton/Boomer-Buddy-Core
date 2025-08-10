@@ -61,6 +61,16 @@ export default function Navigation() {
               </button>
 
               <button
+                onClick={() => setLocation("/mobile-features")}
+                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                  location === "/mobile-features" ? "text-blue-600" : "text-blue-500 hover:text-blue-700"
+                }`}
+              >
+                <Activity className="w-4 h-4" />
+                Mobile Preview
+              </button>
+
+              <button
                 onClick={() => setLocation("/about")}
                 className={`flex items-center gap-2 text-sm font-medium transition-colors ${
                   location === "/about" ? "text-boomer-navy" : "text-gray-600 hover:text-boomer-navy"
