@@ -323,3 +323,58 @@ export const scamAnalysisResultSchema = z.object({
 
 export type ScamAnalysisRequest = z.infer<typeof scamAnalysisRequestSchema>;
 export type ScamAnalysisResult = z.infer<typeof scamAnalysisResultSchema>;
+
+// Mobile training packs table
+export const trainingPacks = pgTable("training_packs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  packId: varchar("pack_id").notNull().unique(),
+  title: varchar("title").notNull(),
+  description: text("description"),
+  locale: varchar("locale").default("en-US"),
+  targets: text("targets").array(), // ["sms", "calls", "email"]
+  difficulty: varchar("difficulty").default("easy"), // easy, medium, hard
+  region: varchar("region").default("US"),
+  version: varchar("version").default("1.0.0"),
+  checksum: varchar("checksum").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+// Training cards within packs
+export const trainingCards = pgTable("training_cards", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  packId: varchar("pack_id").notNull().references(() => trainingPacks.packId),
+  cardIndex: integer("card_index").notNull(),
+  cardType: varchar("card_type").notNull(), // "mcq", "match", "spot_flag", "ordering", "audio_mcq"
+  question: text("question").notNull(),
+  choices: jsonb("choices"), // Array of answer choices for MCQ
+  correctAnswer: text("correct_answer"),
+  explanation: text("explanation"),
+  audioUrl: varchar("audio_url"), // For audio tips
+  tags: text("tags").array(), // Topic tags for spaced repetition
+  difficulty: integer("difficulty").default(1), // 1-5 difficulty level
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+// ML model versions for mobile
+export const modelVersions = pgTable("model_versions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  version: varchar("version").notNull().unique(),
+  androidUrl: varchar("android_url").notNull(),
+  iosUrl: varchar("ios_url").notNull(),
+  metadataUrl: varchar("metadata_url").notNull(),
+  rulesUrl: varchar("rules_url").notNull(),
+  checksum: varchar("checksum").notNull(),
+  requiredRulesVersion: varchar("required_rules_version").notNull(),
+  isActive: boolean("is_active").default(false),
+  releaseNotes: text("release_notes"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+export type InsertTrainingPack = typeof trainingPacks.$inferInsert;
+export type SelectTrainingPack = typeof trainingPacks.$inferSelect;
+export type InsertTrainingCard = typeof trainingCards.$inferInsert;
+export type SelectTrainingCard = typeof trainingCards.$inferSelect;
+export type InsertModelVersion = typeof modelVersions.$inferInsert;
+export type SelectModelVersion = typeof modelVersions.$inferSelect;

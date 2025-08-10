@@ -1,296 +1,498 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  SafeAreaView,
+  Alert,
+} from 'react-native';
+import { ApiService } from '../services/ApiService';
+import { StorageService } from '../services/StorageService';
 
-// Import components
-import CallTranscriptionScreen from './CallTranscriptionScreen';
-import ScreenshotAnalysisScreen from './ScreenshotAnalysisScreen';
-import ProfileScreen from './ProfileScreen';
+const HomeScreen = ({ navigation }: any) => {
+  const [connectionStatus, setConnectionStatus] = useState<{
+    connected: boolean;
+    latency?: number;
+    sources?: number;
+    lastUpdate?: string;
+  }>({ connected: false });
+  
+  const [recentCases, setRecentCases] = useState<number>(0);
+  const [protectionScore, setProtectionScore] = useState<number>(85);
+  const [loading, setLoading] = useState(true);
 
-type TabType = 'home' | 'call' | 'camera' | 'profile';
+  useEffect(() => {
+    initializeHomeScreen();
+  }, []);
 
-const { width } = Dimensions.get('window');
+  const initializeHomeScreen = async () => {
+    try {
+      // Check backend connection
+      const status = await ApiService.getConnectionStatus();
+      setConnectionStatus(status);
 
-export default function HomeScreen() {
-  const [activeTab, setActiveTab] = useState<TabType>('home');
+      // Get local case history count
+      const cases = await StorageService.getCaseHistory();
+      setRecentCases(cases.length);
 
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'call':
-        return <CallTranscriptionScreen />;
-      case 'camera':
-        return <ScreenshotAnalysisScreen />;
-      case 'profile':
-        return <ProfileScreen />;
-      default:
-        return <HomeContent />;
+      // Calculate protection score based on recent activity
+      const score = calculateProtectionScore(cases);
+      setProtectionScore(score);
+    } catch (error) {
+      console.error('Failed to initialize home screen:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  return (
-    <View style={styles.container}>
-      <StatusBar style="dark" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Boomer Buddy</Text>
-        <View style={styles.shieldIcon}>
-          <Text style={styles.shieldText}>🛡️</Text>
+  const calculateProtectionScore = (cases: any[]): number => {
+    // Base score of 75
+    let score = 75;
+    
+    // Increase score for recent blocking activity
+    const recentCases = cases.filter(c => {
+      const caseDate = new Date(c.timestamp);
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      return caseDate > weekAgo;
+    });
+    
+    // Add points for each blocked scam
+    const blockedScams = recentCases.filter(c => c.userAction === 'blocked' || c.riskScore >= 70);
+    score += Math.min(blockedScams.length * 3, 20);
+    
+    return Math.min(score, 100);
+  };
+
+  const formatLastUpdate = (dateString?: string) => {
+    if (!dateString) return 'Unknown';
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    
+    if (diffMinutes < 1) return 'Just now';
+    if (diffMinutes < 60) return `${diffMinutes}m ago`;
+    if (diffMinutes < 1440) return `${Math.floor(diffMinutes / 60)}h ago`;
+    return date.toLocaleDateString();
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 90) return '#16A34A';
+    if (score >= 75) return '#D97706';
+    return '#DC2626';
+  };
+
+  const handleQuickScan = () => {
+    navigation.navigate('Report');
+  };
+
+  const handleViewAlerts = () => {
+    navigation.navigate('Alerts');
+  };
+
+  const handleTraining = () => {
+    navigation.navigate('Training');
+  };
+
+  const handleEmergencyReport = () => {
+    Alert.alert(
+      'Emergency Report',
+      'Are you currently being contacted by a suspected scammer?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Yes, Help Me', 
+          style: 'destructive',
+          onPress: () => {
+            // TODO: Launch emergency flow
+            navigation.navigate('Report', { emergency: true });
+          }
+        }
+      ]
+    );
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading Boomer Buddy...</Text>
         </View>
-      </View>
+      </SafeAreaView>
+    );
+  }
 
-      {/* Content */}
-      <View style={styles.content}>
-        {renderTabContent()}
-      </View>
-
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity 
-          style={[styles.navItem, activeTab === 'home' && styles.activeNavItem]}
-          onPress={() => setActiveTab('home')}
-        >
-          <Text style={[styles.navIcon, activeTab === 'home' && styles.activeNavIcon]}>🏠</Text>
-          <Text style={[styles.navText, activeTab === 'home' && styles.activeNavText]}>Home</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={[styles.navItem, activeTab === 'call' && styles.activeNavItem]}
-          onPress={() => setActiveTab('call')}
-        >
-          <Text style={[styles.navIcon, activeTab === 'call' && styles.activeNavIcon]}>📞</Text>
-          <Text style={[styles.navText, activeTab === 'call' && styles.activeNavText]}>Calls</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={[styles.navItem, activeTab === 'camera' && styles.activeNavItem]}
-          onPress={() => setActiveTab('camera')}
-        >
-          <Text style={[styles.navIcon, activeTab === 'camera' && styles.activeNavIcon]}>📸</Text>
-          <Text style={[styles.navText, activeTab === 'camera' && styles.activeNavText]}>Analyze</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={[styles.navItem, activeTab === 'profile' && styles.activeNavItem]}
-          onPress={() => setActiveTab('profile')}
-        >
-          <Text style={[styles.navIcon, activeTab === 'profile' && styles.activeNavIcon]}>👤</Text>
-          <Text style={[styles.navText, activeTab === 'profile' && styles.activeNavText]}>Profile</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-}
-
-function HomeContent() {
   return (
-    <ScrollView style={styles.homeContent}>
-      {/* Safety Score Card */}
-      <View style={styles.scoreCard}>
-        <Text style={styles.scoreTitle}>Your Safety Score</Text>
-        <View style={styles.scoreDisplay}>
-          <Text style={styles.scoreNumber}>85</Text>
-          <Text style={styles.scoreLabel}>Protected</Text>
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.welcomeText}>Welcome to</Text>
+          <Text style={styles.appTitle}>Boomer Buddy</Text>
+          <Text style={styles.subtitle}>Your Personal Scam Shield</Text>
         </View>
-        <Text style={styles.scoreDescription}>
-          Great job! You're staying vigilant against scams.
-        </Text>
-      </View>
 
-      {/* Quick Actions */}
-      <View style={styles.quickActions}>
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        
-        <TouchableOpacity style={styles.actionButton}>
-          <Text style={styles.actionIcon}>🔍</Text>
-          <View style={styles.actionContent}>
-            <Text style={styles.actionTitle}>Analyze Text Message</Text>
-            <Text style={styles.actionDescription}>Take a screenshot of suspicious messages</Text>
+        {/* Protection Score Card */}
+        <View style={styles.scoreCard}>
+          <Text style={styles.scoreLabel}>Protection Score</Text>
+          <Text style={[styles.scoreValue, { color: getScoreColor(protectionScore) }]}>
+            {protectionScore}%
+          </Text>
+          <Text style={styles.scoreDescription}>
+            {protectionScore >= 90 ? 'Excellent protection' :
+             protectionScore >= 75 ? 'Good protection' : 'Needs improvement'}
+          </Text>
+        </View>
+
+        {/* Connection Status */}
+        <View style={styles.statusCard}>
+          <View style={styles.statusHeader}>
+            <Text style={styles.statusTitle}>Live Intelligence</Text>
+            <View style={[styles.statusDot, { 
+              backgroundColor: connectionStatus.connected ? '#16A34A' : '#DC2626'
+            }]} />
           </View>
-        </TouchableOpacity>
+          
+          {connectionStatus.connected ? (
+            <>
+              <Text style={styles.statusText}>
+                Connected to {connectionStatus.sources} government sources
+              </Text>
+              <Text style={styles.statusTime}>
+                Last update: {formatLastUpdate(connectionStatus.lastUpdate)}
+              </Text>
+              {connectionStatus.latency && (
+                <Text style={styles.latencyText}>
+                  Response time: {connectionStatus.latency}ms
+                </Text>
+              )}
+            </>
+          ) : (
+            <Text style={styles.statusTextError}>
+              Unable to connect to protection services
+            </Text>
+          )}
+        </View>
 
-        <TouchableOpacity style={styles.actionButton}>
-          <Text style={styles.actionIcon}>📞</Text>
-          <View style={styles.actionContent}>
-            <Text style={styles.actionTitle}>Monitor Call</Text>
-            <Text style={styles.actionDescription}>Live transcription and scam detection</Text>
+        {/* Quick Actions */}
+        <View style={styles.actionsContainer}>
+          <Text style={styles.actionsTitle}>Quick Actions</Text>
+          
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.emergencyButton]}
+            onPress={handleEmergencyReport}
+          >
+            <Text style={styles.emergencyButtonText}>🚨 Emergency Report</Text>
+            <Text style={styles.emergencyButtonSubtext}>
+              Being contacted right now?
+            </Text>
+          </TouchableOpacity>
+
+          <View style={styles.actionGrid}>
+            <TouchableOpacity 
+              style={styles.actionCard}
+              onPress={handleQuickScan}
+            >
+              <Text style={styles.actionIcon}>🔍</Text>
+              <Text style={styles.actionTitle}>Quick Scan</Text>
+              <Text style={styles.actionSubtitle}>Check text or call</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.actionCard}
+              onPress={handleViewAlerts}
+            >
+              <Text style={styles.actionIcon}>⚠️</Text>
+              <Text style={styles.actionTitle}>Live Alerts</Text>
+              <Text style={styles.actionSubtitle}>Latest threats</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.actionCard}
+              onPress={handleTraining}
+            >
+              <Text style={styles.actionIcon}>🎓</Text>
+              <Text style={styles.actionTitle}>Training</Text>
+              <Text style={styles.actionSubtitle}>Learn protection</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.actionCard}
+              onPress={() => navigation.navigate('Settings')}
+            >
+              <Text style={styles.actionIcon}>⚙️</Text>
+              <Text style={styles.actionTitle}>Settings</Text>
+              <Text style={styles.actionSubtitle}>Customize app</Text>
+            </TouchableOpacity>
           </View>
-        </TouchableOpacity>
+        </View>
 
-        <TouchableOpacity style={styles.actionButton}>
-          <Text style={styles.actionIcon}>📊</Text>
-          <View style={styles.actionContent}>
-            <Text style={styles.actionTitle}>View Reports</Text>
-            <Text style={styles.actionDescription}>See your analysis history</Text>
+        {/* Recent Activity */}
+        {recentCases > 0 && (
+          <View style={styles.activityCard}>
+            <Text style={styles.activityTitle}>Recent Activity</Text>
+            <Text style={styles.activityText}>
+              You've analyzed {recentCases} potential threats
+            </Text>
+            <TouchableOpacity 
+              style={styles.viewHistoryButton}
+              onPress={() => navigation.navigate('Settings')}
+            >
+              <Text style={styles.viewHistoryText}>View History</Text>
+            </TouchableOpacity>
           </View>
-        </TouchableOpacity>
-      </View>
+        )}
 
-      {/* Recent Activity */}
-      <View style={styles.recentActivity}>
-        <Text style={styles.sectionTitle}>Recent Activity</Text>
-        <Text style={styles.noActivity}>No recent scam attempts detected. Keep it up!</Text>
-      </View>
-    </ScrollView>
+        {/* Safety Tips */}
+        <View style={styles.tipsCard}>
+          <Text style={styles.tipsTitle}>Daily Safety Tip</Text>
+          <Text style={styles.tipsText}>
+            Never give out personal information over the phone unless you initiated the call to a verified number.
+          </Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F9FAFB',
   },
-  header: {
-    backgroundColor: '#17948E',
-    paddingTop: 20,
-    paddingBottom: 15,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  shieldIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  loadingContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  shieldText: {
-    fontSize: 20,
+  loadingText: {
+    fontSize: 16,
+    color: '#6B7280',
   },
-  content: {
+  scrollView: {
     flex: 1,
   },
-  homeContent: {
-    flex: 1,
-    padding: 20,
+  header: {
+    backgroundColor: '#17948E',
+    padding: 24,
+    paddingTop: 16,
+  },
+  welcomeText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    opacity: 0.9,
+  },
+  appTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginVertical: 4,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    opacity: 0.9,
   },
   scoreCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
+    backgroundColor: '#FFFFFF',
+    margin: 16,
+    padding: 24,
+    borderRadius: 16,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  scoreTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 15,
-  },
-  scoreDisplay: {
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  scoreNumber: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: '#17948E',
+    shadowRadius: 8,
+    elevation: 4,
   },
   scoreLabel: {
     fontSize: 16,
-    color: '#666',
-    marginTop: 5,
+    color: '#6B7280',
+    marginBottom: 8,
+  },
+  scoreValue: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    marginBottom: 8,
   },
   scoreDescription: {
     fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
+    color: '#6B7280',
   },
-  quickActions: {
-    marginBottom: 20,
+  statusCard: {
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  sectionTitle: {
+  statusHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  statusTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  statusDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  statusText: {
+    fontSize: 14,
+    color: '#374151',
+    marginBottom: 4,
+  },
+  statusTextError: {
+    fontSize: 14,
+    color: '#DC2626',
+  },
+  statusTime: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  latencyText: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  actionsContainer: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  actionsTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 15,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 16,
   },
   actionButton: {
-    backgroundColor: 'white',
+    backgroundColor: '#FFFFFF',
+    padding: 16,
     borderRadius: 12,
-    padding: 15,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  emergencyButton: {
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  emergencyButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#DC2626',
+    textAlign: 'center',
+  },
+  emergencyButtonSubtext: {
+    fontSize: 14,
+    color: '#7F1D1D',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  actionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  actionCard: {
+    backgroundColor: '#FFFFFF',
+    width: '48%',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 2,
   },
   actionIcon: {
-    fontSize: 24,
-    marginRight: 15,
-  },
-  actionContent: {
-    flex: 1,
+    fontSize: 32,
+    textAlign: 'center',
+    marginBottom: 8,
   },
   actionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  actionDescription: {
-    fontSize: 14,
-    color: '#666',
-  },
-  recentActivity: {
-    marginBottom: 20,
-  },
-  noActivity: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 20,
+    color: '#111827',
     textAlign: 'center',
-    fontSize: 14,
-    color: '#666',
-    fontStyle: 'italic',
-  },
-  bottomNav: {
-    backgroundColor: 'white',
-    flexDirection: 'row',
-    paddingTop: 10,
-    paddingBottom: 20,
-    paddingHorizontal: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-  },
-  navItem: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 5,
-  },
-  activeNavItem: {
-    backgroundColor: 'rgba(23, 148, 142, 0.1)',
-    borderRadius: 8,
-  },
-  navIcon: {
-    fontSize: 20,
     marginBottom: 4,
   },
-  activeNavIcon: {
-    opacity: 1,
-  },
-  navText: {
+  actionSubtitle: {
     fontSize: 12,
-    color: '#666',
+    color: '#6B7280',
+    textAlign: 'center',
   },
-  activeNavText: {
-    color: '#17948E',
+  activityCard: {
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  activityTitle: {
+    fontSize: 18,
     fontWeight: '600',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  activityText: {
+    fontSize: 14,
+    color: '#374151',
+    marginBottom: 12,
+  },
+  viewHistoryButton: {
+    backgroundColor: '#F3F4F6',
+    padding: 8,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  viewHistoryText: {
+    fontSize: 14,
+    color: '#17948E',
+    fontWeight: '500',
+  },
+  tipsCard: {
+    backgroundColor: '#FEF3C7',
+    marginHorizontal: 16,
+    marginBottom: 32,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  tipsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#92400E',
+    marginBottom: 8,
+  },
+  tipsText: {
+    fontSize: 14,
+    color: '#92400E',
+    lineHeight: 20,
   },
 });
+
+export default HomeScreen;

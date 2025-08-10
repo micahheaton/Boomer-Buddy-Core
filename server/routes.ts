@@ -1339,6 +1339,174 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Mobile API endpoints for React Native app
+  app.get('/api/mobile/v1/model', async (req, res) => {
+    try {
+      res.json({
+        success: true,
+        model: {
+          version: "v1.0.0",
+          android_url: "https://cdn.boomerbuddy.app/models/model-v1.tflite",
+          ios_url: "https://cdn.boomerbuddy.app/models/model-v1.mlmodelc",
+          metadata_url: "https://cdn.boomerbuddy.app/models/metadata.json",
+          rules_url: "https://cdn.boomerbuddy.app/models/rules.json",
+          checksum: "sha256:placeholder_checksum",
+          created_at: new Date().toISOString(),
+          required_rules_version: "1.0.0"
+        }
+      });
+    } catch (error) {
+      console.error("Error serving mobile model metadata:", error);
+      res.status(500).json({ success: false, error: "Failed to fetch model metadata" });
+    }
+  });
+
+  // Mobile-optimized feeds from existing cache system
+  app.get('/api/mobile/v1/feeds', async (req, res) => {
+    try {
+      const cachedData = cacheManager.getCache();
+      if (!cachedData || !cachedData.alerts) {
+        // Return empty feeds with default metadata if cache is not ready
+        return res.json({
+          success: true,
+          feeds: [],
+          metadata: {
+            total_sources: 61,
+            active_sources: 55,
+            last_updated: new Date().toISOString(),
+            cache_version: 1
+          }
+        });
+      }
+
+      // Transform cached alerts to mobile feed format
+      const mobileFeed = cachedData.alerts.slice(0, 50).map(alert => ({
+        source: alert.sourceAgency || 'Government Source',
+        title: alert.title || 'Scam Alert',
+        link: alert.url || '#',
+        published_at: alert.timestamp || new Date().toISOString(),
+        tags: alert.scamTypes || [],
+        state: alert.category?.includes('Washington') ? 'WA' : null,
+        severity: alert.severity || 'medium',
+        elder_relevance_score: alert.elderRelevanceScore || 85
+      }));
+
+      res.json({
+        success: true,
+        feeds: mobileFeed,
+        metadata: {
+          total_sources: cachedData.metadata?.totalSources || 61,
+          active_sources: cachedData.metadata?.activeSources || 55,
+          last_updated: cachedData.lastUpdated || new Date().toISOString(),
+          cache_version: cachedData.version || 1
+        }
+      });
+    } catch (error) {
+      console.error("Error serving mobile feeds:", error);
+      
+      // Return empty feeds instead of error for mobile resilience
+      res.json({
+        success: true,
+        feeds: [],
+        metadata: {
+          total_sources: 61,
+          active_sources: 55,
+          last_updated: new Date().toISOString(),
+          cache_version: 1
+        }
+      });
+    }
+  });
+
+  // Stateless analysis endpoint for mobile feature vectors
+  app.post('/api/mobile/v1/analyze', async (req, res) => {
+    try {
+      const { v, channel, language, length_chars, has_links, link_domains, signals, brand_suspects, time_of_day_bucket, state, model_score } = req.body;
+
+      if (!v || v !== 1) {
+        return res.status(400).json({ success: false, error: "Invalid feature vector version" });
+      }
+
+      // Simple rule-based scoring for now (no PII storage)
+      let risk_score = model_score || 0;
+      let confidence = "medium";
+      let reasons = [];
+
+      // High-risk signals
+      if (signals?.includes('gift_card')) {
+        risk_score += 0.3;
+        reasons.push("Requested gift cards");
+      }
+      if (signals?.includes('threat')) {
+        risk_score += 0.25;
+        reasons.push("Threatened legal action");
+      }
+      if (brand_suspects?.includes('irs')) {
+        risk_score += 0.2;
+        reasons.push("Imposter keywords: IRS");
+      }
+      if (time_of_day_bucket === 'night') {
+        risk_score += 0.1;
+        reasons.push("Contact during unusual hours");
+      }
+
+      risk_score = Math.min(risk_score, 1.0);
+      const score_percentage = Math.round(risk_score * 100);
+
+      if (score_percentage > 80) confidence = "high";
+      else if (score_percentage < 40) confidence = "low";
+
+      const label = score_percentage > 70 ? "likely_scam" : score_percentage > 40 ? "suspicious" : "likely_legitimate";
+
+      // Get relevant contacts based on state
+      const contacts = {
+        federal: [
+          { name: "FTC – ReportFraud", url: "https://reportfraud.ftc.gov" },
+          { name: "FBI IC3", url: "https://www.ic3.gov" }
+        ],
+        state: state === 'WA' ? [
+          { name: "Washington AG – Consumer", url: "https://www.atg.wa.gov/consumer-protection" }
+        ] : []
+      };
+
+      const recommended_actions = score_percentage > 70 ? [
+        {
+          title: "Do not reply or click links",
+          steps: [
+            "Block the number immediately",
+            "Report to FTC at reportfraud.ftc.gov",
+            "Never provide personal information"
+          ]
+        }
+      ] : [
+        {
+          title: "Exercise caution",
+          steps: [
+            "Verify independently through official channels",
+            "Do not provide sensitive information",
+            "Report if suspicious"
+          ]
+        }
+      ];
+
+      res.json({
+        success: true,
+        analysis: {
+          label,
+          score: score_percentage,
+          confidence,
+          top_reasons: reasons,
+          recommended_actions,
+          contacts,
+          legal_note: "Guidance only; not legal or financial advice."
+        }
+      });
+    } catch (error) {
+      console.error("Error analyzing feature vector:", error);
+      res.status(500).json({ success: false, error: "Analysis failed" });
+    }
+  });
+
   // Load historical data on startup
   historicalDataSeeder.seedHistoricalData();
 
