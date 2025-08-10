@@ -119,6 +119,93 @@ export const dataSources = pgTable("data_sources", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Community reports submitted by users
+export const communityReports = pgTable("community_reports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  category: text("category").notNull(), // 'phone-scam', 'email-scam', 'online-scam', etc.
+  scamType: text("scam_type"), // 'phishing', 'romance', 'investment', etc.
+  location: text("location"), // City, State or general location
+  phoneNumber: text("phone_number"), // If phone scam
+  emailAddress: text("email_address"), // If email scam
+  websiteUrl: text("website_url"), // If website scam
+  amountLost: integer("amount_lost"), // In cents, if money was lost
+  evidence: jsonb("evidence").default(sql`'[]'::jsonb`), // Array of evidence URLs/descriptions
+  isVerified: boolean("is_verified").default(false),
+  verificationStatus: text("verification_status").default('pending'), // 'pending', 'verified', 'rejected', 'duplicate'
+  verificationSource: text("verification_source"), // Which source verified this
+  verificationDate: timestamp("verification_date"),
+  moderationStatus: text("moderation_status").default('pending'), // 'approved', 'rejected', 'spam'
+  moderationReason: text("moderation_reason"),
+  upvotes: integer("upvotes").default(0),
+  downvotes: integer("downvotes").default(0),
+  reportCount: integer("report_count").default(0), // Number of similar reports
+  relatedTrendId: varchar("related_trend_id").references(() => scamTrends.id),
+  tags: jsonb("tags").default(sql`'[]'::jsonb`),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// User points and reputation system
+export const userPoints = pgTable("user_points", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  pointType: text("point_type").notNull(), // 'report_submission', 'verification', 'helpful_vote', etc.
+  points: integer("points").notNull(),
+  description: text("description").notNull(),
+  relatedId: varchar("related_id"), // ID of related report/action
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Validated data sources for auto-verification
+export const validatedSources = pgTable("validated_sources", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  url: text("url").notNull().unique(),
+  baseUrl: text("base_url").notNull(),
+  sourceType: text("source_type").notNull(), // 'rss', 'api', 'website'
+  category: text("category").notNull(), // 'government', 'news', 'security', 'consumer-protection'
+  agency: text("agency"),
+  reliability: real("reliability").notNull().default(0.5), // 0.0 to 1.0
+  trustScore: real("trust_score").notNull().default(0.5), // Based on validation accuracy
+  lastValidated: timestamp("last_validated"),
+  validationCount: integer("validation_count").default(0),
+  successfulValidations: integer("successful_validations").default(0),
+  isActive: boolean("is_active").default(true),
+  autoDiscovered: boolean("auto_discovered").default(false),
+  discoveredDate: timestamp("discovered_date"),
+  verificationCriteria: jsonb("verification_criteria").default(sql`'{}'::jsonb`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Source validation history
+export const sourceValidations = pgTable("source_validations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sourceId: varchar("source_id").notNull().references(() => validatedSources.id),
+  reportId: varchar("report_id").references(() => communityReports.id),
+  validationType: text("validation_type").notNull(), // 'content_match', 'url_verification', 'domain_check'
+  isSuccessful: boolean("is_successful").notNull(),
+  confidence: real("confidence").notNull(), // 0.0 to 1.0
+  validationData: jsonb("validation_data"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Automated moderation logs
+export const moderationLogs = pgTable("moderation_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  reportId: varchar("report_id").notNull().references(() => communityReports.id),
+  action: text("action").notNull(), // 'approved', 'rejected', 'marked_spam', 'marked_duplicate'
+  reason: text("reason").notNull(),
+  confidence: real("confidence").notNull(),
+  automatedRules: jsonb("automated_rules"), // Rules that triggered this action
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const upsertUserSchema = createInsertSchema(users).pick({
   id: true,
   email: true,

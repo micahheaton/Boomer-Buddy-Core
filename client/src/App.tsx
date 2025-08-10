@@ -12,6 +12,7 @@ import Dashboard from "@/pages/dashboard";
 import History from "@/pages/history";
 import AdminDashboard from "@/pages/admin";
 import CommunityPage from "@/pages/community";
+import CommunityEnhanced from "@/pages/community-enhanced";
 import FeaturesPage from "@/pages/features";
 
 function Router() {
@@ -24,7 +25,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/history" component={History} />
       <Route path="/admin" component={AdminDashboard} />
-      <Route path="/community" component={CommunityPage} />
+      <Route path="/community" component={CommunityEnhanced} />
       <Route path="/features" component={FeaturesPage} />
       <Route component={NotFound} />
     </Switch>

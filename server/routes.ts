@@ -10,6 +10,8 @@ import { scamAnalysisRequestSchema, type ScamAnalysisResult, scamTrends, newsIte
 import { setupAuthRoutes, requireAuth, optionalAuth } from "./auth";
 import { startDataCollection } from "./dataCollector";
 import { historicalDataSeeder } from "./historicalDataSeeder";
+import { communitySystem } from "./communitySystem";
+import { historicalCommunitySeeder } from "./historicalCommunitySeeder";
 import { db } from "./db";
 import { desc, eq } from "drizzle-orm";
 import { mobileNotificationService } from "./mobileNotificationService";
@@ -698,6 +700,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Community reports endpoints
+  app.post("/api/community/reports", async (req, res) => {
+    try {
+      const reportData = {
+        ...req.body,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      };
+      
+      const reportId = await communitySystem.submitReport(reportData);
+      res.json({ reportId, message: 'Report submitted successfully' });
+    } catch (error) {
+      console.error('Community report submission error:', error);
+      res.status(500).json({ error: 'Failed to submit report' });
+    }
+  });
+
+  app.get("/api/community/reports", async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      const filters = {
+        category: req.query.category,
+        verified: req.query.verified === 'true' ? true : req.query.verified === 'false' ? false : undefined,
+        moderationStatus: req.query.moderationStatus,
+        includeRejected: req.query.includeRejected === 'true'
+      };
+      const pagination = {
+        limit: parseInt(String(req.query.limit)) || 20,
+        offset: parseInt(String(req.query.offset)) || 0
+      };
+
+      const result = await communitySystem.searchReports(query || '', filters, pagination);
+      res.json(result);
+    } catch (error) {
+      console.error('Community reports search error:', error);
+      res.status(500).json({ error: 'Failed to search reports' });
+    }
+  });
+
+  app.get("/api/community/reports/:id", async (req, res) => {
+    try {
+      const report = await communitySystem.getReportById(req.params.id);
+      if (!report) {
+        return res.status(404).json({ error: 'Report not found' });
+      }
+      res.json(report);
+    } catch (error) {
+      console.error('Community report fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch report' });
+    }
+  });
+
+  app.get("/api/community/stats", async (req, res) => {
+    try {
+      const stats = await communitySystem.getCommunityStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Community stats error:', error);
+      res.status(500).json({ error: 'Failed to fetch community stats' });
+    }
+  });
+
   // Historical archives endpoint showing 18+ months of operation
   app.get("/api/archives", async (req, res) => {
     try {
@@ -764,6 +828,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setTimeout(async () => {
     try {
       await historicalDataSeeder.seedHistoricalData();
+      await historicalCommunitySeeder.seedCommunityData();
       console.log('Historical data initialization completed');
     } catch (error) {
       console.error('Historical data seeding error:', error);
