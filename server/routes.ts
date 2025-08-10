@@ -12,6 +12,7 @@ import { startDataCollection } from "./dataCollector";
 import { historicalDataSeeder } from "./historicalDataSeeder";
 import { communitySystem } from "./communitySystem";
 import { historicalCommunitySeeder } from "./historicalCommunitySeeder";
+import { translateService } from "./translateService";
 import { db } from "./db";
 import { desc, eq } from "drizzle-orm";
 import { mobileNotificationService } from "./mobileNotificationService";
@@ -759,6 +760,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Community stats error:', error);
       res.status(500).json({ error: 'Failed to fetch community stats' });
+    }
+  });
+
+  // Translation endpoint
+  app.post("/api/translate", async (req, res) => {
+    try {
+      const { text, targetLanguage, sourceLanguage, context } = req.body;
+      
+      if (!text || !targetLanguage) {
+        return res.status(400).json({ error: 'Text and target language are required' });
+      }
+
+      const result = await translateService.translateText({
+        text,
+        targetLanguage,
+        sourceLanguage,
+        context
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error('Translation API error:', error);
+      res.status(500).json({ error: 'Translation failed' });
+    }
+  });
+
+  // Batch translation endpoint
+  app.post("/api/translate/batch", async (req, res) => {
+    try {
+      const { texts, targetLanguage, sourceLanguage } = req.body;
+      
+      if (!Array.isArray(texts) || !targetLanguage) {
+        return res.status(400).json({ error: 'Texts array and target language are required' });
+      }
+
+      const translatedTexts = await translateService.translateBatch(texts, targetLanguage, sourceLanguage);
+
+      res.json({ translatedTexts });
+    } catch (error) {
+      console.error('Batch translation API error:', error);
+      res.status(500).json({ error: 'Batch translation failed' });
     }
   });
 

@@ -3,6 +3,7 @@ import { db } from './db';
 import { scamTrends, newsItems, dataSources } from '../shared/schema';
 import { eq, desc } from 'drizzle-orm';
 import { mobileNotificationService } from './mobileNotificationService';
+import { BOOMER_FOCUSED_DATA_SOURCES, isBoomerRelevant, calculateBoomerRelevanceScore } from './boomerFocusedDataSources';
 
 interface RSSFeed {
   name: string;
@@ -12,23 +13,9 @@ interface RSSFeed {
   agency: string;
 }
 
-// Verified working RSS feeds from trusted government and security sources
+// Convert boomer-focused data sources to RSS feed format with working RSS URLs
 const TRUSTED_FEEDS: RSSFeed[] = [
-  // Core Government Sources (Verified Working)
-  {
-    name: 'FTC Consumer Information',
-    url: 'https://www.ftc.gov/stay-connected/rss',
-    category: 'government',
-    reliability: 0.95,
-    agency: 'FTC'
-  },
-  {
-    name: 'FBI Press Releases',
-    url: 'https://www.fbi.gov/feeds/press-releases/rss.xml',
-    category: 'government',
-    reliability: 0.98,
-    agency: 'FBI'
-  },
+  // High-priority boomer-focused sources with known working RSS feeds
   {
     name: 'Social Security Administration',
     url: 'https://blog.ssa.gov/feed/',
@@ -36,24 +23,6 @@ const TRUSTED_FEEDS: RSSFeed[] = [
     reliability: 0.93,
     agency: 'SSA'
   },
-  
-  // Financial Protection (Verified Working)
-  {
-    name: 'Consumer Financial Protection Bureau',
-    url: 'https://www.consumerfinance.gov/about-us/newsroom/rss/',
-    category: 'financial',
-    reliability: 0.94,
-    agency: 'CFPB'
-  },
-  {
-    name: 'SEC Investor Alerts',
-    url: 'https://www.sec.gov/news/rss/press-release-rss.xml',
-    category: 'financial',
-    reliability: 0.96,
-    agency: 'SEC'
-  },
-  
-  // Technology Security (Verified Working)
   {
     name: 'Google Security Blog',
     url: 'https://security.googleblog.com/feeds/posts/default',
@@ -75,41 +44,12 @@ const TRUSTED_FEEDS: RSSFeed[] = [
     reliability: 0.87,
     agency: 'Microsoft'
   },
-  
-  // Consumer Protection Organizations
-  {
-    name: 'Better Business Bureau',
-    url: 'https://www.bbb.org/losangeles/news-events/rss',
-    category: 'consumer-protection',
-    reliability: 0.80,
-    agency: 'BBB'
-  },
-  
-  // Identity and Tax Protection
-  {
-    name: 'IRS Tax Tips',
-    url: 'https://www.irs.gov/rss/taxtips.xml',
-    category: 'government',
-    reliability: 0.96,
-    agency: 'IRS'
-  },
-  
-  // Cybersecurity Research
   {
     name: 'SANS Internet Security',
     url: 'https://isc.sans.edu/rssfeed.xml',
     category: 'security-research',
     reliability: 0.91,
     agency: 'SANS'
-  },
-  
-  // Federal Communications
-  {
-    name: 'FCC Consumer News',
-    url: 'https://www.fcc.gov/news-events/rss.xml',
-    category: 'government',
-    reliability: 0.92,
-    agency: 'FCC'
   }
 ];
 
@@ -285,17 +225,27 @@ export class DataCollector {
     const tags: string[] = [];
     
     const tagKeywords = {
-      'elderly-target': ['senior', 'elderly', 'medicare', 'social security'],
-      'financial': ['money', 'payment', 'bank', 'credit', 'debt'],
+      'elderly-target': ['senior', 'elderly', 'medicare', 'social security', 'retirement', 'older adult'],
+      'financial': ['money', 'payment', 'bank', 'credit', 'debt', 'investment', 'retirement fund'],
       'identity-theft': ['identity', 'personal info', 'ssn', 'social security number'],
-      'phone-scam': ['phone', 'call', 'robocall', 'voicemail'],
-      'online': ['email', 'internet', 'website', 'online', 'phishing']
+      'phone-scam': ['phone', 'call', 'robocall', 'voicemail', 'telemarketing'],
+      'online': ['email', 'internet', 'website', 'online', 'phishing'],
+      'tech-support': ['tech support', 'computer virus', 'microsoft', 'apple support'],
+      'romance-scam': ['romance', 'dating', 'online dating', 'relationship'],
+      'healthcare': ['medicare', 'medicaid', 'prescription', 'health insurance'],
+      'government': ['irs', 'social security', 'fbi', 'federal', 'government']
     };
 
     for (const [tag, keywords] of Object.entries(tagKeywords)) {
       if (keywords.some(keyword => content.includes(keyword))) {
         tags.push(tag);
       }
+    }
+
+    // Add boomer relevance score as a tag
+    const relevanceScore = calculateBoomerRelevanceScore(item.title || '', item.contentSnippet || '');
+    if (relevanceScore >= 7) {
+      tags.push('high-boomer-relevance');
     }
 
     return tags;
