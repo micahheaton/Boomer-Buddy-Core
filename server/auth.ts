@@ -2,7 +2,8 @@ import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import session from "express-session";
 import ConnectPgSimple from "connect-pg-simple";
-import { Pool } from "pg";
+import pkg from "pg";
+const { Pool } = pkg;
 import type { Express, Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
 
