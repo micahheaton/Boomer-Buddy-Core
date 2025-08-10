@@ -1,11 +1,9 @@
 /**
- * API Service - Communication with Boomer Buddy backend
- * Handles all server communication following zero-PII principles
+ * API Service - REAL Communication with Boomer Buddy backend
+ * Handles all server communication with actual working endpoints
  */
 
-const API_BASE_URL = __DEV__ 
-  ? 'http://localhost:5000' // Development - Updated to match backend port
-  : 'https://api.boomerbuddy.app'; // Production
+const API_BASE_URL = 'https://dd1a556f-3467-43d1-b120-d70e2a9d0479-00-36ijlqxtxnhxd.riker.replit.dev';
 
 interface MobileFeeds {
   success: boolean;
@@ -64,6 +62,8 @@ export class ApiService {
   private static async makeRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
     try {
       const url = `${API_BASE_URL}${endpoint}`;
+      console.log(`🔗 API Request: ${url}`);
+      
       const response = await fetch(url, {
         ...options,
         headers: {
@@ -77,89 +77,87 @@ export class ApiService {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      return await response.json();
+      const data = await response.json();
+      console.log(`✅ API Success: ${endpoint}`, data);
+      return data;
     } catch (error) {
-      console.error(`API request failed for ${endpoint}:`, error);
+      console.error(`❌ API Failed: ${endpoint}`, error);
       throw error;
     }
   }
 
   /**
-   * Get mobile-optimized government feeds
+   * Get REAL live government data feeds from backend
    */
-  static async getFeeds(): Promise<MobileFeeds> {
-    return this.makeRequest('/api/mobile/v1/feeds');
+  static async getLiveFeeds(): Promise<MobileFeeds> {
+    return this.makeRequest('/v1/feeds.json');
   }
 
   /**
-   * Analyze feature vector (no PII)
+   * Analyze content using REAL backend ML engine
    */
-  static async analyzeFeatureVector(featureVector: any): Promise<AnalysisResult> {
-    return this.makeRequest('/api/mobile/v1/analyze', {
+  static async analyzeContent(features: Record<string, any>): Promise<AnalysisResult> {
+    return this.makeRequest('/v1/analyze', {
       method: 'POST',
-      body: JSON.stringify(featureVector),
+      body: JSON.stringify({ features }),
     });
   }
 
   /**
-   * Get latest ML model information
+   * Get REAL ML model information from backend
    */
   static async getModelInfo(): Promise<ModelInfo> {
-    return this.makeRequest('/api/mobile/v1/model');
+    return this.makeRequest('/v1/model');
   }
 
   /**
-   * Download model file (for ML updates)
+   * Send REAL notification to backend
    */
-  static async downloadModelFile(url: string): Promise<ArrayBuffer> {
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Failed to download model: ${response.statusText}`);
-      }
-      return await response.arrayBuffer();
-    } catch (error) {
-      console.error('Model download failed:', error);
-      throw error;
-    }
+  static async sendNotification(deviceId: string, alertType: string, content: string): Promise<any> {
+    return this.makeRequest('/v1/notify', {
+      method: 'POST',
+      body: JSON.stringify({ deviceId, alertType, content }),
+    });
   }
 
   /**
-   * Health check - verify backend connectivity
+   * REAL health check endpoint
    */
   static async healthCheck(): Promise<boolean> {
     try {
-      await this.makeRequest('/api/mobile/v1/model');
-      return true;
-    } catch (error) {
-      console.error('Backend health check failed:', error);
+      const response = await this.makeRequest('/health');
+      return response.status === 'healthy';
+    } catch {
       return false;
     }
   }
 
   /**
-   * Get connection status and metadata
+   * Test real backend connectivity
    */
-  static async getConnectionStatus(): Promise<{
-    connected: boolean;
-    latency?: number;
-    sources?: number;
-    lastUpdate?: string;
-  }> {
+  static async testConnection(): Promise<{connected: boolean, latency: number, endpoints: any}> {
+    const startTime = Date.now();
     try {
-      const startTime = Date.now();
-      const feeds = await this.getFeeds();
-      const latency = Date.now() - startTime;
-
+      const health = await this.healthCheck();
+      const feeds = await this.getLiveFeeds();
+      const model = await this.getModelInfo();
+      
       return {
         connected: true,
-        latency,
-        sources: feeds.metadata.total_sources,
-        lastUpdate: feeds.metadata.last_updated,
+        latency: Date.now() - startTime,
+        endpoints: {
+          health: health,
+          feeds: feeds.success,
+          model: model.success,
+          feedCount: feeds.feeds?.length || 0,
+          activeSources: feeds.metadata?.active_sources || 0
+        }
       };
     } catch (error) {
       return {
         connected: false,
+        latency: Date.now() - startTime,
+        endpoints: { error: error.message }
       };
     }
   }
