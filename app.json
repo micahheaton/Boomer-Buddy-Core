@@ -4,6 +4,9 @@
       "eas": {
         "projectId": "3bf6954a-d88f-4422-9977-400f08628038"
       }
+    },
+    "android": {
+      "package": "com.boomerbuddy.complete"
     }
   }
 }
