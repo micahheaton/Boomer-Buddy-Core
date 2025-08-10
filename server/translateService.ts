@@ -148,7 +148,7 @@ export class TranslateService {
         }
       }
     } catch (error) {
-      console.log(`LibreTranslate failed, using dictionary fallback: ${error.message}`);
+      console.log(`LibreTranslate failed, using dictionary fallback: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 
     // Fallback to basic translation dictionary
