@@ -90,6 +90,16 @@ export default function Navigation() {
                 Features
               </button>
 
+              <button
+                onClick={() => setLocation("/assessment")}
+                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                  location === "/assessment" ? "text-boomer-navy" : "text-gray-600 hover:text-boomer-navy"
+                }`}
+              >
+                <Shield className="w-4 h-4" />
+                Risk Assessment
+              </button>
+
               {isAuthenticated && (
                 <>
                   <button

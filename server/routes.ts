@@ -865,6 +865,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Register vulnerability assessment routes
+  const { registerVulnerabilityRoutes } = await import('./routes/vulnerability.js');
+  registerVulnerabilityRoutes(app);
+
   // Initialize historical data to show 18+ months of operation
   console.log('Initializing historical data...');
   setTimeout(async () => {

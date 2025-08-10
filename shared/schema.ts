@@ -60,12 +60,34 @@ export const analyses = pgTable("analyses", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Vulnerability Assessment Profile
+export const vulnerabilityProfiles = pgTable("vulnerability_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  ageGroup: varchar("age_group", { length: 50 }),
+  techComfort: varchar("tech_comfort", { length: 50 }),
+  previousExperience: varchar("previous_experience", { length: 50 }),
+  currentSituation: varchar("current_situation", { length: 50 }),
+  attackTypes: jsonb("attack_types").default(sql`'[]'::jsonb`),
+  concernAreas: jsonb("concern_areas").default(sql`'[]'::jsonb`),
+  supportLevel: varchar("support_level", { length: 50 }),
+  riskScore: integer("risk_score").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Schema definitions for database operations
 export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   name: true,
   profileImage: true,
   googleId: true,
+});
+
+export const insertVulnerabilityProfileSchema = createInsertSchema(vulnerabilityProfiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 // Real scam trends table for verified data from government sources

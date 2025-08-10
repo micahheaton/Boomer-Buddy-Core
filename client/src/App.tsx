@@ -16,6 +16,7 @@ import CommunityPage from "@/pages/community";
 import CommunityEnhanced from "@/pages/community-enhanced";
 import FeaturesPage from "@/pages/features";
 import About from "@/pages/About";
+import VulnerabilityAssessment from "@/pages/VulnerabilityAssessment";
 
 function Router() {
   return (
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/community" component={CommunityEnhanced} />
       <Route path="/features" component={FeaturesPage} />
       <Route path="/about" component={About} />
+      <Route path="/assessment" component={VulnerabilityAssessment} />
       <Route component={NotFound} />
     </Switch>
   );
