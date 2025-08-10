@@ -6,6 +6,11 @@
 
 Preferred communication style: Simple, everyday language.
 
+# Recent Changes
+- Removed Archives page from navigation (backed up to client/src/pages/backup/archives.tsx for future use)
+- Replaced Archives with About page in main navigation
+- Updated all pages to reflect summer 2025 launch transparency
+
 # System Architecture
 
 ## Frontend Architecture

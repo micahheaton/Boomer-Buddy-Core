@@ -61,13 +61,13 @@ export default function Navigation() {
               </button>
 
               <button
-                onClick={() => setLocation("/archives")}
+                onClick={() => setLocation("/about")}
                 className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                  location === "/archives" ? "text-boomer-navy" : "text-gray-600 hover:text-boomer-navy"
+                  location === "/about" ? "text-boomer-navy" : "text-gray-600 hover:text-boomer-navy"
                 }`}
               >
-                <History className="w-4 h-4" />
-                18M+ Archives
+                <Shield className="w-4 h-4" />
+                About
               </button>
 
               <button
