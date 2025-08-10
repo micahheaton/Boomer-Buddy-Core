@@ -517,12 +517,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`📊 Live heatmap using ${activeSources.length} comprehensive data sources`);;
 
-      // Combine and format for live alerts
+      // Combine and format for live alerts with clickable URLs
       const liveAlerts = [
         ...recentTrends.map(trend => ({
           id: trend.id,
           title: trend.title,
           description: trend.description,
+          url: trend.url, // Add clickable URL
           severity: trend.severity,
           category: trend.category,
           reportCount: trend.reportCount || 0,
@@ -535,6 +536,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: news.id,
           title: news.title,
           description: news.summary || news.content?.substring(0, 150) + '...',
+          url: news.url, // Add clickable URL
           severity: news.category?.includes('alert') ? 'high' : 'medium',
           category: news.category || 'Government Advisory',
           reportCount: 0,
@@ -1086,6 +1088,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: "Failed to collect data",
         details: (error as Error).message 
       });
+    }
+  });
+
+  // Unified trends and heatmap endpoint
+  app.get("/api/unified-trends-heatmap", async (req, res) => {
+    try {
+      // Get comprehensive data from both trends and news
+      const trends = await db.select()
+        .from(scamTrends)
+        .orderBy(sql`${scamTrends.publishedAt} DESC`)
+        .limit(100);
+
+      const news = await db.select()
+        .from(newsItems)
+        .orderBy(sql`${newsItems.publishedAt} DESC`)
+        .limit(50);
+
+      // Get data sources stats
+      const totalSources = await db.select({ count: sql<number>`count(*)` }).from(dataSources);
+      const activeSources = await db.select({ count: sql<number>`count(*)` })
+        .from(dataSources)
+        .where(eq(dataSources.isActive, true));
+
+      // Combine all data into unified format
+      const alerts = [
+        ...trends.map(trend => ({
+          id: trend.id,
+          title: trend.title,
+          description: trend.description,
+          url: trend.url,
+          severity: trend.riskLevel || 'medium',
+          category: trend.scamTypes?.[0] || 'General',
+          timestamp: trend.publishedAt,
+          sourceAgency: trend.agency,
+          isScamAlert: true,
+          type: 'scam-alert' as const,
+          scamTypes: trend.scamTypes,
+          elderRelevanceScore: trend.elderRelevanceScore
+        })),
+        ...news.map(item => ({
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          url: item.url,
+          severity: item.riskLevel || 'medium',
+          category: item.contentType || 'news',
+          timestamp: item.publishedAt,
+          sourceAgency: item.agency,
+          isScamAlert: false,
+          type: 'news' as const,
+          elderRelevanceScore: item.elderRelevanceScore
+        }))
+      ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+      // Calculate real-time statistics
+      const scamAlerts = alerts.filter(a => a.isScamAlert);
+      const newsItems = alerts.filter(a => !a.isScamAlert);
+      const highSeverity = alerts.filter(a => a.severity === 'high' || a.severity === 'critical');
+      const todayAlerts = alerts.filter(a => 
+        new Date(a.timestamp).toDateString() === new Date().toDateString()
+      );
+
+      res.json({
+        alerts,
+        statistics: {
+          totalActiveAlerts: todayAlerts.length,
+          highSeverityAlerts: highSeverity.length,
+          scamAlertsToday: scamAlerts.filter(a => 
+            new Date(a.timestamp).toDateString() === new Date().toDateString()
+          ).length,
+          governmentAdvisories: newsItems.length,
+          dataSourcesOnline: activeSources[0]?.count || 0,
+          lastUpdate: new Date().toISOString(),
+          coverage: "All 50 States + Federal Agencies (Comprehensive Collection)"
+        },
+        metadata: {
+          total: alerts.length,
+          scamTrends: scamAlerts.length,
+          newsItems: newsItems.length,
+          lastUpdated: new Date().toISOString()
+        }
+      });
+    } catch (error) {
+      console.error("Unified endpoint error:", error);
+      res.status(500).json({ error: "Failed to fetch unified data" });
     }
   });
 

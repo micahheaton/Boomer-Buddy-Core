@@ -23,6 +23,7 @@ interface LiveAlert {
   id: string;
   title: string;
   description: string;
+  url?: string; // Add URL for clicking
   severity: 'low' | 'medium' | 'high' | 'critical';
   category: string;
   reportCount: number;
@@ -455,7 +456,11 @@ export default function LiveHeatmapV2() {
                   {alertsVisible && heatmapData.alerts.slice(0, 10).map((alert) => (
                     <div
                       key={alert.id}
-                      className="p-3 bg-slate-900 rounded-lg border border-slate-600 hover:border-slate-500 transition-colors"
+                      className={`p-3 bg-slate-900 rounded-lg border border-slate-600 transition-colors ${
+                        alert.url ? 'hover:border-blue-400 cursor-pointer' : 'hover:border-slate-500'
+                      }`}
+                      onClick={alert.url ? () => window.open(alert.url, '_blank') : undefined}
+                      title={alert.url ? 'Click to view official source' : 'View alert details'}
                     >
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div className="flex items-center gap-2">
@@ -489,7 +494,7 @@ export default function LiveHeatmapV2() {
                       
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-slate-400">{alert.sourceAgency}</span>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-2">
                           {alert.isScamAlert ? (
                             <>
                               <AlertTriangle className="w-3 h-3 text-orange-400" />
@@ -500,6 +505,11 @@ export default function LiveHeatmapV2() {
                               <CheckCircle className="w-3 h-3 text-blue-400" />
                               <span className="text-blue-400">Gov News</span>
                             </>
+                          )}
+                          {alert.url && (
+                            <span className="text-xs text-blue-300 opacity-70">
+                              Click to view →
+                            </span>
                           )}
                         </div>
                       </div>

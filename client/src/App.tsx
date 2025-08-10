@@ -23,6 +23,7 @@ import LiveHeatmapV2 from "@/pages/LiveHeatmapV2";
 import ScamTrendsV2 from "@/pages/ScamTrendsV2";
 import DataSourcesV2 from "@/pages/DataSourcesV2";
 import AdminPanel from "@/pages/AdminPanel";
+import UnifiedTrendsHeatmap from "@/pages/UnifiedTrendsHeatmap";
 
 function Router() {
   return (
@@ -41,6 +42,7 @@ function Router() {
       <Route path="/about" component={About} />
       <Route path="/assessment" component={VulnerabilityAssessment} />
       <Route path="/heatmap" component={LiveHeatmapV2} />
+      <Route path="/unified-trends" component={UnifiedTrendsHeatmap} />
       <Route path="/admin-panel" component={AdminPanel} />
       <Route component={NotFound} />
     </Switch>
