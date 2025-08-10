@@ -1,11 +1,12 @@
 {
   "name": "BoomerBuddyNative",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Native Android app for comprehensive scam protection",
   "main": "index.js",
   "scripts": {
     "android": "react-native run-android",
     "build-android": "cd android && ./gradlew assembleDebug",
+    "build-apk": "./build-apk.sh",
     "start": "react-native start",
     "test": "jest",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
