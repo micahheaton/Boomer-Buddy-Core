@@ -1,4 +1,4 @@
-import Navigation from "@/components/navigation";
+
 import CallTranscription from "@/components/call-transcription";
 import EvidenceCollection from "@/components/evidence-collection";
 import VoiceGuidance from "@/components/voice-guidance";
@@ -9,7 +9,6 @@ import { Phone, Camera, Volume2 } from "lucide-react";
 export default function FeaturesPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <Navigation />
       
       <main className="max-w-6xl mx-auto px-6 py-8">
         {/* Header */}

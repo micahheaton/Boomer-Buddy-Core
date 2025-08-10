@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import Navigation from "@/components/navigation";
+
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
 import { useEffect } from "react";
@@ -70,7 +70,6 @@ export default function History() {
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-        <Navigation />
         <div className="max-w-6xl mx-auto px-6 py-8">
           <div className="flex items-center justify-center min-h-96">
             <div className="text-center">
@@ -86,7 +85,6 @@ export default function History() {
   if (!historyData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-        <Navigation />
         <div className="max-w-6xl mx-auto px-6 py-8">
           <div className="text-center">
             <p className="text-gray-600">Unable to load history data.</p>
@@ -139,7 +137,6 @@ export default function History() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <Navigation />
       
       <main className="max-w-6xl mx-auto px-6 py-8">
         {/* Header */}

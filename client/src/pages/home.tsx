@@ -3,7 +3,7 @@ import { Shield, History, Play, FileText, Phone, Camera, Keyboard } from "lucide
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Logo from "@/components/logo";
-import Navigation from "@/components/navigation";
+
 import InputSelector from "@/components/input-selector";
 import UploadForm from "@/components/upload-form";
 import TextForm from "@/components/text-form";
@@ -341,7 +341,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <Navigation />
 
       <main className="max-w-4xl mx-auto px-6 py-8">
         <section className="text-center mb-12">

@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
+import Navigation from "@/components/navigation";
 import Report from "@/pages/report";
 import EnhancedTrendsPage from "@/pages/enhanced-trends";
 import Archives from "@/pages/archives";
@@ -44,8 +45,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
           <TooltipProvider>
-            <Toaster />
-            <Router />
+            <div className="min-h-screen bg-gray-50">
+              <Navigation />
+              <main className="pt-0">
+                <Router />
+              </main>
+              <Toaster />
+            </div>
           </TooltipProvider>
         </LanguageProvider>
     </QueryClientProvider>

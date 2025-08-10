@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import Navigation from "@/components/navigation";
+
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
 import { useEffect } from "react";
@@ -105,7 +105,6 @@ export default function AdminDashboard() {
   if (authLoading || statsLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-        <Navigation />
         <div className="max-w-6xl mx-auto px-6 py-8">
           <div className="flex items-center justify-center min-h-96">
             <div className="text-center">
@@ -121,7 +120,6 @@ export default function AdminDashboard() {
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-        <Navigation />
         <div className="max-w-6xl mx-auto px-6 py-8">
           <div className="text-center">
             <Shield className="h-16 w-16 text-gray-300 mx-auto mb-4" />
@@ -219,7 +217,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <Navigation />
       
       <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Header */}

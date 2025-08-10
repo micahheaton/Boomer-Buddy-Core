@@ -1,4 +1,4 @@
-import Navigation from "@/components/navigation";
+
 import CommunityProtection from "@/components/community-protection";
 
 export default function CommunityPage() {

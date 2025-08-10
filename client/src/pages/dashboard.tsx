@@ -3,7 +3,7 @@ import { Shield, BarChart3, TrendingUp, Clock, Award, Target } from "lucide-reac
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import Navigation from "@/components/navigation";
+
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
 import { useEffect } from "react";
@@ -62,7 +62,6 @@ export default function Dashboard() {
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-        <Navigation />
         <div className="max-w-6xl mx-auto px-6 py-8">
           <div className="flex items-center justify-center min-h-96">
             <div className="text-center">
@@ -78,7 +77,6 @@ export default function Dashboard() {
   if (!dashboardData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-        <Navigation />
         <div className="max-w-6xl mx-auto px-6 py-8">
           <div className="text-center">
             <p className="text-gray-600">Unable to load dashboard data.</p>
@@ -113,7 +111,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <Navigation />
       
       <main className="max-w-6xl mx-auto px-6 py-8">
         {/* Header */}

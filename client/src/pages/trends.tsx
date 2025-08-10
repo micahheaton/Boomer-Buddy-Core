@@ -7,7 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Search, TrendingUp, Shield, Clock } from "lucide-react";
-import Navigation from "@/components/navigation";
+
 
 interface ScamTrend {
   id: string;
@@ -129,7 +129,6 @@ export default function TrendsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <Navigation />
       <div className="container mx-auto p-6 max-w-6xl">
       {/* Header */}
       <div className="mb-8">
