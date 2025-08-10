@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { USStatesHeatmap } from "@/components/USStatesHeatmap";
 import { 
   MapPin, 
   AlertTriangle, 
@@ -66,6 +67,7 @@ export default function UnifiedTrendsHeatmap() {
   const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
   const [showDailySummary, setShowDailySummary] = useState(false);
   const [selectedSources, setSelectedSources] = useState<Set<string>>(new Set());
+  const [selectedState, setSelectedState] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -149,8 +151,14 @@ export default function UnifiedTrendsHeatmap() {
     // Source filter logic  
     const matchesSourceFilter = selectedSources.size === 0 || 
       selectedSources.has(alert.sourceAgency);
+
+    // State filter logic
+    const matchesStateFilter = !selectedState || 
+      alert.sourceAgency?.includes(selectedState) ||
+      alert.description?.includes(selectedState) ||
+      alert.title?.includes(selectedState);
     
-    return matchesSearch && matchesType && matchesSeverity && matchesCardFilter && matchesSourceFilter;
+    return matchesSearch && matchesType && matchesSeverity && matchesCardFilter && matchesSourceFilter && matchesStateFilter;
   }) || [];
 
   // Calculate consistent statistics from filtered data
@@ -442,23 +450,47 @@ export default function UnifiedTrendsHeatmap() {
         </div>
       )}
 
+      {/* US States Heatmap */}
+      <USStatesHeatmap 
+        data={unifiedData?.alerts || []}
+        selectedState={selectedState}
+        onStateSelect={setSelectedState}
+      />
+
       {/* Active Filters Display */}
-      {activeFilters.size > 0 && (
+      {(activeFilters.size > 0 || selectedState) && (
         <Alert className="mb-4 border-blue-200 bg-blue-50">
           <Filter className="h-4 w-4 text-blue-600" />
           <AlertDescription className="text-blue-800 flex items-center justify-between">
             <span>
-              <strong>Active Filter:</strong> Showing {filteredAlerts.length} items filtered by {Array.from(activeFilters).join(', ').replace('-', ' ')}
+              <strong>Active Filters:</strong> Showing {filteredAlerts.length} items
+              {activeFilters.size > 0 && ` filtered by ${Array.from(activeFilters).join(', ').replace(/-/g, ' ')}`}
+              {selectedState && ` for ${selectedState}`}
             </span>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => setActiveFilters(new Set())}
-              className="text-blue-600 hover:text-blue-800"
-            >
-              <X className="h-3 w-3 mr-1" />
-              Clear
-            </Button>
+            <div className="flex gap-2">
+              {selectedState && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setSelectedState(null)}
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Clear State
+                </Button>
+              )}
+              {activeFilters.size > 0 && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setActiveFilters(new Set())}
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Clear Filters
+                </Button>
+              )}
+            </div>
           </AlertDescription>
         </Alert>
       )}

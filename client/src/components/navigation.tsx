@@ -51,16 +51,14 @@ export default function Navigation() {
               </button>
               
               <button
-                onClick={() => setLocation("/scam-trends-v2")}
+                onClick={() => setLocation("/unified-trends")}
                 className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                  location === "/scam-trends-v2" ? "text-boomer-navy" : "text-gray-600 hover:text-boomer-navy"
+                  location === "/unified-trends" ? "text-boomer-navy" : "text-gray-600 hover:text-boomer-navy"
                 }`}
               >
-                <TrendingUp className="w-4 h-4" />
-                Scam Trends
+                <Activity className="w-4 h-4" />
+                Live Intelligence
               </button>
-              
-
 
               <button
                 onClick={() => setLocation("/about")}
@@ -100,26 +98,6 @@ export default function Navigation() {
               >
                 <Shield className="w-4 h-4" />
                 Risk Assessment
-              </button>
-
-              <button
-                onClick={() => setLocation("/unified-trends")}
-                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                  location === "/unified-trends" ? "text-boomer-navy" : "text-gray-600 hover:text-boomer-navy"
-                }`}
-              >
-                <Activity className="w-4 h-4" />
-                Live Intelligence
-              </button>
-
-              <button
-                onClick={() => setLocation("/heatmap")}
-                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                  location === "/heatmap" ? "text-boomer-navy" : "text-gray-600 hover:text-boomer-navy"
-                }`}
-              >
-                <Activity className="w-4 h-4" />
-                Live Heatmap
               </button>
 
               {isAuthenticated && (
