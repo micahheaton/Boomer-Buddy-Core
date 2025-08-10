@@ -1069,7 +1069,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Trigger comprehensive data collection
+  // Trigger comprehensive data collection with cache refresh
   app.post("/api/admin/collect-all-data", async (req, res) => {
     try {
       const { EnhancedDataCollector } = await import('./enhancedDataCollector');
@@ -1078,9 +1078,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('📊 Starting comprehensive data collection...');
       await collector.collectFromAllSources();
       
+      // Refresh cache after data collection
+      const { cacheManager } = await import('./cacheManager');
+      await cacheManager.forceRefresh();
+      console.log('🔄 Cache refreshed after data collection');
+      
       res.json({ 
         success: true, 
-        message: "Comprehensive data collection completed" 
+        message: "Comprehensive data collection completed",
+        cacheRefreshed: true
       });
     } catch (error) {
       console.error('Error collecting data:', error);
@@ -1091,99 +1097,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Unified trends and heatmap endpoint
+  // Unified trends and heatmap endpoint (with caching)
   app.get("/api/unified-trends-heatmap", async (req, res) => {
     try {
-      console.log('🔍 Fetching unified data...');
+      console.log('⚡ Serving cached unified data...');
       
-      // Get comprehensive data from both trends and news using correct column names
-      const trendsData = await db.select()
-        .from(scamTrends)
-        .where(eq(scamTrends.isActive, true))
-        .orderBy(desc(scamTrends.lastReported))
-        .limit(100);
-
-      console.log(`📊 Found ${trendsData.length} active scam trends`);
-
-      const newsItemsData = await db.select()
-        .from(newsItems)
-        .where(eq(newsItems.isVerified, true))
-        .orderBy(desc(newsItems.publishDate))
-        .limit(50);
-
-      console.log(`📰 Found ${newsItemsData.length} verified news items`);
-
-      // Get data sources stats
-      const totalSources = await db.select({ count: sql<number>`count(*)` }).from(dataSources);
-      const activeSources = await db.select({ count: sql<number>`count(*)` })
-        .from(dataSources)
-        .where(eq(dataSources.status, 'active'));
-
-      // Combine all data into unified format
-      const alerts = [
-        ...trendsData.map(trend => ({
-          id: trend.id,
-          title: trend.title,
-          description: trend.description,
-          url: trend.sourceUrl || '#',
-          severity: trend.severity || 'medium',
-          category: trend.category || 'General',
-          timestamp: trend.lastReported || trend.createdAt,
-          sourceAgency: trend.sourceAgency || 'Government Source',
-          isScamAlert: true,
-          type: 'scam-alert' as const,
-          scamTypes: trend.affectedRegions || [],
-          elderRelevanceScore: 85
-        })),
-        ...newsItemsData.map(item => ({
-          id: item.id,
-          title: item.title,
-          description: item.summary?.substring(0, 150) + '...' || 'Government News Update',
-          url: item.sourceUrl || '#',
-          severity: item.category?.includes('alert') ? 'high' : 'medium',
-          category: item.category || 'Government News',
-          timestamp: item.publishDate || item.createdAt,
-          sourceAgency: item.sourceAgency || 'Government Source',
-          isScamAlert: false,
-          type: 'news' as const,
-          elderRelevanceScore: item.elderRelevanceScore || 75
-        }))
-      ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-
-      console.log(`🔗 Combined ${alerts.length} total alerts and news items`);
-
-      // Calculate real-time statistics
-      const scamAlerts = alerts.filter(a => a.isScamAlert);
-      const newsItemsFiltered = alerts.filter(a => !a.isScamAlert);
-      const highSeverity = alerts.filter(a => a.severity === 'high' || a.severity === 'critical');
-      const todayAlerts = alerts.filter(a => 
-        new Date(a.timestamp).toDateString() === new Date().toDateString()
-      );
-
-      res.json({
-        alerts,
-        statistics: {
-          totalActiveAlerts: todayAlerts.length,
-          highSeverityAlerts: highSeverity.length,
-          scamAlertsToday: scamAlerts.filter(a => 
-            new Date(a.timestamp).toDateString() === new Date().toDateString()
-          ).length,
-          governmentAdvisories: newsItemsFiltered.length,
-          dataSourcesOnline: activeSources[0]?.count || 0,
-          lastUpdate: new Date().toISOString(),
-          coverage: "All 50 States + Federal Agencies (Comprehensive Collection)"
-        },
-        metadata: {
-          total: alerts.length,
-          scamTrends: scamAlerts.length,
-          newsItems: newsItemsFiltered.length,
-          lastUpdated: new Date().toISOString()
-        }
-      });
+      const { cacheManager } = await import('./cacheManager');
+      const cachedData = await cacheManager.getCachedData();
+      
+      res.json(cachedData);
+      console.log(`✅ Served ${cachedData.alerts.length} alerts from cache (v${cachedData.version})`);
     } catch (error) {
       console.error("Unified endpoint error:", error);
-      console.error("Error details:", (error as Error).message);
-      console.error("Stack trace:", (error as Error).stack);
       res.status(500).json({ 
         error: "Failed to fetch unified data",
         details: (error as Error).message 
@@ -1231,6 +1156,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Cache management endpoints
+  app.get("/api/cache-status", async (req, res) => {
+    try {
+      const { cacheManager } = await import('./cacheManager');
+      const stats = cacheManager.getCacheStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get cache status" });
+    }
+  });
+
+  app.post("/api/cache-refresh", async (req, res) => {
+    try {
+      const { cacheManager } = await import('./cacheManager');
+      await cacheManager.forceRefresh();
+      res.json({ success: true, message: "Cache refreshed successfully" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to refresh cache" });
+    }
+  });
+
   // Data collection schedule status endpoint
   app.get("/api/schedule-status", async (req: Request, res: Response) => {
     try {
@@ -1271,7 +1217,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Initialize mobile notification service
   mobileNotificationService.initialize(httpServer);
+  
+  // Initialize cache manager with WebSocket server for real-time updates
+  const { cacheManager } = await import('./cacheManager');
+  cacheManager.setWebSocketServer(webSocketHandler.wss);
+  
   console.log("Mobile notification service initialized");
   console.log("WebSocket handler initialized for real-time heatmap updates");
+  console.log("🔄 Cache manager initialized with WebSocket notifications");
   return httpServer;
 }
