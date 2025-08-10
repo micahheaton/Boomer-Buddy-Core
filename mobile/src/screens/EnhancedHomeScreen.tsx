@@ -1,11 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, RefreshControl, Animated } from 'react-native';
+import { 
+  View, 
+  ScrollView, 
+  RefreshControl, 
+  Animated, 
+  DeviceEventEmitter,
+  PermissionsAndroid,
+  Platform,
+  Alert
+} from 'react-native';
 import { ThreatVisualization } from '../components/ThreatVisualization';
 import { PersonalizedSafetyCarousel } from '../components/PersonalizedSafetyCarousel';
 import { EmotionalSupportBot } from '../components/EmotionalSupportBot';
+import { SmsOverlay } from '../components/SmsOverlay';
 import { AdvancedAnalysisEngine, ThreatVisualizationData } from '../services/AdvancedAnalysisEngine';
 import { StorageService } from '../services/StorageService';
 import { ApiService } from '../services/ApiService';
+import { SmsInterceptionService, SmsOverlayData } from '../services/SmsInterceptionService';
 
 interface QuickStats {
   protectionScore: number;
@@ -34,6 +45,8 @@ export const EnhancedHomeScreen: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showSupportBot, setShowSupportBot] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'online' | 'offline'>('online');
+  const [smsOverlayData, setSmsOverlayData] = useState<SmsOverlayData | null>(null);
+  const [smsService] = useState(new SmsInterceptionService());
 
   // Animations
   const [headerAnimation] = useState(new Animated.Value(0));
@@ -48,9 +61,12 @@ export const EnhancedHomeScreen: React.FC = () => {
     initializeHomeScreen();
     startPeriodicUpdates();
     animateInitialLoad();
+    initializeSmsProtection();
     
     return () => {
-      // Cleanup periodic updates
+      // Cleanup SMS monitoring
+      smsService.stopSmsMonitoring();
+      DeviceEventEmitter.removeAllListeners('onSmsReceived');
     };
   }, []);
 
@@ -772,6 +788,15 @@ export const EnhancedHomeScreen: React.FC = () => {
         initialContext="general"
       />
 
+      {/* SMS Scam Detection Overlay */}
+      <SmsOverlay
+        overlayData={smsOverlayData}
+        onDismiss={() => setSmsOverlayData(null)}
+        onBlock={handleBlockSender}
+        onReport={handleReportScam}
+        onAnalyzeMore={handleAnalyzeMore}
+      />
+
       {/* Floating Support Button */}
       <View
         style={{
@@ -801,4 +826,141 @@ export const EnhancedHomeScreen: React.FC = () => {
       </View>
     </View>
   );
+
+  // SMS Overlay Handlers
+  const handleBlockSender = async () => {
+    try {
+      console.log('🚫 Blocking sender:', smsOverlayData?.senderInfo.number);
+      Alert.alert('Sender Blocked', 'Future messages from this sender will be blocked.');
+      setSmsOverlayData(null);
+    } catch (error) {
+      console.error('Failed to block sender:', error);
+    }
+  };
+
+  const handleReportScam = async () => {
+    try {
+      if (smsOverlayData?.analysis) {
+        await ApiService.sendNotification(
+          'scam_report',
+          'sms_scam',
+          JSON.stringify({
+            sender: smsOverlayData.senderInfo.number,
+            analysis: smsOverlayData.analysis,
+            timestamp: Date.now()
+          })
+        );
+        
+        console.log('📊 Scam reported to authorities');
+        Alert.alert('Report Sent', 'This scam has been reported to relevant authorities.');
+        setSmsOverlayData(null);
+      }
+    } catch (error) {
+      console.error('Failed to report scam:', error);
+      Alert.alert('Report Failed', 'Unable to send report. Please try again.');
+    }
+  };
+
+  const handleAnalyzeMore = () => {
+    console.log('🔍 Opening detailed analysis');
+    Alert.alert('Detailed Analysis', 'Opening comprehensive threat analysis...');
+    setSmsOverlayData(null);
+  };
+
+  const initializeSmsProtection = async () => {
+    try {
+      console.log('🔒 Initializing SMS protection...');
+      
+      if (Platform.OS === 'android') {
+        const permissions = await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.RECEIVE_SMS,
+          PermissionsAndroid.PERMISSIONS.READ_SMS,
+          PermissionsAndroid.PERMISSIONS.READ_CONTACTS,
+        ]);
+        
+        const allGranted = Object.values(permissions).every(
+          status => status === PermissionsAndroid.RESULTS.GRANTED
+        );
+        
+        if (allGranted) {
+          const success = await smsService.startSmsMonitoring();
+          if (success) {
+            console.log('✅ SMS protection active');
+            DeviceEventEmitter.addListener('onSmsReceived', handleSmsReceived);
+          }
+        } else {
+          Alert.alert(
+            'SMS Protection',
+            'SMS permissions are required for real-time scam detection.',
+            [
+              { text: 'Skip', style: 'cancel' },
+              { text: 'Grant Permissions', onPress: initializeSmsProtection }
+            ]
+          );
+        }
+      }
+    } catch (error) {
+      console.error('❌ Failed to initialize SMS protection:', error);
+    }
+  };
+
+  const handleSmsReceived = async (smsData: any) => {
+    try {
+      console.log('📱 SMS received for analysis:', smsData.senderNumber?.slice(-4));
+      
+      if (smsData.isHighRisk) {
+        Alert.alert(
+          '🚨 SCAM ALERT',
+          'High-risk SMS detected! Opening detailed analysis...',
+          [
+            { text: 'Dismiss', style: 'cancel' },
+            { text: 'Analyze', onPress: () => analyzeSmsInDetail(smsData) }
+          ]
+        );
+      }
+      
+      const analysis = await smsService.analyzeSmsMessage(
+        smsData.messageBody,
+        smsData.senderNumber,
+        smsData.timestamp
+      );
+      
+      if (analysis.recommendedAction !== 'safe') {
+        const overlayData: SmsOverlayData = {
+          show: true,
+          messageText: smsData.messageBody,
+          analysis: analysis,
+          senderInfo: {
+            number: smsData.senderNumber,
+            isKnownContact: false
+          }
+        };
+        
+        setSmsOverlayData(overlayData);
+      }
+      
+    } catch (error) {
+      console.error('❌ SMS analysis failed:', error);
+    }
+  };
+
+  const analyzeSmsInDetail = async (smsData: any) => {
+    const analysis = await smsService.analyzeSmsMessage(
+      smsData.messageBody,
+      smsData.senderNumber,
+      smsData.timestamp
+    );
+    
+    const overlayData: SmsOverlayData = {
+      show: true,
+      messageText: smsData.messageBody,
+      analysis: analysis,
+      senderInfo: {
+        number: smsData.senderNumber,
+        isKnownContact: false
+      }
+    };
+    
+    setSmsOverlayData(overlayData);
+  };
 };
