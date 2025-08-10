@@ -109,6 +109,12 @@ export const scamTrends = pgTable("scam_trends", {
   elderVulnerabilities: jsonb("elder_vulnerabilities").default(sql`'[]'::jsonb`),
   preventionTips: jsonb("prevention_tips").default(sql`'[]'::jsonb`),
   reportingInstructions: text("reporting_instructions"),
+  // New user-friendly enhancements
+  impactScore: integer("impact_score").default(0), // 0-100 urgency/impact score
+  actionableSteps: jsonb("actionable_steps").default(sql`'[]'::jsonb`), // Clear "what to do" steps
+  simplifiedLanguage: text("simplified_language"), // Plain-language summary
+  geographicRelevance: jsonb("geographic_relevance").default(sql`'[]'::jsonb`), // State-specific info
+  authorityBadge: text("authority_badge").notNull().default('federal'), // 'federal' | 'state' | 'nonprofit'
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

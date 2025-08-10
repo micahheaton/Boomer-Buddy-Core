@@ -15,25 +15,26 @@ interface RSSFeed {
   agency: string;
 }
 
-// Official Government and Nonprofit Sources (.gov, .us, authorized nonprofits)
+// CURATED GOVERNMENT-ONLY DATA SOURCES (.gov/.us domains + select nonprofits)
+// Focused on actionable intelligence for seniors from extremely reliable sources
 const TRUSTED_FEEDS: RSSFeed[] = [
-  // Federal Government Sources
+  // Federal Government Sources (.gov domains only)
   {
     name: 'Federal Trade Commission Consumer Alerts',
-    url: 'https://www.ftc.gov/news-events/stay-connected/ftc-rss-feeds/ftc-consumer-blog',
+    url: 'https://www.consumer.ftc.gov/rss/consumer-alerts.xml',
     category: 'government-consumer',
     reliability: 0.98,
     agency: 'FTC'
   },
   {
-    name: 'FBI Internet Crime Complaint Center',
+    name: 'FBI Internet Crime Complaint Center Public Service Announcements',
     url: 'https://www.ic3.gov/rss/PSA.xml',
     category: 'government-security',
     reliability: 0.97,
     agency: 'FBI-IC3'
   },
   {
-    name: 'Social Security Administration',
+    name: 'Social Security Administration Blog',
     url: 'https://blog.ssa.gov/feed/',
     category: 'government-benefits',
     reliability: 0.98,
@@ -47,38 +48,38 @@ const TRUSTED_FEEDS: RSSFeed[] = [
     agency: 'HHS-OIG'
   },
   {
-    name: 'CISA Cybersecurity Alerts',
-    url: 'https://www.cisa.gov/cybersecurity-advisories.xml',
+    name: 'CISA Cybersecurity and Infrastructure Security Agency',
+    url: 'https://www.cisa.gov/news.xml',
     category: 'government-cybersecurity',
     reliability: 0.96,
     agency: 'CISA'
   },
-  // State Government Sources
+  // State Government Sources (.us domains and verified .gov state sites)
   {
-    name: 'Washington State Attorney General Consumer Alerts',
-    url: 'https://www.atg.wa.gov/rss/consumer-alerts',
+    name: 'Washington State Attorney General Consumer Protection',
+    url: 'https://www.atg.wa.gov/news/rss.xml',
     category: 'state-consumer',
     reliability: 0.95,
     agency: 'WA-AG'
   },
   {
     name: 'California Attorney General Consumer Alerts',
-    url: 'https://oag.ca.gov/consumers/alerts/rss',
+    url: 'https://oag.ca.gov/rss/consumer-alerts',
     category: 'state-consumer',
     reliability: 0.95,
     agency: 'CA-AG'
   },
-  // Authorized Nonprofits (specifically elder-focused)
+  // Authorized Elder-Focused Nonprofits (strict curation)
   {
     name: 'AARP Fraud Watch Network',
-    url: 'https://www.aarp.org/money/scams-fraud/rss.xml',
+    url: 'https://www.aarp.org/money/scams-fraud/info-2019/scams-fraud.xml',
     category: 'nonprofit-elder',
     reliability: 0.94,
     agency: 'AARP'
   },
   {
     name: 'Better Business Bureau Scam Tracker',
-    url: 'https://www.bbb.org/scamtracker/rss',
+    url: 'https://www.bbb.org/alerts/rss',
     category: 'nonprofit-business',
     reliability: 0.92,
     agency: 'BBB'
@@ -193,6 +194,12 @@ export class DataCollector {
       firstReported: new Date(item.pubDate || Date.now()),
       lastReported: new Date(item.pubDate || Date.now()),
       isActive: true,
+      // New user-friendly fields
+      impactScore: this.calculateImpactScore(item, feed),
+      actionableSteps: this.generateActionableSteps(item, feed),
+      simplifiedLanguage: this.createSimplifiedSummary(item),
+      geographicRelevance: this.extractGeographicRelevance(feed),
+      authorityBadge: this.determineAuthorityBadge(feed),
       createdAt: new Date(),
       updatedAt: new Date()
     }).returning();
@@ -391,6 +398,97 @@ export class DataCollector {
 
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // New user-friendly enhancement methods
+  private calculateImpactScore(item: any, feed: RSSFeed): number {
+    let score = 30; // Base score
+
+    // Authority level
+    if (feed.agency === 'FBI' || feed.agency === 'FTC') score += 30;
+    else if (feed.agency.includes('AG')) score += 20;
+    else score += 15;
+
+    // Urgency keywords
+    const content = `${item.title} ${item.contentSnippet || ''}`.toLowerCase();
+    if (content.includes('urgent') || content.includes('immediate')) score += 25;
+    if (content.includes('widespread') || content.includes('national')) score += 20;
+    if (content.includes('elderly') || content.includes('senior')) score += 15;
+
+    return Math.min(100, score);
+  }
+
+  private generateActionableSteps(item: any, feed: RSSFeed): string[] {
+    const content = `${item.title} ${item.contentSnippet || ''}`.toLowerCase();
+    const steps: string[] = [];
+
+    // Generic protective steps
+    steps.push("Do not provide personal information to unsolicited callers or emails");
+    
+    if (content.includes('phone') || content.includes('call')) {
+      steps.push("Hang up immediately if someone asks for Social Security numbers or bank details");
+      steps.push("Call back using the official phone number from the organization's website");
+    }
+    
+    if (content.includes('email') || content.includes('phishing')) {
+      steps.push("Do not click links in suspicious emails");
+      steps.push("Type website addresses directly into your browser");
+    }
+    
+    if (content.includes('social security') || content.includes('medicare')) {
+      steps.push("Remember: Government agencies never call demanding immediate payment");
+      steps.push("Contact the agency directly using their official phone number");
+    }
+
+    steps.push("Report this scam to your local authorities and the FTC at reportfraud.ftc.gov");
+    
+    return steps;
+  }
+
+  private createSimplifiedSummary(item: any): string {
+    const title = item.title || '';
+    const content = item.contentSnippet || item.content || '';
+    
+    // Create a simple, plain-language summary
+    let summary = `Scammers are targeting people `;
+    
+    if (title.toLowerCase().includes('social security')) {
+      summary += `by pretending to be from Social Security. They claim there's a problem with your benefits or account.`;
+    } else if (title.toLowerCase().includes('medicare')) {
+      summary += `by pretending to be from Medicare. They may offer fake benefits or ask for your Medicare number.`;
+    } else if (title.toLowerCase().includes('irs') || title.toLowerCase().includes('tax')) {
+      summary += `by pretending to be from the IRS. They claim you owe taxes and demand immediate payment.`;
+    } else if (title.toLowerCase().includes('tech support')) {
+      summary += `by pretending to fix computer problems. They want remote access to your computer.`;
+    } else {
+      summary += `with a new type of fraud. Be extra careful with unexpected contact.`;
+    }
+    
+    return summary;
+  }
+
+  private extractGeographicRelevance(feed: RSSFeed): string[] {
+    const relevance: string[] = [];
+    
+    if (feed.agency.includes('CA')) relevance.push('California');
+    if (feed.agency.includes('WA')) relevance.push('Washington');
+    if (feed.agency === 'FTC' || feed.agency === 'FBI' || feed.agency === 'SSA') {
+      relevance.push('All U.S. States');
+    }
+    
+    if (relevance.length === 0) relevance.push('Nationwide');
+    
+    return relevance;
+  }
+
+  private determineAuthorityBadge(feed: RSSFeed): 'federal' | 'state' | 'nonprofit' {
+    if (feed.agency === 'FTC' || feed.agency === 'FBI' || feed.agency === 'SSA' || feed.agency === 'HHS-OIG' || feed.agency === 'CISA') {
+      return 'federal';
+    }
+    if (feed.agency.includes('AG') || feed.agency.includes('WA') || feed.agency.includes('CA')) {
+      return 'state';
+    }
+    return 'nonprofit';
   }
 }
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Filter, MapPin, AlertTriangle, TrendingUp, Eye, Calendar, Building } from "lucide-react";
+import { Search, Filter, MapPin, AlertTriangle, TrendingUp, Eye, Calendar, Building, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { AuthorityBadge } from "@/components/AuthorityBadge";
+import { ActionableSteps } from "@/components/ActionableSteps";
+import { ImpactUrgencyScore } from "@/components/ImpactUrgencyScore";
 
 interface FilterOptions {
   category?: string[];
@@ -34,6 +37,15 @@ interface TrendItem {
   }>;
   firstReported: string;
   lastReported: string;
+  // New user-friendly fields
+  impactScore?: number;
+  actionableSteps?: string[];
+  simplifiedLanguage?: string;
+  geographicRelevance?: string[];
+  authorityBadge?: 'federal' | 'state' | 'nonprofit';
+  sourceAgency?: string;
+  elderVulnerabilities?: string[];
+  reportingInstructions?: string;
 }
 
 interface NewsItem {
@@ -163,8 +175,14 @@ export default function EnhancedTrends() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Live Scam Intelligence Center</h1>
-          <p className="text-muted-foreground">Real-time scam trends and verified news from trusted sources</p>
+          <h1 className="text-3xl font-bold">Government Scam Intelligence Center</h1>
+          <p className="text-muted-foreground">Curated alerts from federal, state, and trusted nonprofit sources only</p>
+          <div className="flex items-center gap-2 mt-2">
+            <Badge className="bg-blue-100 text-blue-800">Federal .gov</Badge>
+            <Badge className="bg-green-100 text-green-800">State .us</Badge>
+            <Badge className="bg-purple-100 text-purple-800">Trusted Nonprofits</Badge>
+            <span className="text-xs text-gray-600 ml-2">No clickbait • No commercial media</span>
+          </div>
         </div>
         <div className="flex items-center space-x-2">
           <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -328,13 +346,26 @@ export default function EnhancedTrends() {
             </Card>
           ) : (
             trends.map((trend) => (
-              <Card key={trend.id} className="hover:shadow-lg transition-shadow">
+              <Card key={trend.id} className="hover:shadow-lg transition-shadow border-l-4 border-l-blue-500">
                 <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-2">
-                      <CardTitle className="text-xl">{trend.title}</CardTitle>
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="space-y-2 flex-1">
+                      <div className="flex items-start gap-3">
+                        <AuthorityBadge 
+                          authority={trend.authorityBadge || 'federal'} 
+                          agency={trend.sourceAgency}
+                        />
+                        <div className="flex-1">
+                          <CardTitle className="text-xl mb-2">{trend.title}</CardTitle>
+                          <ImpactUrgencyScore 
+                            score={trend.impactScore || 50}
+                            severity={trend.severity as any}
+                            elderVulnerabilities={trend.elderVulnerabilities}
+                          />
+                        </div>
+                      </div>
+                      
                       <div className="flex items-center space-x-4">
-                        <SeverityBadge severity={trend.severity} />
                         <Badge variant="secondary">{trend.category}</Badge>
                         <div className="flex items-center space-x-1 text-sm text-muted-foreground">
                           <AlertTriangle className="h-4 w-4" />
@@ -343,24 +374,49 @@ export default function EnhancedTrends() {
                         {trend.affectedRegions.length > 0 && (
                           <div className="flex items-center space-x-1 text-sm text-muted-foreground">
                             <MapPin className="h-4 w-4" />
-                            <span>Active in {trend.affectedRegions.length} regions</span>
+                            <span>{trend.affectedRegions.join(", ")}</span>
                           </div>
                         )}
                       </div>
                     </div>
+                    
                     <div className="text-right text-sm text-muted-foreground">
                       <div>Last updated</div>
                       <div>{new Date(trend.lastReported).toLocaleDateString()}</div>
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <CardDescription className="mb-4">
+                
+                <CardContent className="space-y-4">
+                  {/* Simplified Language Summary */}
+                  {trend.simplifiedLanguage && (
+                    <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
+                      <h4 className="font-medium text-blue-900 mb-2">What This Means:</h4>
+                      <p className="text-blue-800 leading-relaxed">{trend.simplifiedLanguage}</p>
+                    </div>
+                  )}
+                  
+                  {/* Original Description */}
+                  <CardDescription className="text-base leading-relaxed">
                     {trend.description}
                   </CardDescription>
                   
+                  {/* Geographic Relevance */}
+                  {trend.geographicRelevance && trend.geographicRelevance.length > 0 && (
+                    <div className="bg-green-50 p-3 rounded-md border border-green-200">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Globe className="w-4 h-4 text-green-700" />
+                        <span className="font-medium text-green-900">Geographic Focus:</span>
+                      </div>
+                      <p className="text-green-800 text-sm">
+                        {trend.geographicRelevance.join(", ")}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* Tags */}
                   {trend.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mb-4">
+                    <div className="flex flex-wrap gap-1">
                       {trend.tags.map((tag, index) => (
                         <Badge key={index} variant="outline" className="text-xs">
                           {tag}
@@ -369,7 +425,15 @@ export default function EnhancedTrends() {
                     </div>
                   )}
                   
-                  <div className="flex items-center justify-between">
+                  {/* Actionable Steps */}
+                  <ActionableSteps 
+                    steps={trend.actionableSteps || []}
+                    reportingInstructions={trend.reportingInstructions}
+                    urgency={trend.severity as any}
+                  />
+                  
+                  {/* Source Information */}
+                  <div className="flex items-center justify-between pt-4 border-t">
                     <div className="flex items-center space-x-4">
                       {trend.sources.map((source, index) => (
                         <div key={index} className="flex items-center space-x-2">
@@ -383,7 +447,7 @@ export default function EnhancedTrends() {
                       {trend.sources.map((source, index) => (
                         <Button key={index} variant="outline" size="sm" asChild>
                           <a href={source.url} target="_blank" rel="noopener noreferrer">
-                            View Source
+                            View Official Source
                           </a>
                         </Button>
                       ))}
