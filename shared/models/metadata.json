@@ -1,0 +1,76 @@
+{
+  "model": {
+    "version": "1.0.0",
+    "checksum": "sha256:abc123def456789abcdef123456789abcdef123456789abcdef123456789abcdef",
+    "createdAt": "2025-08-01T00:00:00Z",
+    "requiredRulesVersion": "1.0.0",
+    "description": "Lightweight text classifier for phishing/scam detection",
+    "architecture": "DistilBERT-base fine-tuned on scam/phishing dataset",
+    "inputFormat": "text",
+    "outputFormat": "classification_scores",
+    "platforms": {
+      "android": {
+        "filename": "model-v1.tflite",
+        "size": 268435456,
+        "checksum": "sha256:android_specific_checksum_here"
+      },
+      "ios": {
+        "filename": "model-v1.mlmodelc",
+        "size": 301989888,
+        "checksum": "sha256:ios_specific_checksum_here"
+      }
+    }
+  },
+  "rules": {
+    "version": "1.0.0",
+    "checksum": "sha256:rules_checksum_here",
+    "createdAt": "2025-08-01T00:00:00Z",
+    "description": "Regex/keyword checks and agency validation rules",
+    "categories": [
+      "payment_rails",
+      "threat_language", 
+      "urgency_tactics",
+      "brand_impersonation",
+      "government_agencies",
+      "phone_formats",
+      "agency_hours",
+      "suspicious_domains"
+    ]
+  },
+  "labels": {
+    "classes": [
+      "safe",
+      "suspicious", 
+      "likely_scam",
+      "definite_scam"
+    ],
+    "signals": [
+      "urgency",
+      "gift_card",
+      "threat",
+      "secrecy",
+      "callback_mismatch",
+      "after_hours_government",
+      "suspicious_domain",
+      "brand_impersonation"
+    ],
+    "brands": [
+      "irs",
+      "ssa", 
+      "medicare",
+      "amazon",
+      "apple",
+      "google",
+      "microsoft",
+      "paypal",
+      "bank"
+    ]
+  },
+  "update": {
+    "cdnBase": "https://cdn.boomerbuddy.net/models/",
+    "signatureKey": "model_signing_key_id",
+    "updateCheckInterval": 86400,
+    "forcedUpdateThreshold": "major",
+    "rollbackSupported": true
+  }
+}

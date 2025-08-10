@@ -1,0 +1,485 @@
+Awesome — here’s the **single, end-to-end mobile app spec** (Android + iOS) you can paste into Replit to scaffold Boomer Buddy. I pulled everything together, kept content intact where possible, and organized it for clean handoff.
+
+---
+
+# Boomer Buddy — Mobile Companion Apps (Full Build Spec)
+
+## 0) Product scope & value
+
+**Outcomes**
+
+* Warn about risky calls/texts in real time.
+* Capture evidence (text, voicemail transcript, screenshots, voice notes).
+* Give plain-language guidance + official contacts.
+* Let trusted family see serious events (opt-in).
+* Review history, profile, billing.
+* Community activity (read-only).
+* **Training & education** via 30-second micro-drills (quiz-personalized).
+
+**Core features**
+
+* Call & SMS warnings (on-device).
+* Live voicemail risk check (post-transcription).
+* One-tap report (call/SMS/email/web/letter/voice).
+* Voice note capture w/ transcription (local).
+* Community feed + local alerts.
+* Account, billing (subscriptions), caregiver sharing.
+* Quiz-personalized reminders + micro-drills.
+
+---
+
+## 1) Zero-PII, US-only, store-friendly posture
+
+* **No PII stored** by backend: no names, emails, phone numbers, addresses, SSNs, card/bank data, IPs, device IDs, raw content (text/audio/images), GPS.
+* **On-device only** history/media; optional user-owned backup (iCloud/Google Drive).
+* **Optional stateless “second opinion”** uses redacted feature vectors only; no persistence or logs.
+* **US-only distribution** (App Store Connect + Play Console region).
+* **Privacy labels**: target “Data Not Collected” (StoreKit2/GPB direct). If using RevenueCat, disclose anonymous device identifier “Used for Purchases; Not Linked to You”.
+* **Reviewer packet**: architecture diagram, “No PII Stored” statement, permission justifications, privacy policy, SMS/Call extensions description.
+* **Settings proof toggles**: Local-Only Mode (default ON), No Diagnostics (default ON), Clear All Local Data.
+
+---
+
+## 2) Monorepo structure
+
+```
+boomer-buddy/
+  apps/
+    mobile/                 # React Native (TS)
+    ios-extensions/         # iOS Call Directory + SMS Filter targets
+    android-services/       # Android CallScreening + SMS/default role bridges
+  services/
+    api/                    # Node/Python API (stateless)
+    feeds/                  # Worker to aggregate gov/org alerts to feeds.json
+  shared/
+    models/                 # TFLite/Core ML bundles + metadata + rules
+    contracts/              # OpenAPI, JSON schemas
+    ui/                     # Design tokens, icons, assets
+  ops/
+    ci/                     # CI pipelines
+    scripts/                # Build/release helpers
+  README.md
+```
+
+**High-level flow**
+
+1. Device receives call/SMS → on-device model + rules score risk → warn via system UI.
+2. User submits a report → device builds **feature vector** (no raw PII) → optional `/v1/analyze` → response with actions/contacts.
+3. History, training, and caregiver share run locally.
+
+---
+
+## 3) Platform capability map
+
+### Android
+
+* **Calls**: `CallScreeningService` (label/block; no recording). Heads-up notifications; optional overlay (opt-in; use sparingly).
+* **SMS**: Request **Default SMS** role (best) or combine **SMS User Consent API** + **Notification Listener**.
+* **On-device ML**: **TensorFlow Lite**; rule engine in Kotlin.
+* **Other**: Live Caption (OS-level), scoped storage, foreground service optimizations.
+
+### iOS
+
+* **Phone**: **Call Directory Extension** (identify/block via local list; no audio access).
+* **Messages**: **SMS Filter Extension** (`UNMessageFilterExtension`) for **unknown senders**; offline “on-device” classifier path.
+* **Voicemail**: Analyze Apple’s voicemail transcription **after** it lands (user consent).
+* **On-device ML**: **Core ML**; rules in Swift.
+* **Integrations**: App Intents/Shortcuts (quick “Report”); no overlays on Phone/Messages.
+
+---
+
+## 4) On-device risk engine
+
+**Signals**
+
+* Payment rails (gift cards, crypto, wire), threats/legal pressure, urgency/secrecy, brand spoof, look-alike domains, short links, callback mismatch, off-hours gov agency claims.
+
+**Model**
+
+* Lightweight text classifier (phishing/scam fine-tune).
+* Output: score (0–1), label, top tokens/signals.
+
+**Packaging**
+
+* Android: `.tflite` + label map JSON.
+* iOS: `.mlmodelc` + label map plist.
+* Metadata JSON: version, checksum, created\_at, required rules version.
+
+**Rules**
+
+* Regex/keyword checks (hi-weight).
+* Agency hours & phone formats (state/country aware).
+* Final risk: weighted blend(model, rules).
+
+**Updates**
+
+* Signed bundles from CDN; verify checksum; keep last-good offline.
+
+---
+
+## 5) UX flows
+
+**Call warning**
+
+* Android: heads-up warning chip “Suspected scam” + decline/block/open app.
+* iOS: number labeled via Call Directory (“Boomer Buddy: Suspected Scam”).
+
+**SMS warning**
+
+* Android: inline banner in our SMS thread + notification for high risk.
+* iOS: SMS Filter classifies unknown sender (Allow/Junk/Promo/Transaction); app can notify and deep link to details.
+
+**Submit report**
+
+* Options: paste text, upload screenshot/photo, voice note, describe scenario.
+* Device builds **feature vector** (see §8) → optional cloud analyze → returns **score, reasons, actions, contacts**.
+
+**Caregiver share (zero-knowledge)**
+
+* Expiring anonymous token link to redacted case **summary** only; no PII, auto-expires.
+
+**History & billing**
+
+* Local, encrypted timeline; export bank/police PDF (local render).
+* Subscriptions via StoreKit2/GPB or RevenueCat.
+
+---
+
+## 6) Training & personalization (30-sec micro-drills)
+
+**Website quiz → App import (no PII)**
+
+* Web quiz outputs **profile** (risk flags + prefs) → signed **token** (JWT/PASETO, no identity).
+* App imports via **deeplink** (`boomerbuddy://import?p=TOKEN`) or 10-char code (optional).
+* Token verified offline; store profile in encrypted local store; user can edit.
+
+**Reminders**
+
+* On-device scheduler only (iOS `UNUserNotificationCenter`; Android `WorkManager`/`AlarmManager`).
+* Frequency: multi-daily / daily / weekly; preferred hours/days; audio or text.
+
+**Micro-drill types**
+
+* MCQ (“Is this legit?”), Match-2 (term↔definition), Spot-the-red-flag, Ordering (safe steps), Audio MCQ (15–30s tip + 1 Q).
+
+**Packs (signed, CDN)**
+
+* Example packs: `sms_essentials_v1`, `giftcard_basics_v1`, `medicare_v1`.
+* Card schema includes question/choices/explain, or snippet + flags, or audio asset.
+
+**Adaptive**
+
+* Local SM-2-lite spaced repetition; adjust by misses (e.g., link spoofing).
+
+---
+
+## 7) Permissions & entitlements
+
+### Android (manifest examples)
+
+```
+<uses-permission android:name="android.permission.READ_CALL_LOG"/>
+<uses-permission android:name="android.permission.ANSWER_PHONE_CALLS"/>
+<uses-permission android:name="android.permission.CALL_PHONE"/>
+<uses-permission android:name="android.permission.READ_SMS"/>
+<uses-permission android:name="android.permission.RECEIVE_SMS"/>
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+```
+
+Register service:
+
+```
+<service
+  android:name=".screening.BoomerBuddyCallScreeningService"
+  android:permission="android.permission.BIND_SCREENING_SERVICE"
+  android:exported="true">
+  <intent-filter>
+    <action android:name="android.telecom.CallScreeningService"/>
+  </intent-filter>
+</service>
+```
+
+### iOS (targets/entitlements)
+
+* Main app: Push notifications, background fetch (optional).
+* **Call Directory Extension**: identification/block list target (separate bundle ID).
+* **SMS Filter Extension**: on-device filter (separate target).
+* Info.plist purpose strings explaining senior protection; no call recording.
+
+---
+
+## 8) What leaves the device (optional cloud “second opinion”)
+
+**Feature vector** (no raw content, no PII):
+
+```json
+{
+  "v": 1,
+  "channel": "sms|call|voicemail|email|web|letter",
+  "language": "en",
+  "length_chars": 247,
+  "has_links": true,
+  "link_domains": ["bit.ly","examp1e.com"],
+  "signals": ["urgency","gift_card","threat","callback_number_mismatch"],
+  "brand_suspects": ["irs","ssa"],
+  "time_of_day_bucket": "night",
+  "state": "WA",
+  "model_score": 0.86
+}
+```
+
+Server returns **label/score/confidence/reasons/actions/contacts**. No persistence/logging.
+
+---
+
+## 9) Client-side PII scrubber (block before send)
+
+* **Text**: regex for emails, phones, SSN, PAN, routing/account, addresses, IBAN, crypto wallets → replace with `[REDACTED_TYPE]` and **exclude** from features entirely.
+* **Image**: OCR on device → blur bounding boxes → default to **local only**.
+* **Audio**: on-device STT → same text rules; default local only.
+* **Hard block**: If full PAN/SSN detected → **never** transmit anything; show local guidance only.
+
+---
+
+## 10) Backend (stateless, logless)
+
+**Endpoints**
+
+* `GET /v1/model` → version + signed CDN URL + checksums.
+* `GET /v1/feeds.json` → daily merged alerts (gov/org only).
+* `POST /v1/analyze` → feature vector in, JSON out; **no DB**, **no logs**.
+
+**No logs**
+
+* Disable access logs (e.g., Nginx `access_log off;`), drop IP headers, no request body logging.
+* Memory-only processing; tmpfs; no swap.
+
+**Optional DP metrics**
+
+* If absolutely needed: differentially private counters (no identifiers). Prefer none.
+
+**Security headers**
+
+* HSTS, CSP, Referrer-Policy, Permissions-Policy; no cookies.
+
+---
+
+## 11) Subscriptions & billing
+
+* **Best privacy**: StoreKit 2 (iOS) + Google Play Billing (Android) direct. Local receipt validation; optional server validation (stateless).
+* **Cross-store convenience**: RevenueCat (anonymous App User ID only). Update privacy labels accordingly.
+* **Pricing**: \$15/mo, or \~\$10/mo effective when paid annually.
+* **Entitlements**: Core features gated; essential protections (e.g., basic call labels) can stay partially available.
+
+---
+
+## 12) Native stubs
+
+**Android Call Screening (Kotlin)**
+
+```kotlin
+class BoomerBuddyCallScreeningService : CallScreeningService() {
+  override fun onScreenCall(callDetails: Call.Details) {
+    val number = callDetails.handle?.schemeSpecificPart ?: ""
+    val risk = RiskEngine.scoreNumber(number, this)
+    val resp = CallResponse.Builder()
+    if (risk.label == "high") {
+      resp.setDisallowCall(true).setRejectCall(true)
+      NotificationHelper.warnIncoming(number, risk)
+    } else if (risk.label == "medium") {
+      NotificationHelper.warnIncoming(number, risk)
+    }
+    respondToCall(callDetails, resp.build())
+  }
+}
+```
+
+**iOS Call Directory (Swift)**
+
+```swift
+final class CallDirectoryHandler: CXCallDirectoryProvider {
+  override func beginRequest(with context: CXCallDirectoryExtensionContext) {
+    context.delegate = self
+    do {
+      try addOrUpdateEntries(to: context)
+      context.completeRequest()
+    } catch { context.cancelRequest(withError: error) }
+  }
+  private func addOrUpdateEntries(to context: CXCallDirectoryExtensionContext) throws {
+    for e in LocalRiskList.shared.currentEntries() {
+      context.addIdentificationEntry(withNextSequentialPhoneNumber: e.number, label: e.label)
+    }
+  }
+}
+```
+
+**iOS SMS Filter (Swift)**
+
+```swift
+final class MessageFilterExtension: ILMessageFilterExtension {
+  override func handle(_ req: ILMessageFilterQueryRequest,
+                       context: ILMessageFilterExtensionContext,
+                       completion: @escaping (ILMessageFilterQueryResponse)->Void) {
+    let text = req.messageBody ?? ""
+    let res = LocalRiskEngine.shared.score(text: text)
+    let resp = ILMessageFilterQueryResponse()
+    resp.action = res.action  // .allow/.junk/.promotion/.transaction
+    completion(resp)
+  }
+}
+```
+
+---
+
+## 13) Backend contracts (OpenAPI in `shared/contracts`)
+
+**POST /v1/cases** (for future, if you later allow cloud case storage; v1 is local only)
+
+* Request: `user_id?`, `channel`, `text?`, `image_urls?`, `audio_url?`, `phone_number?`, `locale/state?`, `device_model_version`.
+* Response: `case_id`, `score`, `confidence`, `label`, `explanation`, `recommended_actions[]`, `contacts{}`, `legal_disclaimer`.
+
+**GET /v1/cases/{id}\`** (future)
+
+**GET /v1/numberlist**
+
+* Signed E.164 list + labels for iOS Call Directory / Android cache.
+
+**GET /v1/model\`**
+
+* Latest model metadata + signed URL.
+
+**POST /v1/analyze\`**
+
+* **Feature vector only**; returns guidance; no persistence.
+
+---
+
+## 14) Evidence capture (local)
+
+* **Text/transcripts**: plain text, stored locally; voicemail uses Apple’s text; do **not** store call audio.
+* **Images**: screenshots/photos; OCR local; backend OCR optional (later); prefer local processing.
+* **Audio notes**: record local; transcribe local (or on device); attach to case **locally**.
+* **Redaction**: SSN/PAN blocked; user sees warnings; export PDF built locally.
+
+---
+
+## 15) Feeds worker (`services/feeds`)
+
+* Merge **gov/org** sources (FTC, IC3, SSA OIG, HHS OIG, CISA, SEC, CFPB, FCC, DOJ, AARP, etc.) + state AG feeds.
+* Normalize schema: `{source, title, link, published_at, tags[], state?}`
+* De-dupe by `(title_norm + domain + date_bucket)`.
+* Rank: federal PSAs > state AG alerts > nonprofit explainers.
+* Output: `feeds.json` (public; no user context).
+* Cron: every 6–12h.
+
+---
+
+## 16) Testing & accessibility
+
+* **Unit**: risk rules, model wrapper, PII scrubber, pack loader.
+* **Integration**: Android call screening mock; iOS extension host tests.
+* **E2E**: submit report → guidance; subscription purchase/restore; token import.
+* **A11y**: large fonts, voice-over labels, AAA contrast, captions on audio tips.
+
+---
+
+## 17) CI & releases
+
+* Lint, typecheck, unit tests on each push.
+* Build mobile artifacts on tags; iOS extensions on Mac runner.
+* Release order: backend → model/feeds → apps.
+* Crash/perf monitoring (Sentry) with **PII scrubbing** (or disabled).
+
+---
+
+## 18) Replit setup (actions for the agent)
+
+1. Create monorepo folders per §2.
+2. Init RN app in `apps/mobile` (TS, React Query, Zustand/RTK, Reanimated).
+3. Create `apps/ios-extensions` targets (Call Directory, SMS Filter).
+4. Create `apps/android-services` module (CallScreening; SMS role helper).
+5. Scaffold `services/api` (Node or Python) with endpoints in §10 (stateless).
+6. Scaffold `services/feeds` worker to emit `feeds.json`.
+7. Add `shared/models` placeholders (`model-v1.tflite`, `model-v1.mlmodelc`, `metadata.json`, `rules.json`).
+8. Add `shared/contracts/openapi.yaml`.
+9. Add README with permission justifications, privacy posture, and reviewer packet items.
+
+**Env vars**
+
+* (Server) MODEL\_CDN\_BASE, MODEL\_SIGN\_KEY, FEEDS\_OUTPUT\_BUCKET.
+* (Client) none required for privacy; store URLs compiled in.
+
+---
+
+## 19) Seed data & fixtures
+
+* **Numbers list**: ten known scam numbers with “Suspected Scam”.
+* **Messages**: three SMS samples (malicious/ambiguous/legit).
+* **Voicemail transcript**: short “gift card” request.
+* **Cases**: three local dummy cases for History.
+* **Packs**: `sms_essentials_v1`, `giftcard_basics_v1`, `medicare_v1` with 6–8 cards each (two audio tips per pack).
+
+---
+
+## 20) Roadmap (fast)
+
+* **Week 1**: RN shell; Android call screening stub; iOS Call Directory stub; SMS Filter returns Allow; backend `/v1/model`, `/v1/feeds.json`; StoreKit/GPB test env.
+* **Week 2**: Real rules + model runner; submit report→feature vector→guidance; History; Training pack #1; daily reminders.
+* **Week 3**: Two more packs; spaced repetition; caregiver share (expiring token); tie packs to live alerts (keyword map).
+* **Week 4**: Polish A11y, reviewer packet, US-only store listings, privacy policy finalize.
+
+---
+
+## 21) Nginx (no logs) example
+
+```nginx
+server {
+  listen 443 ssl http2;
+  server_name api.boomerbuddy.net;
+  access_log off;
+  error_log /var/log/nginx/error.log crit;
+  proxy_set_header X-Forwarded-For "";
+  proxy_set_header X-Real-IP "";
+  add_header Referrer-Policy "no-referrer";
+  add_header Permissions-Policy "geolocation=(), microphone=(), camera=()";
+  add_header X-Content-Type-Options "nosniff";
+  add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+  location / { proxy_pass http://app; proxy_buffering off; }
+}
+```
+
+---
+
+## 22) Example payloads
+
+**/v1/analyze → request (feature vector)**
+
+```json
+{"v":1,"channel":"sms","language":"en","length_chars":247,"has_links":true,
+"link_domains":["bit.ly"],"signals":["urgency","gift_card","threat"],
+"brand_suspects":["irs"],"time_of_day_bucket":"night","state":"WA","model_score":0.86}
+```
+
+**/v1/analyze → response**
+
+```json
+{"label":"likely_scam","score":91,"confidence":"high",
+"top_reasons":["Requested gift cards","Threatened legal action","Imposter keywords: IRS"],
+"recommended_actions":[{"title":"Do not reply or click links","steps":["Block the number","Report to FTC at reportfraud.ftc.gov"]}],
+"contacts":{"federal":[{"name":"FTC – ReportFraud","url":"https://reportfraud.ftc.gov"}],
+"state":[{"name":"Washington AG – Consumer","url":"https://www.atg.wa.gov/consumer-protection"}]},
+"legal_note":"Guidance only; not legal or financial advice."}
+```
+
+**Training pack metadata**
+
+```json
+{"pack_id":"sms_essentials_v1","title":"SMS Essentials","locale":"en-US",
+"targets":["sms","calls"],"difficulty":"easy","region":"US","created_at":"2025-08-01","checksum":"sha256:..."}
+```
+
+---
+
+That’s the whole package — architecture, privacy posture, platform integrations, training system, endpoints, stubs, and runbook — ready for Replit to scaffold. Want me to also generate the **starter RN screens & native module stubs** as a zip you can drop in?

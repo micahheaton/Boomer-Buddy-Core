@@ -1,0 +1,531 @@
+openapi: 3.0.3
+info:
+  title: Boomer Buddy Mobile API
+  description: |
+    Stateless, logless API for mobile companion apps.
+    
+    **Privacy Guarantee**: No PII stored, no logging, memory-only processing.
+    All content must be PII-scrubbed before transmission.
+  version: 1.0.0
+  contact:
+    name: Boomer Buddy Support
+    email: support@boomerbuddy.net
+
+servers:
+  - url: https://api.boomerbuddy.net/v1
+    description: Production API
+
+security: []  # No authentication - stateless design
+
+paths:
+  /model:
+    get:
+      summary: Get latest model metadata and download URLs
+      description: |
+        Returns information about the latest on-device ML model.
+        Includes signed CDN URLs for TensorFlow Lite (Android) and Core ML (iOS) downloads.
+      operationId: getModel
+      responses:
+        '200':
+          description: Model information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelInfo'
+        '500':
+          description: Model information unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /feeds.json:
+    get:
+      summary: Get merged government/organization alerts
+      description: |
+        Returns daily merged alerts from federal agencies (FTC, FBI IC3, SSA, HHS OIG, CISA, SEC, CFPB, FCC),
+        state attorney generals, and authorized elder-focused nonprofits (AARP, BBB).
+        
+        Updated every 6-12 hours via automated worker.
+      operationId: getFeeds
+      responses:
+        '200':
+          description: Merged feeds
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MergedFeeds'
+        '500':
+          description: Feeds unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /numberlist:
+    get:
+      summary: Get known scam numbers list
+      description: |
+        Returns signed E.164 formatted list of known scam numbers with labels.
+        Used by iOS Call Directory Extension and Android call screening cache.
+      operationId: getNumberList
+      responses:
+        '200':
+          description: Scam numbers list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NumberList'
+        '500':
+          description: Number list unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /analyze:
+    post:
+      summary: Analyze feature vector for scam risk
+      description: |
+        **CRITICAL**: Only accepts PII-scrubbed feature vectors. No raw content allowed.
+        
+        Returns risk analysis with guidance, actions, and contacts.
+        **NO PERSISTENCE** - analysis is discarded after response.
+      operationId: analyzeFeatureVector
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeatureVector'
+      responses:
+        '200':
+          description: Risk analysis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskAnalysis'
+        '400':
+          description: Invalid feature vector or PII detected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Analysis unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /health:
+    get:
+      summary: Health check
+      description: Simple health check endpoint
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
+
+components:
+  schemas:
+    ModelInfo:
+      type: object
+      required:
+        - version
+        - checksum
+        - createdAt
+        - requiredRulesVersion
+        - downloadUrls
+        - rulesUrl
+      properties:
+        version:
+          type: string
+          description: Model version (semver)
+          example: "1.2.3"
+        checksum:
+          type: string
+          description: SHA256 checksum for integrity verification
+          example: "sha256:abc123..."
+        createdAt:
+          type: string
+          format: date-time
+          description: Model creation timestamp
+        requiredRulesVersion:
+          type: string
+          description: Required rules engine version
+          example: "1.1.0"
+        downloadUrls:
+          type: object
+          required:
+            - android
+            - ios
+          properties:
+            android:
+              type: string
+              format: uri
+              description: Signed CDN URL for TensorFlow Lite model
+            ios:
+              type: string
+              format: uri
+              description: Signed CDN URL for Core ML model
+        rulesUrl:
+          type: string
+          format: uri
+          description: Signed CDN URL for rules configuration
+
+    MergedFeeds:
+      type: object
+      required:
+        - lastUpdated
+        - sources
+        - alerts
+      properties:
+        lastUpdated:
+          type: integer
+          format: int64
+          description: Unix timestamp of last update
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedSource'
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedAlert'
+          maxItems: 100
+          description: Top-ranked alerts (max 100)
+
+    FeedSource:
+      type: object
+      required:
+        - id
+        - name
+        - url
+        - type
+        - priority
+      properties:
+        id:
+          type: string
+          description: Unique source identifier
+          example: "ftc_consumer_alerts"
+        name:
+          type: string
+          description: Human-readable source name
+          example: "FTC Consumer Alerts"
+        url:
+          type: string
+          format: uri
+          description: RSS/Atom feed URL
+        type:
+          type: string
+          enum: [federal, state, nonprofit]
+          description: Source type
+        priority:
+          type: integer
+          minimum: 1
+          description: Priority (1=highest)
+        state:
+          type: string
+          description: State code for state sources
+          example: "CA"
+
+    FeedAlert:
+      type: object
+      required:
+        - id
+        - source
+        - title
+        - link
+        - publishedAt
+        - tags
+        - priority
+      properties:
+        id:
+          type: string
+          description: Unique alert identifier
+        source:
+          type: string
+          description: Source ID that published this alert
+        title:
+          type: string
+          description: Alert title
+          maxLength: 200
+        link:
+          type: string
+          format: uri
+          description: Link to full alert
+        publishedAt:
+          type: integer
+          format: int64
+          description: Unix timestamp of publication
+        tags:
+          type: array
+          items:
+            type: string
+          description: Alert tags (scam types, categories)
+          example: ["phishing", "federal", "medicare"]
+        state:
+          type: string
+          description: State code if state-specific
+        priority:
+          type: integer
+          minimum: 1
+          description: Alert priority
+
+    NumberList:
+      type: object
+      required:
+        - version
+        - checksum
+        - updatedAt
+        - numbers
+      properties:
+        version:
+          type: string
+          description: List version
+        checksum:
+          type: string
+          description: SHA256 checksum for integrity
+        updatedAt:
+          type: integer
+          format: int64
+          description: Unix timestamp of last update
+        numbers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScamNumber'
+          maxItems: 10000
+
+    ScamNumber:
+      type: object
+      required:
+        - number
+        - label
+        - confidence
+      properties:
+        number:
+          type: string
+          description: E.164 formatted phone number
+          pattern: '^\d{10}$'
+          example: "8005551234"
+        label:
+          type: string
+          description: Display label for the number
+          example: "Boomer Buddy: Suspected Scam"
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Confidence score (0-1)
+        shouldBlock:
+          type: boolean
+          description: Whether to block this number
+          default: false
+
+    FeatureVector:
+      type: object
+      required:
+        - v
+        - channel
+        - language
+        - length_chars
+        - has_links
+        - signals
+        - time_of_day_bucket
+        - state
+        - model_score
+      properties:
+        v:
+          type: integer
+          description: Feature vector version
+          enum: [1]
+        channel:
+          type: string
+          enum: [sms, call, voicemail, email, web, letter]
+          description: Communication channel
+        language:
+          type: string
+          description: Content language code
+          example: "en"
+        length_chars:
+          type: integer
+          minimum: 0
+          description: Content length in characters
+        has_links:
+          type: boolean
+          description: Whether content contains links
+        link_domains:
+          type: array
+          items:
+            type: string
+          description: Extracted domains (no full URLs)
+          example: ["bit.ly", "example.com"]
+        signals:
+          type: array
+          items:
+            type: string
+          description: Detected scam signals
+          example: ["urgency", "gift_card", "threat"]
+        brand_suspects:
+          type: array
+          items:
+            type: string
+          description: Suspected brand impersonations
+          example: ["irs", "amazon"]
+        time_of_day_bucket:
+          type: string
+          description: Time of day category
+          enum: [morning, afternoon, evening, night, unknown]
+        state:
+          type: string
+          description: User's state code
+          pattern: '^[A-Z]{2}$'
+          example: "WA"
+        model_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Local model prediction score
+
+    RiskAnalysis:
+      type: object
+      required:
+        - label
+        - score
+        - confidence
+        - top_reasons
+        - recommended_actions
+        - contacts
+        - legal_note
+      properties:
+        label:
+          type: string
+          enum: [safe, suspicious, likely_scam, definite_scam]
+          description: Risk classification
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Risk score (0-100)
+        confidence:
+          type: string
+          enum: [low, medium, high]
+          description: Confidence in analysis
+        top_reasons:
+          type: array
+          items:
+            type: string
+          maxItems: 5
+          description: Top reasons for the risk assessment
+          example: ["Requested gift cards", "Threatened legal action"]
+        recommended_actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecommendedAction'
+          description: Suggested actions for the user
+        contacts:
+          type: object
+          properties:
+            federal:
+              type: array
+              items:
+                $ref: '#/components/schemas/Contact'
+            state:
+              type: array
+              items:
+                $ref: '#/components/schemas/Contact'
+            local:
+              type: array
+              items:
+                $ref: '#/components/schemas/Contact'
+        legal_note:
+          type: string
+          description: Legal disclaimer
+          example: "Guidance only; not legal or financial advice."
+
+    RecommendedAction:
+      type: object
+      required:
+        - title
+        - steps
+      properties:
+        title:
+          type: string
+          description: Action title
+          example: "Do not reply or click links"
+        steps:
+          type: array
+          items:
+            type: string
+          description: Specific steps to take
+          example: ["Block the number", "Report to FTC"]
+
+    Contact:
+      type: object
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+          description: Contact name
+          example: "FTC – ReportFraud"
+        url:
+          type: string
+          format: uri
+          description: Contact website
+          example: "https://reportfraud.ftc.gov"
+        phone:
+          type: string
+          description: Contact phone number
+        email:
+          type: string
+          format: email
+          description: Contact email
+        description:
+          type: string
+          description: What this contact helps with
+          example: "Report fraud and identity theft"
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Model information unavailable"
+
+    HealthCheck:
+      type: object
+      required:
+        - status
+        - timestamp
+        - version
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        timestamp:
+          type: integer
+          format: int64
+        version:
+          type: string
+
+  securitySchemes: {}
+
+tags:
+  - name: Models
+    description: ML model management
+  - name: Feeds
+    description: Government/organization alerts
+  - name: Analysis
+    description: Risk analysis (stateless)
+  - name: Health
+    description: Service health
