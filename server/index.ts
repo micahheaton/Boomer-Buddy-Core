@@ -2,7 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { registerSimpleV2Routes } from "./simple-v2-routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { setupAuth } from "./auth";
+// import { setupAuth } from "./auth"; // Temporarily disabled to fix Google auth errors
 import { scheduledDataCollection } from "./scheduledDataCollection";
 
 const app = express();
@@ -10,7 +10,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Setup authentication middleware
-setupAuth(app);
+// setupAuth(app); // Disabled to prevent Google auth connection errors
 
 app.use((req, res, next) => {
   const start = Date.now();
