@@ -14,7 +14,7 @@ import { communitySystem } from "./communitySystem";
 import { historicalCommunitySeeder } from "./historicalCommunitySeeder";
 import { translateService } from "./translateService";
 import { db } from "./db";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { mobileNotificationService } from "./mobileNotificationService";
 import { filterService, type FilterOptions } from "./filterService";
 import multer from "multer";
@@ -1094,28 +1094,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Unified trends and heatmap endpoint
   app.get("/api/unified-trends-heatmap", async (req, res) => {
     try {
+      console.log('🔍 Fetching unified data...');
+      
       // Get comprehensive data from both trends and news using correct column names
-      const trends = await db.select()
+      const trendsData = await db.select()
         .from(scamTrends)
         .where(eq(scamTrends.isActive, true))
         .orderBy(desc(scamTrends.lastReported))
         .limit(100);
 
-      const news = await db.select()
+      console.log(`📊 Found ${trendsData.length} active scam trends`);
+
+      const newsItemsData = await db.select()
         .from(newsItems)
         .where(eq(newsItems.isVerified, true))
         .orderBy(desc(newsItems.publishDate))
         .limit(50);
 
+      console.log(`📰 Found ${newsItemsData.length} verified news items`);
+
       // Get data sources stats
       const totalSources = await db.select({ count: sql<number>`count(*)` }).from(dataSources);
       const activeSources = await db.select({ count: sql<number>`count(*)` })
         .from(dataSources)
-        .where(eq(dataSources.isActive, true));
+        .where(eq(dataSources.status, 'active'));
 
       // Combine all data into unified format
       const alerts = [
-        ...trends.map(trend => ({
+        ...trendsData.map(trend => ({
           id: trend.id,
           title: trend.title,
           description: trend.description,
@@ -1129,7 +1135,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           scamTypes: trend.affectedRegions || [],
           elderRelevanceScore: 85
         })),
-        ...news.map(item => ({
+        ...newsItemsData.map(item => ({
           id: item.id,
           title: item.title,
           description: item.summary?.substring(0, 150) + '...' || 'Government News Update',
@@ -1144,9 +1150,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }))
       ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
+      console.log(`🔗 Combined ${alerts.length} total alerts and news items`);
+
       // Calculate real-time statistics
       const scamAlerts = alerts.filter(a => a.isScamAlert);
-      const newsItems = alerts.filter(a => !a.isScamAlert);
+      const newsItemsFiltered = alerts.filter(a => !a.isScamAlert);
       const highSeverity = alerts.filter(a => a.severity === 'high' || a.severity === 'critical');
       const todayAlerts = alerts.filter(a => 
         new Date(a.timestamp).toDateString() === new Date().toDateString()
@@ -1160,7 +1168,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           scamAlertsToday: scamAlerts.filter(a => 
             new Date(a.timestamp).toDateString() === new Date().toDateString()
           ).length,
-          governmentAdvisories: newsItems.length,
+          governmentAdvisories: newsItemsFiltered.length,
           dataSourcesOnline: activeSources[0]?.count || 0,
           lastUpdate: new Date().toISOString(),
           coverage: "All 50 States + Federal Agencies (Comprehensive Collection)"
@@ -1168,7 +1176,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         metadata: {
           total: alerts.length,
           scamTrends: scamAlerts.length,
-          newsItems: newsItems.length,
+          newsItems: newsItemsFiltered.length,
           lastUpdated: new Date().toISOString()
         }
       });
