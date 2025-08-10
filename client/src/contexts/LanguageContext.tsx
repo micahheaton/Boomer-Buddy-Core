@@ -55,10 +55,20 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Auto-translate page content when language changes
+  // Auto-translate page content when language changes with smooth transitions
   useEffect(() => {
     if (currentLanguage.code !== 'en') {
-      translatePageContent();
+      // Add loading animation to body
+      document.body.style.opacity = '0.8';
+      document.body.style.transition = 'opacity 0.3s ease';
+      
+      translatePageContent().finally(() => {
+        // Remove loading animation
+        document.body.style.opacity = '1';
+        setTimeout(() => {
+          document.body.style.removeProperty('transition');
+        }, 300);
+      });
     }
   }, [currentLanguage]);
 

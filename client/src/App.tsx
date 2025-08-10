@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { TranslationStatus } from "@/components/translation-status";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Navigation from "@/components/navigation";
@@ -54,6 +55,7 @@ function App() {
               <main className="pt-0">
                 <Router />
               </main>
+              <TranslationStatus />
               <Toaster />
             </div>
           </TooltipProvider>

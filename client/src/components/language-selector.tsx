@@ -23,13 +23,17 @@ export function LanguageSelector() {
         <Button 
           variant="ghost" 
           size="sm" 
-          className={`gap-2 ${isTranslating ? 'opacity-50' : ''}`}
+          className={`gap-2 transition-all duration-300 ${isTranslating ? 'opacity-50 scale-95' : 'hover:scale-105'}`}
           disabled={isTranslating}
         >
           <Globe className="h-4 w-4" />
           <span className="text-lg">{flagMapping[currentLanguage.flag]}</span>
           <span className="hidden sm:inline">{currentLanguage.nativeName}</span>
-          <ChevronDown className="h-3 w-3" />
+          {isTranslating ? (
+            <div className="animate-spin h-3 w-3 border border-gray-400 border-t-transparent rounded-full"></div>
+          ) : (
+            <ChevronDown className="h-3 w-3" />
+          )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 max-h-96 overflow-y-auto">
