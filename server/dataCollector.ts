@@ -12,42 +12,130 @@ interface RSSFeed {
   agency: string;
 }
 
-// Verified RSS feeds from trusted government sources
+// Verified RSS feeds from trusted government and security sources
 const TRUSTED_FEEDS: RSSFeed[] = [
+  // Government Sources
   {
     name: 'FTC Consumer Alerts',
-    url: 'https://www.consumer.ftc.gov/rss/consumer-alerts.xml',
+    url: 'https://consumer.ftc.gov/consumer-alerts/feed',
     category: 'government',
     reliability: 0.95,
     agency: 'FTC'
   },
   {
-    name: 'FBI IC3 Press Releases',
-    url: 'https://www.fbi.gov/feeds/ic3-press-releases/rss.xml',
+    name: 'FBI Top Stories',
+    url: 'https://www.fbi.gov/feeds/stories/rss',
+    category: 'government', 
+    reliability: 0.98,
+    agency: 'FBI'
+  },
+  {
+    name: 'FBI Press Releases',
+    url: 'https://www.fbi.gov/feeds/press-releases/rss',
     category: 'government',
     reliability: 0.98,
     agency: 'FBI'
   },
   {
-    name: 'AARP Fraud Watch',
-    url: 'https://www.aarp.org/money/scams-fraud/feed.rss',
+    name: 'Social Security Admin Blog',
+    url: 'https://blog.ssa.gov/feed/',
+    category: 'government',
+    reliability: 0.93,
+    agency: 'SSA'
+  },
+  {
+    name: 'CISA Cybersecurity Advisories',
+    url: 'https://www.cisa.gov/cybersecurity-advisories/rss.xml',
+    category: 'government',
+    reliability: 0.97,
+    agency: 'CISA'
+  },
+  
+  // Consumer Protection Organizations
+  {
+    name: 'AARP Fraud News',
+    url: 'https://www.aarp.org/money/scams-fraud/rss.xml',
     category: 'consumer-protection',
     reliability: 0.85,
     agency: 'AARP'
   },
   {
-    name: 'BBB Scam Alerts',
-    url: 'https://www.bbb.org/all/scamtracker/rss',
-    category: 'consumer-protection',
+    name: 'BBB Scam News',
+    url: 'https://www.bbb.org/us/news/scams/rss',
+    category: 'consumer-protection', 
     reliability: 0.80,
     agency: 'BBB'
   },
   {
-    name: 'Social Security Admin Alerts',
-    url: 'https://blog.ssa.gov/feed/',
+    name: 'Consumer Reports Security',
+    url: 'https://www.consumerreports.org/cro/rss/index.xml',
+    category: 'consumer-protection',
+    reliability: 0.82,
+    agency: 'Consumer Reports'
+  },
+  
+  // Financial Protection
+  {
+    name: 'CFPB Consumer Alerts',
+    url: 'https://www.consumerfinance.gov/about-us/newsroom/rss/',
+    category: 'financial',
+    reliability: 0.94,
+    agency: 'CFPB'
+  },
+  {
+    name: 'SEC Investor Alerts', 
+    url: 'https://www.sec.gov/news/pressrelease.rss',
+    category: 'financial',
+    reliability: 0.96,
+    agency: 'SEC'
+  },
+  {
+    name: 'FINRA Investor Alerts',
+    url: 'https://www.finra.org/rss/investor-news',
+    category: 'financial',
+    reliability: 0.92,
+    agency: 'FINRA'
+  },
+  
+  // Technology Security
+  {
+    name: 'Microsoft Security Blog',
+    url: 'https://www.microsoft.com/security/blog/feed/',
+    category: 'tech-security',
+    reliability: 0.88,
+    agency: 'Microsoft'
+  },
+  {
+    name: 'Google Security Blog',
+    url: 'https://security.googleblog.com/feeds/posts/default',
+    category: 'tech-security',
+    reliability: 0.88,
+    agency: 'Google'
+  },
+  {
+    name: 'Krebs on Security',
+    url: 'https://krebsonsecurity.com/feed/',
+    category: 'security-research',
+    reliability: 0.90,
+    agency: 'Independent'
+  },
+  
+  // Healthcare and Medicare
+  {
+    name: 'CMS Medicare Alerts',
+    url: 'https://www.cms.gov/newsroom/rss.xml',
+    category: 'healthcare',
+    reliability: 0.95,
+    agency: 'CMS'
+  },
+  
+  // Identity Protection
+  {
+    name: 'IRS Tax Scam Alerts',
+    url: 'https://www.irs.gov/rss/newsroom.xml',
     category: 'government',
-    reliability: 0.93,
-    agency: 'SSA'
+    reliability: 0.96,
+    agency: 'IRS'
   }
 ];
 
@@ -244,15 +332,42 @@ export class DataCollector {
   }
 
   private extractDescription(item: any): string {
-    return (item.contentSnippet || item.content || item.summary || '').trim().substring(0, 500);
-  }
-
-  private extractSummary(item: any): string {
-    return (item.contentSnippet || item.summary || '').trim().substring(0, 300);
+    let description = item.contentSnippet || item.content || item.summary || '';
+    
+    // Clean HTML tags and entities
+    description = description
+      .replace(/<[^>]*>/g, ' ') // Remove HTML tags
+      .replace(/&[^;]+;/g, ' ') // Remove HTML entities
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim();
+    
+    return description.substring(0, 500);
   }
 
   private extractContent(item: any): string {
-    return (item.content || item.contentSnippet || item.summary || '').trim().substring(0, 1000);
+    let content = item.content || item.contentSnippet || item.summary || '';
+    
+    // Clean HTML tags and entities
+    content = content
+      .replace(/<[^>]*>/g, ' ') // Remove HTML tags
+      .replace(/&[^;]+;/g, ' ') // Remove HTML entities
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim();
+    
+    return content.substring(0, 1000);
+  }
+
+  private extractSummary(item: any): string {
+    let summary = item.contentSnippet || item.summary || '';
+    
+    // Clean HTML tags and entities
+    summary = summary
+      .replace(/<[^>]*>/g, ' ') // Remove HTML tags  
+      .replace(/&[^;]+;/g, ' ') // Remove HTML entities
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim();
+    
+    return summary.substring(0, 300);
   }
 
   private async logSuccessfulCollection(feed: RSSFeed): Promise<void> {

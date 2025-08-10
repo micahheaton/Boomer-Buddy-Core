@@ -12,6 +12,7 @@ import { startDataCollection } from "./dataCollector";
 import { db } from "./db";
 import { desc, eq } from "drizzle-orm";
 import { mobileNotificationService } from "./mobileNotificationService";
+import { filterService, type FilterOptions } from "./filterService";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -566,44 +567,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/trends/search", async (req, res) => {
+  // Advanced filtering and search endpoints
+  app.get("/api/filter/trends", async (req, res) => {
     try {
-      const { q } = req.query;
+      const filters: FilterOptions = {
+        category: req.query.category ? String(req.query.category).split(',') : undefined,
+        severity: req.query.severity ? String(req.query.severity).split(',') : undefined,
+        agency: req.query.agency ? String(req.query.agency).split(',') : undefined,
+        tags: req.query.tags ? String(req.query.tags).split(',') : undefined,
+        searchQuery: req.query.q as string,
+        sortBy: req.query.sortBy as 'date' | 'reports' | 'relevance' || 'date',
+        sortOrder: req.query.sortOrder as 'asc' | 'desc' || 'desc',
+        limit: req.query.limit ? parseInt(String(req.query.limit)) : 50,
+        offset: req.query.offset ? parseInt(String(req.query.offset)) : 0
+      };
+
+      if (req.query.dateStart && req.query.dateEnd) {
+        filters.dateRange = {
+          start: new Date(String(req.query.dateStart)),
+          end: new Date(String(req.query.dateEnd))
+        };
+      }
+
+      const trends = await filterService.filterScamTrends(filters);
+      const statistics = await filterService.getStatistics(filters);
+      
+      res.json({ 
+        trends: trends.map(trend => ({
+          id: trend.id,
+          title: trend.title,
+          description: trend.description,
+          category: trend.category,
+          severity: trend.severity,
+          reportCount: trend.reportCount,
+          affectedRegions: trend.affectedRegions || [],
+          tags: trend.tags || [],
+          sources: [{
+            name: trend.sourceAgency,
+            url: trend.sourceUrl,
+            reliability: 0.95
+          }],
+          firstReported: trend.firstReported,
+          lastReported: trend.lastReported
+        })),
+        statistics,
+        filters,
+        total: trends.length
+      });
+    } catch (error) {
+      console.error("Filter trends error:", error);
+      res.status(500).json({ error: "Failed to filter trends" });
+    }
+  });
+
+  app.get("/api/filter/news", async (req, res) => {
+    try {
+      const filters: FilterOptions = {
+        category: req.query.category ? String(req.query.category).split(',') : undefined,
+        agency: req.query.agency ? String(req.query.agency).split(',') : undefined,
+        searchQuery: req.query.q as string,
+        sortBy: req.query.sortBy as 'date' | 'relevance' || 'date',
+        sortOrder: req.query.sortOrder as 'asc' | 'desc' || 'desc',
+        limit: req.query.limit ? parseInt(String(req.query.limit)) : 20,
+        offset: req.query.offset ? parseInt(String(req.query.offset)) : 0
+      };
+
+      if (req.query.dateStart && req.query.dateEnd) {
+        filters.dateRange = {
+          start: new Date(String(req.query.dateStart)),
+          end: new Date(String(req.query.dateEnd))
+        };
+      }
+
+      const news = await filterService.filterNewsItems(filters);
+      const statistics = await filterService.getStatistics(filters);
+      
+      res.json({ 
+        news: news.map(item => ({
+          id: item.id,
+          title: item.title,
+          summary: item.summary,
+          content: item.content,
+          category: item.category,
+          source: {
+            name: item.sourceName,
+            agency: item.sourceAgency,
+            url: item.sourceUrl,
+            reliability: item.reliability
+          },
+          publishDate: item.publishDate,
+          createdAt: item.createdAt
+        })),
+        statistics,
+        filters,
+        total: news.length
+      });
+    } catch (error) {
+      console.error("Filter news error:", error);
+      res.status(500).json({ error: "Failed to filter news" });
+    }
+  });
+
+  app.get("/api/search", async (req, res) => {
+    try {
+      const { q, limit = 20, offset = 0 } = req.query;
       if (!q || typeof q !== 'string') {
         return res.status(400).json({ error: "Search query required" });
       }
       
-      // Search in titles, descriptions, and tags
-      const searchQuery = `%${q.toLowerCase()}%`;
-      const trends = await db.select()
-        .from(scamTrends)
-        .where(eq(scamTrends.isActive, true))
-        .orderBy(desc(scamTrends.lastReported))
-        .limit(20);
-
-      // Filter results by search term (basic text matching)
-      const filteredTrends = trends.filter(trend => 
-        trend.title.toLowerCase().includes(q.toLowerCase()) ||
-        trend.description.toLowerCase().includes(q.toLowerCase()) ||
-        (trend.tags as string[])?.some(tag => tag.toLowerCase().includes(q.toLowerCase()))
-      );
+      const results = await filterService.globalSearch(q, {
+        limit: parseInt(String(limit)),
+        offset: parseInt(String(offset))
+      });
       
-      const results = filteredTrends.map(trend => ({
-        id: trend.id,
-        title: trend.title,
-        description: trend.description,
-        category: trend.category,
-        severity: trend.severity,
-        reportCount: trend.reportCount,
-        sourceAgency: trend.sourceAgency,
-        sourceUrl: trend.sourceUrl,
-        lastReported: trend.lastReported
-      }));
-      
-      res.json({ results, query: q, total: results.length });
+      res.json(results);
     } catch (error) {
-      console.error("Trend search error:", error);
-      res.status(500).json({ error: "Failed to search trends" });
+      console.error("Global search error:", error);
+      res.status(500).json({ error: "Failed to search" });
+    }
+  });
+
+  app.get("/api/filter/options", async (req, res) => {
+    try {
+      const options = await filterService.getFilterOptions();
+      res.json(options);
+    } catch (error) {
+      console.error("Filter options error:", error);
+      res.status(500).json({ error: "Failed to get filter options" });
     }
   });
 
