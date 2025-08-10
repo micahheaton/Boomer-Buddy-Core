@@ -9,6 +9,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { nanoid } from "nanoid";
+import OpenAI from "openai";
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(process.cwd(), "uploads");
@@ -16,7 +17,7 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Configure multer for file uploads
+// Configure multer for file uploads (images)
 const upload = multer({
   dest: uploadsDir,
   limits: {
@@ -29,6 +30,26 @@ const upload = multer({
       cb(new Error("Only image files are allowed"));
     }
   },
+});
+
+// Configure multer for audio uploads
+const audioUpload = multer({
+  dest: uploadsDir,
+  limits: {
+    fileSize: 25 * 1024 * 1024, // 25MB limit for audio
+  },
+  fileFilter: (req: any, file: any, cb: any) => {
+    if (file.mimetype.startsWith("audio/") || file.fieldname === 'audio') {
+      cb(null, true);
+    } else {
+      cb(new Error("Only audio files are allowed"));
+    }
+  },
+});
+
+// Initialize OpenAI client for transcription
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -166,11 +187,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // GET /api/states - Get available states
   app.get("/api/states", (req, res) => {
-    const states = Object.keys(stateContacts).map(code => ({
-      code,
-      name: stateContacts[code].name,
-    }));
-    res.json(states);
+    try {
+      const stateContactsData = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data/state-contacts.json"), "utf-8"));
+      const states = Object.entries(stateContactsData).map(([code, data]: [string, any]) => ({
+        code,
+        name: data.name
+      })).sort((a, b) => a.name.localeCompare(b.name));
+      
+      res.json(states);
+    } catch (error) {
+      console.error("Error loading state data:", error);
+      // Fallback to basic state list
+      const basicStates = [
+        { code: "CA", name: "California" },
+        { code: "NY", name: "New York" },
+        { code: "TX", name: "Texas" },
+        { code: "FL", name: "Florida" },
+        { code: "IL", name: "Illinois" }
+      ];
+      res.json(basicStates);
+    }
+  });
+
+  // POST /api/transcribe - Transcribe audio to text using OpenAI Whisper
+  app.post("/api/transcribe", audioUpload.single("audio"), async (req: Request & { file?: Express.Multer.File }, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No audio file provided" });
+      }
+
+      if (!process.env.OPENAI_API_KEY) {
+        return res.status(500).json({ error: "OpenAI API key not configured" });
+      }
+
+      const audioPath = req.file.path;
+      
+      // Create a read stream from the uploaded file
+      const audioStream = fs.createReadStream(audioPath);
+      
+      // Use OpenAI Whisper for transcription
+      const transcription = await openai.audio.transcriptions.create({
+        file: audioStream,
+        model: "whisper-1",
+        language: "en", // Optimize for English
+        response_format: "text"
+      });
+
+      // Clean up the uploaded file
+      fs.unlink(audioPath, (err) => {
+        if (err) console.error("Error deleting audio file:", err);
+      });
+
+      if (!transcription || typeof transcription !== 'string' || transcription.trim().length === 0) {
+        return res.status(400).json({ error: "No speech detected in the audio" });
+      }
+
+      res.json({ 
+        text: transcription.trim(),
+        success: true 
+      });
+
+    } catch (error: any) {
+      console.error("Transcription error:", error);
+      
+      // Clean up file if it exists
+      if (req.file) {
+        fs.unlink(req.file.path, (err) => {
+          if (err) console.error("Error deleting audio file:", err);
+        });
+      }
+      
+      res.status(500).json({ 
+        error: "Transcription failed: " + (error.message || "Unknown error"),
+        success: false 
+      });
+    }
   });
 
   // Serve uploaded images

@@ -258,6 +258,69 @@ export default function Home() {
         </header>
 
         <main className="max-w-4xl mx-auto px-6 py-8">
+          {/* Navigation Button */}
+          <div className="mb-6 text-center">
+            <Button 
+              onClick={handleStartOver}
+              variant="outline" 
+              size="lg"
+              className="text-lg px-8 py-4 bg-white hover:bg-gray-50"
+            >
+              {viewMode === 'demo' ? 'Back to Home' : 'Analyze Another Scam'}
+            </Button>
+          </div>
+          
+          {/* Show Original Content for Demos */}
+          {viewMode === 'demo' && (
+            <section className="bg-gray-50 rounded-xl border-2 border-gray-200 p-6 mb-8">
+              <h3 className="text-xl font-semibold mb-4 text-gray-800">Original Content Being Analyzed:</h3>
+              <div className="bg-white rounded-lg p-4 border">
+                {analysisId?.includes('phishing') && (
+                  <div className="space-y-3">
+                    <div className="text-sm text-gray-600">Email Screenshot Analysis:</div>
+                    <div className="bg-red-50 border border-red-200 rounded p-3">
+                      <div className="font-semibold text-red-800">From: security@bankofamerica-verify.net</div>
+                      <div className="font-semibold text-red-800">Subject: URGENT: Account Security Alert - Action Required</div>
+                      <div className="mt-2 text-red-700">
+                        Dear Customer,<br/><br/>
+                        We have detected suspicious activity on your Bank of America account. Your account will be temporarily suspended unless you verify your information immediately.<br/><br/>
+                        Click here to secure your account: [VERIFY NOW]<br/><br/>
+                        You must provide your Social Security Number and account details to prevent closure.<br/><br/>
+                        This action expires in 24 hours.<br/><br/>
+                        Bank of America Security Team
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {analysisId?.includes('techsupport') && (
+                  <div className="space-y-3">
+                    <div className="text-sm text-gray-600">User Description:</div>
+                    <div className="bg-orange-50 border border-orange-200 rounded p-3 text-orange-800">
+                      "Someone just called me saying they're from Microsoft and my computer has viruses. They said I need to download TeamViewer so they can fix it remotely. The caller had a strong accent and was very insistent that I needed to act immediately or my computer would crash. They said they detected malicious activity from my IP address. Should I trust them and download the software they're asking for?"
+                    </div>
+                  </div>
+                )}
+                
+                {analysisId?.includes('ssa') && (
+                  <div className="space-y-3">
+                    <div className="text-sm text-gray-600">Phone Call Transcript:</div>
+                    <div className="bg-amber-50 border border-amber-200 rounded p-3 text-amber-800">
+                      <div className="font-mono text-sm">
+                        <div><strong>Caller:</strong> This is Agent Johnson from the Social Security Administration. Your social security number has been suspended due to suspicious activity.</div><br/>
+                        <div><strong>Me:</strong> What kind of suspicious activity?</div><br/>
+                        <div><strong>Caller:</strong> There are several fraudulent charges and bank accounts linked to your SSN. We need to clear this immediately or we'll have to issue a warrant for your arrest.</div><br/>
+                        <div><strong>Me:</strong> That sounds serious. What do I need to do?</div><br/>
+                        <div><strong>Caller:</strong> First, confirm your social security number so I can access your file. Then you'll need to purchase gift cards to pay the clearance fee to unlock your account. Do not hang up or tell anyone about this call.</div><br/>
+                        <div><strong>Me:</strong> [Hung up - seemed suspicious]</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
           <ResultsDisplay 
             result={analysisResult} 
             analysisId={analysisId!}

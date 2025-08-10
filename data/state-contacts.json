@@ -1,0 +1,602 @@
+{
+  "AL": {
+    "name": "Alabama",
+    "attorney_general": {
+      "name": "Alabama Attorney General Consumer Protection",
+      "phone": "1-800-392-5658",
+      "website": "ago.alabama.gov"
+    },
+    "elder_abuse": {
+      "name": "Alabama Department of Human Resources Adult Protective Services",
+      "phone": "1-334-242-1850"
+    }
+  },
+  "AK": {
+    "name": "Alaska",
+    "attorney_general": {
+      "name": "Alaska Attorney General Consumer Protection",
+      "phone": "1-907-269-5100",
+      "website": "law.alaska.gov"
+    },
+    "elder_abuse": {
+      "name": "Alaska Adult Protective Services",
+      "phone": "1-800-478-9996"
+    }
+  },
+  "AZ": {
+    "name": "Arizona",
+    "attorney_general": {
+      "name": "Arizona Attorney General Consumer Protection",
+      "phone": "1-602-542-5763",
+      "website": "azag.gov"
+    },
+    "elder_abuse": {
+      "name": "Arizona Adult Protective Services",
+      "phone": "1-877-767-2385"
+    }
+  },
+  "AR": {
+    "name": "Arkansas",
+    "attorney_general": {
+      "name": "Arkansas Attorney General Consumer Protection",
+      "phone": "1-800-482-8982",
+      "website": "arkansasag.gov"
+    },
+    "elder_abuse": {
+      "name": "Arkansas Adult Protective Services",
+      "phone": "1-800-482-8049"
+    }
+  },
+  "CA": {
+    "name": "California",
+    "attorney_general": {
+      "name": "California Attorney General Consumer Protection",
+      "phone": "1-800-952-5225",
+      "website": "oag.ca.gov"
+    },
+    "elder_abuse": {
+      "name": "California Adult Protective Services",
+      "phone": "1-833-401-0832"
+    }
+  },
+  "CO": {
+    "name": "Colorado",
+    "attorney_general": {
+      "name": "Colorado Attorney General Consumer Protection",
+      "phone": "1-720-508-6000",
+      "website": "coag.gov"
+    },
+    "elder_abuse": {
+      "name": "Colorado Adult Protective Services",
+      "phone": "1-844-264-5437"
+    }
+  },
+  "CT": {
+    "name": "Connecticut",
+    "attorney_general": {
+      "name": "Connecticut Attorney General Consumer Protection",
+      "phone": "1-860-808-5318",
+      "website": "portal.ct.gov/ag"
+    },
+    "elder_abuse": {
+      "name": "Connecticut Protective Services for the Elderly",
+      "phone": "1-888-385-4225"
+    }
+  },
+  "DE": {
+    "name": "Delaware",
+    "attorney_general": {
+      "name": "Delaware Attorney General Consumer Protection",
+      "phone": "1-800-220-5424",
+      "website": "attorneygeneral.delaware.gov"
+    },
+    "elder_abuse": {
+      "name": "Delaware Adult Protective Services",
+      "phone": "1-800-223-9074"
+    }
+  },
+  "FL": {
+    "name": "Florida",
+    "attorney_general": {
+      "name": "Florida Attorney General Consumer Protection",
+      "phone": "1-866-966-7226",
+      "website": "myfloridalegal.com"
+    },
+    "elder_abuse": {
+      "name": "Florida Elder Abuse Hotline",
+      "phone": "1-800-962-2873"
+    }
+  },
+  "GA": {
+    "name": "Georgia",
+    "attorney_general": {
+      "name": "Georgia Attorney General Consumer Protection",
+      "phone": "1-404-651-8600",
+      "website": "law.georgia.gov"
+    },
+    "elder_abuse": {
+      "name": "Georgia Adult Protective Services",
+      "phone": "1-866-552-4464"
+    }
+  },
+  "HI": {
+    "name": "Hawaii",
+    "attorney_general": {
+      "name": "Hawaii Attorney General Consumer Protection",
+      "phone": "1-808-586-2636",
+      "website": "ag.hawaii.gov"
+    },
+    "elder_abuse": {
+      "name": "Hawaii Adult Protective Services",
+      "phone": "1-808-832-5115"
+    }
+  },
+  "ID": {
+    "name": "Idaho",
+    "attorney_general": {
+      "name": "Idaho Attorney General Consumer Protection",
+      "phone": "1-800-432-3545",
+      "website": "gov.idaho.gov/ag"
+    },
+    "elder_abuse": {
+      "name": "Idaho Adult Protective Services",
+      "phone": "1-855-552-7283"
+    }
+  },
+  "IL": {
+    "name": "Illinois",
+    "attorney_general": {
+      "name": "Illinois Attorney General Consumer Protection",
+      "phone": "1-800-964-3013",
+      "website": "illinoisag.gov"
+    },
+    "elder_abuse": {
+      "name": "Illinois Adult Protective Services",
+      "phone": "1-866-800-1409"
+    }
+  },
+  "IN": {
+    "name": "Indiana",
+    "attorney_general": {
+      "name": "Indiana Attorney General Consumer Protection",
+      "phone": "1-800-382-5516",
+      "website": "in.gov/attorneygeneral"
+    },
+    "elder_abuse": {
+      "name": "Indiana Adult Protective Services",
+      "phone": "1-800-992-6978"
+    }
+  },
+  "IA": {
+    "name": "Iowa",
+    "attorney_general": {
+      "name": "Iowa Attorney General Consumer Protection",
+      "phone": "1-515-281-5926",
+      "website": "iowaattorneygeneral.gov"
+    },
+    "elder_abuse": {
+      "name": "Iowa Adult Abuse Hotline",
+      "phone": "1-800-362-2178"
+    }
+  },
+  "KS": {
+    "name": "Kansas",
+    "attorney_general": {
+      "name": "Kansas Attorney General Consumer Protection",
+      "phone": "1-800-432-2310",
+      "website": "ag.ks.gov"
+    },
+    "elder_abuse": {
+      "name": "Kansas Adult Protective Services",
+      "phone": "1-800-922-5330"
+    }
+  },
+  "KY": {
+    "name": "Kentucky",
+    "attorney_general": {
+      "name": "Kentucky Attorney General Consumer Protection",
+      "phone": "1-888-432-9257",
+      "website": "ag.ky.gov"
+    },
+    "elder_abuse": {
+      "name": "Kentucky Adult Protection Hotline",
+      "phone": "1-877-597-2331"
+    }
+  },
+  "LA": {
+    "name": "Louisiana",
+    "attorney_general": {
+      "name": "Louisiana Attorney General Consumer Protection",
+      "phone": "1-800-351-4889",
+      "website": "ag.louisiana.gov"
+    },
+    "elder_abuse": {
+      "name": "Louisiana Adult Protective Services",
+      "phone": "1-225-342-2414"
+    }
+  },
+  "ME": {
+    "name": "Maine",
+    "attorney_general": {
+      "name": "Maine Attorney General Consumer Protection",
+      "phone": "1-800-436-2131",
+      "website": "maine.gov/ag"
+    },
+    "elder_abuse": {
+      "name": "Maine Adult Protective Services",
+      "phone": "1-800-624-8404"
+    }
+  },
+  "MD": {
+    "name": "Maryland",
+    "attorney_general": {
+      "name": "Maryland Attorney General Consumer Protection",
+      "phone": "1-410-528-8662",
+      "website": "marylandattorneygeneral.gov"
+    },
+    "elder_abuse": {
+      "name": "Maryland Adult Protective Services",
+      "phone": "1-800-917-7383"
+    }
+  },
+  "MA": {
+    "name": "Massachusetts",
+    "attorney_general": {
+      "name": "Massachusetts Attorney General Consumer Protection",
+      "phone": "1-617-727-8400",
+      "website": "mass.gov/ag"
+    },
+    "elder_abuse": {
+      "name": "Massachusetts Elder Abuse Hotline",
+      "phone": "1-800-922-2275"
+    }
+  },
+  "MI": {
+    "name": "Michigan",
+    "attorney_general": {
+      "name": "Michigan Attorney General Consumer Protection",
+      "phone": "1-877-765-8388",
+      "website": "michigan.gov/ag"
+    },
+    "elder_abuse": {
+      "name": "Michigan Adult Protective Services",
+      "phone": "1-855-444-3911"
+    }
+  },
+  "MN": {
+    "name": "Minnesota",
+    "attorney_general": {
+      "name": "Minnesota Attorney General Consumer Protection",
+      "phone": "1-651-296-3353",
+      "website": "ag.state.mn.us"
+    },
+    "elder_abuse": {
+      "name": "Minnesota Adult Abuse Reporting Center",
+      "phone": "1-844-880-1574"
+    }
+  },
+  "MS": {
+    "name": "Mississippi",
+    "attorney_general": {
+      "name": "Mississippi Attorney General Consumer Protection",
+      "phone": "1-800-281-4418",
+      "website": "ago.state.ms.us"
+    },
+    "elder_abuse": {
+      "name": "Mississippi Adult Protective Services",
+      "phone": "1-800-222-8000"
+    }
+  },
+  "MO": {
+    "name": "Missouri",
+    "attorney_general": {
+      "name": "Missouri Attorney General Consumer Protection",
+      "phone": "1-800-392-8222",
+      "website": "ago.mo.gov"
+    },
+    "elder_abuse": {
+      "name": "Missouri Adult Abuse Hotline",
+      "phone": "1-800-392-0210"
+    }
+  },
+  "MT": {
+    "name": "Montana",
+    "attorney_general": {
+      "name": "Montana Attorney General Consumer Protection",
+      "phone": "1-800-481-6896",
+      "website": "dojmt.gov"
+    },
+    "elder_abuse": {
+      "name": "Montana Adult Protective Services",
+      "phone": "1-844-277-9300"
+    }
+  },
+  "NE": {
+    "name": "Nebraska",
+    "attorney_general": {
+      "name": "Nebraska Attorney General Consumer Protection",
+      "phone": "1-800-727-6432",
+      "website": "ago.nebraska.gov"
+    },
+    "elder_abuse": {
+      "name": "Nebraska Adult Protective Services",
+      "phone": "1-800-652-1999"
+    }
+  },
+  "NV": {
+    "name": "Nevada",
+    "attorney_general": {
+      "name": "Nevada Attorney General Consumer Protection",
+      "phone": "1-702-486-3132",
+      "website": "ag.nv.gov"
+    },
+    "elder_abuse": {
+      "name": "Nevada Adult Protective Services",
+      "phone": "1-775-687-4522"
+    }
+  },
+  "NH": {
+    "name": "New Hampshire",
+    "attorney_general": {
+      "name": "New Hampshire Attorney General Consumer Protection",
+      "phone": "1-603-271-3658",
+      "website": "doj.nh.gov"
+    },
+    "elder_abuse": {
+      "name": "New Hampshire Adult Protective Services",
+      "phone": "1-800-949-0470"
+    }
+  },
+  "NJ": {
+    "name": "New Jersey",
+    "attorney_general": {
+      "name": "New Jersey Attorney General Consumer Protection",
+      "phone": "1-973-504-6200",
+      "website": "njoag.gov"
+    },
+    "elder_abuse": {
+      "name": "New Jersey Adult Protective Services",
+      "phone": "1-800-792-8820"
+    }
+  },
+  "NM": {
+    "name": "New Mexico",
+    "attorney_general": {
+      "name": "New Mexico Attorney General Consumer Protection",
+      "phone": "1-505-717-3500",
+      "website": "nmag.gov"
+    },
+    "elder_abuse": {
+      "name": "New Mexico Adult Protective Services",
+      "phone": "1-866-654-3219"
+    }
+  },
+  "NY": {
+    "name": "New York",
+    "attorney_general": {
+      "name": "New York Attorney General Consumer Protection",
+      "phone": "1-800-771-7755",
+      "website": "ag.ny.gov"
+    },
+    "elder_abuse": {
+      "name": "New York Adult Protective Services",
+      "phone": "1-844-697-3505"
+    }
+  },
+  "NC": {
+    "name": "North Carolina",
+    "attorney_general": {
+      "name": "North Carolina Attorney General Consumer Protection",
+      "phone": "1-877-566-7226",
+      "website": "ncdoj.gov"
+    },
+    "elder_abuse": {
+      "name": "North Carolina Adult Protective Services",
+      "phone": "1-800-662-7030"
+    }
+  },
+  "ND": {
+    "name": "North Dakota",
+    "attorney_general": {
+      "name": "North Dakota Attorney General Consumer Protection",
+      "phone": "1-800-472-2600",
+      "website": "attorneygeneral.nd.gov"
+    },
+    "elder_abuse": {
+      "name": "North Dakota Adult Protective Services",
+      "phone": "1-800-451-8693"
+    }
+  },
+  "OH": {
+    "name": "Ohio",
+    "attorney_general": {
+      "name": "Ohio Attorney General Consumer Protection",
+      "phone": "1-800-282-0515",
+      "website": "ohioattorneygeneral.gov"
+    },
+    "elder_abuse": {
+      "name": "Ohio Adult Protective Services",
+      "phone": "1-855-642-4453"
+    }
+  },
+  "OK": {
+    "name": "Oklahoma",
+    "attorney_general": {
+      "name": "Oklahoma Attorney General Consumer Protection",
+      "phone": "1-405-521-2029",
+      "website": "oag.ok.gov"
+    },
+    "elder_abuse": {
+      "name": "Oklahoma Adult Protective Services",
+      "phone": "1-800-522-3511"
+    }
+  },
+  "OR": {
+    "name": "Oregon",
+    "attorney_general": {
+      "name": "Oregon Attorney General Consumer Protection",
+      "phone": "1-503-378-4320",
+      "website": "doj.state.or.us"
+    },
+    "elder_abuse": {
+      "name": "Oregon Adult Protective Services",
+      "phone": "1-855-503-7233"
+    }
+  },
+  "PA": {
+    "name": "Pennsylvania",
+    "attorney_general": {
+      "name": "Pennsylvania Attorney General Consumer Protection",
+      "phone": "1-800-441-2555",
+      "website": "attorneygeneral.gov"
+    },
+    "elder_abuse": {
+      "name": "Pennsylvania Elder Abuse Hotline",
+      "phone": "1-800-490-8505"
+    }
+  },
+  "RI": {
+    "name": "Rhode Island",
+    "attorney_general": {
+      "name": "Rhode Island Attorney General Consumer Protection",
+      "phone": "1-401-274-4400",
+      "website": "riag.ri.gov"
+    },
+    "elder_abuse": {
+      "name": "Rhode Island Adult Protective Services",
+      "phone": "1-401-462-0555"
+    }
+  },
+  "SC": {
+    "name": "South Carolina",
+    "attorney_general": {
+      "name": "South Carolina Attorney General Consumer Protection",
+      "phone": "1-803-737-3953",
+      "website": "scag.gov"
+    },
+    "elder_abuse": {
+      "name": "South Carolina Adult Protective Services",
+      "phone": "1-888-227-3487"
+    }
+  },
+  "SD": {
+    "name": "South Dakota",
+    "attorney_general": {
+      "name": "South Dakota Attorney General Consumer Protection",
+      "phone": "1-800-300-1986",
+      "website": "atg.sd.gov"
+    },
+    "elder_abuse": {
+      "name": "South Dakota Adult Services",
+      "phone": "1-605-773-3165"
+    }
+  },
+  "TN": {
+    "name": "Tennessee",
+    "attorney_general": {
+      "name": "Tennessee Attorney General Consumer Protection",
+      "phone": "1-800-342-8385",
+      "website": "tn.gov/ag"
+    },
+    "elder_abuse": {
+      "name": "Tennessee Adult Protective Services",
+      "phone": "1-888-277-8366"
+    }
+  },
+  "TX": {
+    "name": "Texas",
+    "attorney_general": {
+      "name": "Texas Attorney General Consumer Protection",
+      "phone": "1-800-621-0508",
+      "website": "texasattorneygeneral.gov"
+    },
+    "elder_abuse": {
+      "name": "Texas Adult Protective Services",
+      "phone": "1-800-252-5400"
+    }
+  },
+  "UT": {
+    "name": "Utah",
+    "attorney_general": {
+      "name": "Utah Attorney General Consumer Protection",
+      "phone": "1-801-366-0260",
+      "website": "attorneygeneral.utah.gov"
+    },
+    "elder_abuse": {
+      "name": "Utah Adult Protective Services",
+      "phone": "1-800-371-7897"
+    }
+  },
+  "VT": {
+    "name": "Vermont",
+    "attorney_general": {
+      "name": "Vermont Attorney General Consumer Protection",
+      "phone": "1-800-649-2424",
+      "website": "ago.vermont.gov"
+    },
+    "elder_abuse": {
+      "name": "Vermont Adult Protective Services",
+      "phone": "1-800-564-1612"
+    }
+  },
+  "VA": {
+    "name": "Virginia",
+    "attorney_general": {
+      "name": "Virginia Attorney General Consumer Protection",
+      "phone": "1-800-451-1525",
+      "website": "oag.state.va.us"
+    },
+    "elder_abuse": {
+      "name": "Virginia Adult Protective Services",
+      "phone": "1-888-832-3858"
+    }
+  },
+  "WA": {
+    "name": "Washington",
+    "attorney_general": {
+      "name": "Washington Attorney General Consumer Protection",
+      "phone": "1-800-551-4636",
+      "website": "atg.wa.gov"
+    },
+    "elder_abuse": {
+      "name": "Washington Adult Protective Services",
+      "phone": "1-866-221-4909"
+    }
+  },
+  "WV": {
+    "name": "West Virginia",
+    "attorney_general": {
+      "name": "West Virginia Attorney General Consumer Protection",
+      "phone": "1-800-368-8808",
+      "website": "ago.wv.gov"
+    },
+    "elder_abuse": {
+      "name": "West Virginia Adult Protective Services",
+      "phone": "1-800-352-6513"
+    }
+  },
+  "WI": {
+    "name": "Wisconsin",
+    "attorney_general": {
+      "name": "Wisconsin Attorney General Consumer Protection",
+      "phone": "1-800-422-7128",
+      "website": "doj.state.wi.us"
+    },
+    "elder_abuse": {
+      "name": "Wisconsin Elder Abuse Hotline",
+      "phone": "1-833-586-0107"
+    }
+  },
+  "WY": {
+    "name": "Wyoming",
+    "attorney_general": {
+      "name": "Wyoming Attorney General Consumer Protection",
+      "phone": "1-307-777-7841",
+      "website": "ag.wyo.gov"
+    },
+    "elder_abuse": {
+      "name": "Wyoming Adult Protective Services",
+      "phone": "1-307-777-6137"
+    }
+  }
+}

@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { analyzeContent } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import VoiceRecorder from "./voice-recorder";
 import type { ScamAnalysisResult } from "@/types/scam-analysis";
 
 interface TextFormProps {
@@ -67,6 +68,30 @@ export default function TextForm({ onAnalysisComplete, onLoading, isLoading }: T
       <div className="bg-white rounded-xl shadow-md p-8">
         <h3 className="text-2xl font-semibold mb-6 text-boomer-navy">Tell Us What Happened</h3>
         
+        {/* Voice Recording Option */}
+        <div className="mb-6">
+          <VoiceRecorder 
+            onTranscription={(transcribedText) => {
+              setText(transcribedText);
+            }}
+            onError={(error) => {
+              toast({
+                title: "Voice Recording Error",
+                description: error,
+                variant: "destructive",
+              });
+            }}
+          />
+        </div>
+
+        <div className="text-center my-6">
+          <div className="flex items-center">
+            <div className="flex-grow border-t border-gray-300"></div>
+            <span className="px-4 text-gray-500 text-sm font-medium">OR TYPE YOUR MESSAGE</span>
+            <div className="flex-grow border-t border-gray-300"></div>
+          </div>
+        </div>
+
         <div className="mb-6">
           <Textarea
             value={text}
