@@ -3,24 +3,22 @@
     "version": ">= 5.0.0" 
   },
   "build": {
-    "release-apk": {
+    "development": {
       "android": {
-        "workflow": "generic",
-        "gradleCommand": ":app:assembleRelease",
-        "artifactPath": "android/app/build/outputs/apk/release/app-release.apk"
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleDebug"
       }
     },
-    "debug-apk": {
+    "preview": {
       "android": {
-        "workflow": "generic",
-        "gradleCommand": ":app:assembleDebug",
-        "artifactPath": "android/app/build/outputs/apk/debug/app-debug.apk"
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
       }
     },
     "production": {
       "android": {
-        "workflow": "generic",
-        "buildType": "apk"
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
       }
     }
   },

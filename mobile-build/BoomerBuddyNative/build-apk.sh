@@ -24,10 +24,10 @@ fi
 
 # Build production APK using the generic workflow
 echo "🔨 Building production APK with EAS..."
-echo "📋 Build profile: release-apk (generic workflow)"
+echo "📋 Build profile: production (generic workflow)"
 
 # Start the build
-eas build --platform android --profile release-apk
+eas build --platform android --profile production
 
 # Check if build command succeeded
 if [ $? -eq 0 ]; then
