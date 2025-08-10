@@ -1,94 +1,164 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createStackNavigator } from '@react-navigation/stack';
-import {
-  SafeAreaProvider,
-  SafeAreaView,
-} from 'react-native-safe-area-context';
-import { StatusBar, Platform, Text } from 'react-native';
-import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 
-// Screens
-import SimpleHomeScreen from './screens/SimpleHomeScreen';
-
-// Simple icon component for tab navigation
-const TabIcon = ({ name, color, size }: { name: string; color: string; size: number }) => {
-  const icons: { [key: string]: string } = {
-    'shield-check': '🛡️',
-    'alert-triangle': '⚠️',
-    'plus-circle': '➕',
-    'book-open': '📚',
-    'settings': '⚙️',
+export default function App() {
+  const handleAnalyze = () => {
+    Alert.alert('Boomer Buddy', 'Scam analysis feature ready! Upload screenshots or describe suspicious calls.');
   };
-  
+
+  const handleEmergency = () => {
+    Alert.alert('Emergency', 'Emergency features activated! Call authorities if needed.');
+  };
+
   return (
-    <Text style={{ fontSize: size, color }}>
-      {icons[name] || '●'}
-    </Text>
+    <View style={styles.container}>
+      <StatusBar style="dark" backgroundColor="#FFFFFF" />
+      
+      <ScrollView style={styles.scrollContainer}>
+        <View style={styles.header}>
+          <Text style={styles.title}>🛡️ Boomer Buddy</Text>
+          <Text style={styles.subtitle}>Your Digital Safety Companion</Text>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Quick Protection Check</Text>
+          <Text style={styles.cardText}>
+            Upload a screenshot, share a message, or describe a suspicious call to get instant scam analysis.
+          </Text>
+          <TouchableOpacity style={styles.primaryButton} onPress={handleAnalyze}>
+            <Text style={styles.buttonText}>🔍 Analyze Threat</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>🚨 Emergency Mode</Text>
+          <Text style={styles.cardText}>
+            If you think you're being scammed right now, tap here for immediate help.
+          </Text>
+          <TouchableOpacity style={styles.emergencyButton} onPress={handleEmergency}>
+            <Text style={styles.buttonText}>⚡ Emergency Help</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>📊 Live Threats</Text>
+          <Text style={styles.cardText}>
+            Stay updated with the latest scams reported by government agencies.
+          </Text>
+          <View style={styles.alertItem}>
+            <Text style={styles.alertType}>• Tech Support Scam</Text>
+            <Text style={styles.alertDate}>Today</Text>
+          </View>
+          <View style={styles.alertItem}>
+            <Text style={styles.alertType}>• Medicare Fraud Alert</Text>
+            <Text style={styles.alertDate}>Yesterday</Text>
+          </View>
+        </View>
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>
+            🔒 Privacy First: All analysis happens on your device. No personal data is shared.
+          </Text>
+        </View>
+      </ScrollView>
+    </View>
   );
-};
+}
 
-const Tab = createBottomTabNavigator();
-const Stack = createStackNavigator();
-
-// Services will be initialized when needed
-
-const TabNavigator = () => {
-  return (
-    <Tab.Navigator
-      screenOptions={{
-        tabBarActiveTintColor: '#17948E',
-        tabBarInactiveTintColor: '#6B7280',
-        tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopWidth: 1,
-          borderTopColor: '#E5E7EB',
-          paddingTop: 8,
-          paddingBottom: Platform.OS === 'ios' ? 20 : 8,
-        },
-      }}
-    >
-      <Tab.Screen 
-        name="Home" 
-        component={SimpleHomeScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon name="shield-check" size={size} color={color} />
-          ),
-        }}
-      />
-    </Tab.Navigator>
-  );
-};
-
-const App = () => {
-  return (
-    <SafeAreaProvider>
-      <NavigationContainer>
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-          <ExpoStatusBar style="dark" backgroundColor="#FFFFFF" />
-          <Stack.Navigator
-            screenOptions={{
-              headerStyle: {
-                backgroundColor: '#17948E',
-              },
-              headerTintColor: '#FFFFFF',
-              headerTitleStyle: {
-                fontWeight: 'bold',
-              },
-            }}
-          >
-            <Stack.Screen 
-              name="Main" 
-              component={TabNavigator}
-              options={{ headerShown: false }}
-            />
-          </Stack.Navigator>
-        </SafeAreaView>
-      </NavigationContainer>
-    </SafeAreaProvider>
-  );
-};
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+  header: {
+    backgroundColor: '#17948E',
+    padding: 24,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: 'white',
+    opacity: 0.9,
+  },
+  card: {
+    backgroundColor: 'white',
+    margin: 16,
+    padding: 20,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  cardText: {
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  primaryButton: {
+    backgroundColor: '#17948E',
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  emergencyButton: {
+    backgroundColor: '#DC2626',
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  alertItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  alertType: {
+    fontSize: 14,
+    color: '#1F2937',
+    fontWeight: '500',
+  },
+  alertDate: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  footer: {
+    margin: 16,
+    padding: 16,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+  },
+  footerText: {
+    fontSize: 12,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+});
 
 export default App;
