@@ -2,25 +2,15 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   SafeAreaProvider,
   SafeAreaView,
 } from 'react-native-safe-area-context';
 import { StatusBar, Platform, Text } from 'react-native';
+import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
 
 // Screens
-import HomeScreen from './screens/HomeScreen';
-import AlertsScreen from './screens/AlertsScreen';
-import ReportScreen from './screens/ReportScreen';
-import TrainingScreen from './screens/TrainingScreen';
-import SettingsScreen from './screens/SettingsScreen';
-import AnalysisResultScreen from './screens/AnalysisResultScreen';
-
-// Services
-import { PiiScrubber } from './services/PiiScrubber';
-import { RiskEngine } from './services/RiskEngine';
-import { StorageService } from './services/StorageService';
+import SimpleHomeScreen from './screens/SimpleHomeScreen';
 
 // Simple icon component for tab navigation
 const TabIcon = ({ name, color, size }: { name: string; color: string; size: number }) => {
@@ -41,12 +31,8 @@ const TabIcon = ({ name, color, size }: { name: string; color: string; size: num
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
-const queryClient = new QueryClient();
 
-// Initialize core services
-PiiScrubber.initialize();
-RiskEngine.initialize();
-StorageService.initialize();
+// Services will be initialized when needed
 
 const TabNavigator = () => {
   return (
@@ -65,46 +51,10 @@ const TabNavigator = () => {
     >
       <Tab.Screen 
         name="Home" 
-        component={HomeScreen}
+        component={SimpleHomeScreen}
         options={{
           tabBarIcon: ({ color, size }) => (
             <TabIcon name="shield-check" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen 
-        name="Alerts" 
-        component={AlertsScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon name="alert-triangle" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen 
-        name="Report" 
-        component={ReportScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon name="plus-circle" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen 
-        name="Training" 
-        component={TrainingScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon name="book-open" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen 
-        name="Settings" 
-        component={SettingsScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon name="settings" size={size} color={color} />
           ),
         }}
       />
@@ -114,44 +64,30 @@ const TabNavigator = () => {
 
 const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider>
-        <NavigationContainer>
-          <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-            <StatusBar
-              barStyle="dark-content"
-              backgroundColor="#FFFFFF"
-              translucent={false}
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+          <ExpoStatusBar style="dark" backgroundColor="#FFFFFF" />
+          <Stack.Navigator
+            screenOptions={{
+              headerStyle: {
+                backgroundColor: '#17948E',
+              },
+              headerTintColor: '#FFFFFF',
+              headerTitleStyle: {
+                fontWeight: 'bold',
+              },
+            }}
+          >
+            <Stack.Screen 
+              name="Main" 
+              component={TabNavigator}
+              options={{ headerShown: false }}
             />
-            <Stack.Navigator
-              screenOptions={{
-                headerStyle: {
-                  backgroundColor: '#17948E',
-                },
-                headerTintColor: '#FFFFFF',
-                headerTitleStyle: {
-                  fontWeight: 'bold',
-                },
-              }}
-            >
-              <Stack.Screen 
-                name="Main" 
-                component={TabNavigator}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="AnalysisResult"
-                component={AnalysisResultScreen}
-                options={{
-                  title: 'Analysis Result',
-                  presentation: 'modal',
-                }}
-              />
-            </Stack.Navigator>
-          </SafeAreaView>
-        </NavigationContainer>
-      </SafeAreaProvider>
-    </QueryClientProvider>
+          </Stack.Navigator>
+        </SafeAreaView>
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 };
 
