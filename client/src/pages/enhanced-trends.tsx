@@ -80,10 +80,10 @@ export default function EnhancedTrendsPage() {
     refetchInterval: 60 * 60 * 1000, // Refetch every hour
   });
 
-  const trends: LiveTrend[] = trendsData?.trends || [];
-  const news: NewsItem[] = newsData?.news || [];
-  const lastUpdate = trendsData?.lastUpdate ? new Date(trendsData.lastUpdate) : null;
-  const nextUpdate = trendsData?.nextUpdate ? new Date(trendsData.nextUpdate) : null;
+  const trends: LiveTrend[] = (trendsData as any)?.trends || [];
+  const news: NewsItem[] = (newsData as any)?.news || [];
+  const lastUpdate = (trendsData as any)?.lastUpdate ? new Date((trendsData as any).lastUpdate) : null;
+  const nextUpdate = (trendsData as any)?.nextUpdate ? new Date((trendsData as any).nextUpdate) : null;
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -183,7 +183,7 @@ export default function EnhancedTrendsPage() {
                 <div className="text-sm text-gray-600">Active Threats</div>
               </Card>
               <Card className="p-4">
-                <div className="text-2xl font-bold text-red-600">{trendsData.totalReports?.toLocaleString() || 0}</div>
+                <div className="text-2xl font-bold text-red-600">{((trendsData as any)?.totalReports || 0).toLocaleString()}</div>
                 <div className="text-sm text-gray-600">Total Reports</div>
               </Card>
               <Card className="p-4">
@@ -287,7 +287,7 @@ export default function EnhancedTrendsPage() {
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div className="flex items-center gap-2">
                           <Users className="h-4 w-4 text-red-500" />
-                          <span>{trend.reportCount.toLocaleString()} reports</span>
+                          <span>{(trend.reportCount || 0).toLocaleString()} reports</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-gray-500" />
@@ -444,25 +444,25 @@ export default function EnhancedTrendsPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {archiveData?.weekly && (
+                  {(archiveData as any)?.weekly && (
                     <>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <div className="text-2xl font-bold text-red-600">
-                            {archiveData.weekly.totalScams.toLocaleString()}
+                            {((archiveData as any).weekly.totalScams || 0).toLocaleString()}
                           </div>
                           <div className="text-sm text-gray-600">Total Scams</div>
                         </div>
                         <div>
                           <div className="text-2xl font-bold text-blue-600">
-                            {archiveData.weekly.newTrends}
+                            {(archiveData as any).weekly.newTrends || 0}
                           </div>
                           <div className="text-sm text-gray-600">New Trends</div>
                         </div>
                       </div>
                       <div>
                         <div className="text-sm font-medium mb-1">Top Category</div>
-                        <Badge>{archiveData.weekly.topCategory}</Badge>
+                        <Badge>{(archiveData as any).weekly.topCategory || 'Unknown'}</Badge>
                       </div>
                     </>
                   )}
@@ -477,25 +477,25 @@ export default function EnhancedTrendsPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {archiveData?.monthly && (
+                  {(archiveData as any)?.monthly && (
                     <>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <div className="text-2xl font-bold text-red-600">
-                            {archiveData.monthly.totalScams.toLocaleString()}
+                            {((archiveData as any).monthly.totalScams || 0).toLocaleString()}
                           </div>
                           <div className="text-sm text-gray-600">Total Scams</div>
                         </div>
                         <div>
                           <div className="text-2xl font-bold text-blue-600">
-                            {archiveData.monthly.newTrends}
+                            {(archiveData as any).monthly.newTrends || 0}
                           </div>
                           <div className="text-sm text-gray-600">New Trends</div>
                         </div>
                       </div>
                       <div>
                         <div className="text-sm font-medium mb-1">Top Category</div>
-                        <Badge>{archiveData.monthly.topCategory}</Badge>
+                        <Badge>{(archiveData as any).monthly.topCategory || 'Unknown'}</Badge>
                       </div>
                     </>
                   )}
