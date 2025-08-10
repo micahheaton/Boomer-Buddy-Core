@@ -54,10 +54,38 @@ const openai = new OpenAI({
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Load knowledge base data and demo examples
-  const federalContacts = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data/contacts_federal.json"), "utf-8"));
-  const financialContacts = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data/contacts_financial.json"), "utf-8"));
-  const stateContacts = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data/contacts_states.json"), "utf-8"));
-  const demoData = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data/demo_data.json"), "utf-8"));
+  let federalContacts = {};
+  let financialContacts = {};
+  let stateContacts = {};
+  let demoData = {};
+  
+  try {
+    stateContacts = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data/state-contacts.json"), "utf-8"));
+  } catch (error) {
+    console.log("State contacts file not found, using fallback");
+    stateContacts = {};
+  }
+  
+  try {
+    federalContacts = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data/contacts_federal.json"), "utf-8"));
+  } catch (error) {
+    console.log("Federal contacts file not found");
+    federalContacts = {};
+  }
+  
+  try {
+    financialContacts = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data/contacts_financial.json"), "utf-8"));
+  } catch (error) {
+    console.log("Financial contacts file not found");
+    financialContacts = {};
+  }
+  
+  try {
+    demoData = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data/demo_data.json"), "utf-8"));
+  } catch (error) {
+    console.log("Demo data file not found");
+    demoData = {};
+  }
 
   // POST /api/analyze - Analyze content for scam patterns
   app.post("/api/analyze", upload.single("image"), async (req: Request & { file?: Express.Multer.File }, res) => {
