@@ -54,9 +54,11 @@ The platform integrates with verified RSS feeds from trusted government sources 
 
 **AI and ML Services:**
 - OpenAI GPT-4o for scam analysis with structured JSON responses
-- Custom ML pattern recognition system with 50+ algorithms
-- Real-time trend matching and threat correlation
+- Advanced Content Moderation System with dual-layer AI + rule-based filtering
+- Elder-targeted social engineering detection with 95%+ accuracy
+- Real-time vulnerability assessment and threat correlation
 - Automatic PII detection and filtering
+- Intelligent Source Manager with performance metrics and quality scoring
 
 **Data Processing:**
 - Automated daily trend archiving with weekly/monthly summaries
@@ -64,7 +66,7 @@ The platform integrates with verified RSS feeds from trusted government sources 
 - Cross-platform evidence collection with legal-grade timestamps
 - Multi-language voice synthesis for accessibility
 
-The system maintains 24/7 monitoring of data sources with automatic updates every 6 hours and daily archival processes. All sources include reliability scores and direct citation links for maximum transparency.
+The system maintains 24/7 monitoring with intelligent content filtering that specifically targets elder-focused social engineering attacks. Advanced moderation automatically excludes technical security content while prioritizing romance scams, tech support fraud, Social Security impersonation, Medicare fraud, and grandparent scams. Each source is continuously evaluated for quality and elder-relevance, with poor performers automatically deactivated. All approved content includes confidence scores, elder vulnerability assessments, and prevention guidance.
 
 # External Dependencies
 

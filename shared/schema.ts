@@ -84,6 +84,9 @@ export const scamTrends = pgTable("scam_trends", {
   firstReported: timestamp("first_reported").notNull(),
   lastReported: timestamp("last_reported").notNull(),
   isActive: boolean("is_active").default(true),
+  elderVulnerabilities: jsonb("elder_vulnerabilities").default(sql`'[]'::jsonb`),
+  preventionTips: jsonb("prevention_tips").default(sql`'[]'::jsonb`),
+  reportingInstructions: text("reporting_instructions"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -102,6 +105,8 @@ export const newsItems = pgTable("news_items", {
   publishDate: timestamp("publish_date").notNull(),
   isVerified: boolean("is_verified").default(false),
   relatedTrends: jsonb("related_trends").default(sql`'[]'::jsonb`),
+  elderRelevanceScore: real("elder_relevance_score"),
+  elderVulnerabilities: jsonb("elder_vulnerabilities").default(sql`'[]'::jsonb`),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

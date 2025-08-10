@@ -4,6 +4,8 @@ import { scamTrends, newsItems, dataSources } from '../shared/schema';
 import { eq, desc } from 'drizzle-orm';
 import { mobileNotificationService } from './mobileNotificationService';
 import { BOOMER_FOCUSED_DATA_SOURCES, isBoomerRelevant, calculateBoomerRelevanceScore } from './boomerFocusedDataSources';
+import { intelligentSourceManager } from './intelligentSourceManager';
+import { contentModerationSystem } from './contentModerationSystem';
 
 interface RSSFeed {
   name: string;
@@ -83,21 +85,35 @@ export class DataCollector {
   }
 
   private async collectFromFeed(feed: RSSFeed): Promise<void> {
-    console.log(`Collecting from ${feed.name}...`);
-    
     try {
-      const parsedFeed = await this.parser.parseURL(feed.url);
+      console.log(`🔍 Collecting from ${feed.name} with intelligent filtering...`);
+      const feedData = await this.parser.parseURL(feed.url);
       
-      for (const item of parsedFeed.items) {
-        if (this.isScamRelated(item)) {
-          await this.processScamTrend(item, feed);
-        }
-        await this.processNewsItem(item, feed);
+      if (!feedData.items || feedData.items.length === 0) {
+        console.log(`No items found in ${feed.name}`);
+        return;
       }
 
+      // Use intelligent source manager to process and filter content
+      const sourceId = feed.agency.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const processedItems = await intelligentSourceManager.processContentFromSource(
+        sourceId, 
+        feedData.items.slice(0, 30) // Process more items but filter intelligently
+      );
+
+      // Log filtering results
+      const approved = processedItems.filter(item => item.status === 'approved').length;
+      const rejected = processedItems.filter(item => item.status === 'rejected').length;
+      const reviewing = processedItems.filter(item => item.status === 'reviewing').length;
+
+      console.log(`📊 ${feed.name} Results: ${approved} approved, ${rejected} rejected, ${reviewing} reviewing (${feedData.items.length} total)`);
+      
       await this.logSuccessfulCollection(feed);
+      
     } catch (error) {
-      throw new Error(`RSS parsing failed for ${feed.name}: ${error}`);
+      console.error(`Failed to collect from ${feed.name}:`, error);
+      await this.logDataSourceError(feed, error as Error);
+      throw new Error(`RSS parsing failed for ${feed.name}: ${error.message}`);
     }
   }
 
@@ -122,7 +138,7 @@ export class DataCollector {
       // Update report count and last seen
       await db.update(scamTrends)
         .set({
-          reportCount: existingTrend[0].reportCount + 1,
+          reportCount: (existingTrend[0].reportCount || 0) + 1,
           lastReported: new Date(),
           updatedAt: new Date()
         })
