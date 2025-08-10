@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Report from "@/pages/report";
-import TrendsPage from "@/pages/trends";
+import EnhancedTrendsPage from "@/pages/enhanced-trends";
 import Dashboard from "@/pages/dashboard";
 import History from "@/pages/history";
 import AdminDashboard from "@/pages/admin";
@@ -18,7 +18,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/report/:id" component={Report} />
-      <Route path="/trends" component={TrendsPage} />
+      <Route path="/trends" component={EnhancedTrendsPage} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/history" component={History} />
       <Route path="/admin" component={AdminDashboard} />

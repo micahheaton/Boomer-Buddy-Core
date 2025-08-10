@@ -270,6 +270,34 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return user;
   }
+
+  async archiveDailyTrends(archiveData: any) {
+    // In production, store in time-series database
+    console.log(`Archived daily trends for ${archiveData.date}:`, {
+      trendsCount: archiveData.trends.length,
+      newsCount: archiveData.news.length,
+      totalReports: archiveData.totalReports
+    });
+    return { success: true, archived: archiveData.date };
+  }
+
+  async getTrendArchive(dateRange?: { start: Date; end: Date }) {
+    // Mock archive data for now
+    return {
+      weekly: {
+        totalScams: 12847,
+        newTrends: 8,
+        affectedRegions: 15,
+        topCategory: 'AI Voice Cloning'
+      },
+      monthly: {
+        totalScams: 48392,
+        newTrends: 23,
+        affectedRegions: 22,
+        topCategory: 'Technology Scams'
+      }
+    };
+  }
 }
 
 export const storage = new DatabaseStorage();

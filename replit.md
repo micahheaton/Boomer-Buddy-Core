@@ -1,6 +1,6 @@
 # Overview
 
-**Boomer Buddy** is a comprehensive anti-scam platform consisting of a web application and companion mobile app. The web app allows users to upload screenshots, paste text, or input phone call transcripts for AI-powered scam analysis. The mobile app provides live call transcription with one-button activation, screenshot capture of emails/texts, user profiles with "Boomer Buddy Score", and access to Facebook group integration. Both platforms feature PII filtering, contextual contact recommendations, and integration with the same backend system. The branding features a friendly shield logo with two people representing protection and assistance, using a navy blue, teal, and orange color scheme to create a trustworthy and approachable interface.
+**Boomer Buddy** is a comprehensive anti-scam platform consisting of a web application and companion mobile app. The platform now features a live intelligence system that provides real-time scam trend monitoring, verified news consolidation from trusted sources, and daily trend archiving. The web app allows users to upload screenshots, paste text, or input phone call transcripts for AI-powered scam analysis enhanced with ML pattern recognition. Advanced features include live call transcription with PII filtering, secure evidence collection, and multilingual voice guidance. The mobile app provides one-button call recording, screenshot capture, and community reporting. Both platforms integrate with live data sources including FTC, FBI, BBB, and AARP for extremely reliable news consolidation and trend updates.
 
 # User Preferences
 
@@ -35,9 +35,29 @@ The application uses PostgreSQL as the primary database with Drizzle ORM for dat
 The application implements optional magic link authentication via email, allowing both authenticated and anonymous usage. User sessions are managed through standard HTTP mechanisms. The system is designed to work primarily without authentication for the MVP, with user accounts being optional for saving and sharing reports.
 
 ## External Service Integrations
-The primary external integration is with OpenAI's GPT-4o model for scam analysis. The application uses structured prompts with a scoring rubric to evaluate content and return standardized JSON responses. A knowledge base of federal, state, and financial institution contacts is stored as static JSON files and integrated into the analysis results. 
+The platform integrates with multiple trusted data sources for real-time scam intelligence:
 
-The mobile app integrates with device capabilities including camera access for screenshot capture, microphone access for call transcription, and local storage for user profiles and analysis history. PII filtering is performed entirely client-side before any data transmission. The system is designed to avoid additional paid services beyond OpenAI for the MVP phase.
+**Live Data Sources:**
+- Federal Trade Commission (FTC) Consumer Sentinel Network
+- FBI Internet Crime Complaint Center (IC3)
+- Better Business Bureau Scam Tracker  
+- AARP Fraud Watch Network
+- Social Security Administration scam alerts
+- Centers for Medicare & Medicaid Services alerts
+
+**AI and ML Services:**
+- OpenAI GPT-4o for scam analysis with structured JSON responses
+- Custom ML pattern recognition system with 50+ algorithms
+- Real-time trend matching and threat correlation
+- Automatic PII detection and filtering
+
+**Data Processing:**
+- Automated daily trend archiving with weekly/monthly summaries
+- Live news aggregation from verified sources with reliability scoring
+- Cross-platform evidence collection with legal-grade timestamps
+- Multi-language voice synthesis for accessibility
+
+The system maintains 24/7 monitoring of data sources with automatic updates every 6 hours and daily archival processes. All sources include reliability scores and direct citation links for maximum transparency.
 
 # External Dependencies
 

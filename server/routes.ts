@@ -485,6 +485,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Live data endpoints for enhanced reliability
+  app.get("/api/trends", async (req, res) => {
+    try {
+      const { liveDataService } = await import('./liveDataService');
+      const trends = liveDataService.getCurrentTrends();
+      const systemStatus = liveDataService.getSystemStatus();
+      
+      res.json({ 
+        trends,
+        lastUpdate: systemStatus.lastUpdate,
+        nextUpdate: systemStatus.nextUpdate,
+        totalReports: systemStatus.totalReports,
+        dataSourcesOnline: systemStatus.dataSourcesOnline
+      });
+    } catch (error) {
+      console.error("Trends endpoint error:", error);
+      res.status(500).json({ error: "Failed to fetch live trends data" });
+    }
+  });
+
+  app.get("/api/news", async (req, res) => {
+    try {
+      const { liveDataService } = await import('./liveDataService');
+      const news = liveDataService.getCurrentNews();
+      const systemStatus = liveDataService.getSystemStatus();
+      
+      res.json({ 
+        news,
+        lastUpdate: systemStatus.lastUpdate,
+        totalItems: news.length
+      });
+    } catch (error) {
+      console.error("News endpoint error:", error);
+      res.status(500).json({ error: "Failed to fetch live news data" });
+    }
+  });
+
+  app.get("/api/trends/search", async (req, res) => {
+    try {
+      const { q } = req.query;
+      if (!q || typeof q !== 'string') {
+        return res.status(400).json({ error: "Search query required" });
+      }
+      
+      const { liveDataService } = await import('./liveDataService');
+      const results = await liveDataService.searchTrends(q);
+      
+      res.json({ results, query: q });
+    } catch (error) {
+      console.error("Trend search error:", error);
+      res.status(500).json({ error: "Failed to search trends" });
+    }
+  });
+
+  app.get("/api/trends/archive", async (req, res) => {
+    try {
+      const archive = await storage.getTrendArchive();
+      res.json(archive);
+    } catch (error) {
+      console.error("Archive endpoint error:", error);
+      res.status(500).json({ error: "Failed to fetch trend archive" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
