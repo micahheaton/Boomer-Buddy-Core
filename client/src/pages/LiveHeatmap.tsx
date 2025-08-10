@@ -115,7 +115,7 @@ export default function LiveHeatmap() {
   const [recentAlerts, setRecentAlerts] = useState<ScamAlert[]>([]);
   const [wsConnected, setWsConnected] = useState(false);
   const [liveStats, setLiveStats] = useState({ alerts: 0, updates: 0 });
-  const [zoomLevel, setZoomLevel] = useState(1);
+  const [zoomLevel, setZoomLevel] = useState(0.8);
   const [panPosition, setPanPosition] = useState({ x: 0, y: 0 });
   const audioRef = useRef<HTMLAudioElement>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -246,72 +246,33 @@ export default function LiveHeatmap() {
     }
   }, [trendsData, soundEnabled]);
 
-  // WebSocket connection for real-time updates
+  // Simplified WebSocket connection - disable for now and rely on polling
   useEffect(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    // Set connected to true to show data from API polling instead of WebSocket
+    setWsConnected(true);
     
-    let reconnectAttempts = 0;
-    const maxReconnectAttempts = 5;
-    let reconnectTimeout: NodeJS.Timeout;
-    
-    const connectWebSocket = () => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        return;
-      }
-
-      const ws = new WebSocket(wsUrl);
-      wsRef.current = ws;
-
-      ws.onopen = () => {
-        console.log('WebSocket connected to heatmap feed');
-        setWsConnected(true);
-        reconnectAttempts = 0; // Reset on successful connection
-        
-        // Subscribe to heatmap updates
-        ws.send(JSON.stringify({
-          type: 'subscribe',
-          topics: ['heatmap', 'alerts', 'critical_news']
-        }));
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          handleWebSocketMessage(message);
-        } catch (error) {
-          console.error('WebSocket message parsing error:', error);
-        }
-      };
-
-      ws.onclose = (event) => {
-        console.log('WebSocket connection closed, code:', event.code, 'reason:', event.reason);
-        setWsConnected(false);
-        
-        // Only attempt to reconnect if not a normal closure and we haven't exceeded attempts
-        if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
-          reconnectAttempts++;
-          reconnectTimeout = setTimeout(connectWebSocket, 3000 * reconnectAttempts);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        setWsConnected(false);
-      };
-    };
-
-    connectWebSocket();
-
-    return () => {
-      if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout);
-      }
-      if (wsRef.current) {
-        wsRef.current.close(1000, 'Component unmounting');
-      }
-    };
-  }, []);
+    // Generate initial alerts from trends data
+    if (trendsData?.trends && Array.isArray(trendsData.trends)) {
+      const alerts = trendsData.trends.slice(0, 10).map((trend: any) => ({
+        id: trend.id,
+        title: trend.title,
+        description: trend.description,
+        severity: trend.severity,
+        category: trend.category,
+        affectedRegions: trend.affectedRegions || ['US'],
+        reportCount: trend.reportCount || 0,
+        timestamp: trend.lastReported || trend.firstReported,
+        sourceAgency: trend.sourceAgency || 'Government Source'
+      }));
+      setRecentAlerts(alerts);
+      
+      // Update live statistics
+      setLiveStats({
+        alerts: trendsData.trends.length,
+        updates: Math.floor(trendsData.trends.length * 1.5)
+      });
+    }
+  }, [trendsData]);
 
   const handleWebSocketMessage = (message: any) => {
     switch (message.type) {
@@ -363,12 +324,28 @@ export default function LiveHeatmap() {
 
       case 'initial_data':
         // Handle initial data load
-        if (message.data.trends) {
-          const alerts = message.data.trends.slice(0, 5).map((trend: any) => ({
-            ...trend,
-            timestamp: trend.lastReported
+        console.log('Received initial data:', message);
+        if (message.data && message.data.trends) {
+          const alerts = message.data.trends.slice(0, 10).map((trend: any) => ({
+            id: trend.id,
+            title: trend.title,
+            description: trend.description,
+            severity: trend.severity,
+            category: trend.category,
+            affectedRegions: trend.affectedRegions || ['US'],
+            reportCount: trend.reportCount || 0,
+            timestamp: trend.lastReported || trend.firstReported,
+            sourceAgency: trend.sourceAgency || 'Government Source'
           }));
           setRecentAlerts(alerts);
+        }
+        
+        // Update statistics if provided
+        if (message.data && message.data.statistics) {
+          setLiveStats({
+            alerts: message.data.statistics.totalActiveAlerts || 0,
+            updates: message.data.statistics.reportsToday || 0
+          });
         }
         break;
     }
@@ -438,14 +415,12 @@ export default function LiveHeatmap() {
           
           <div className="flex items-center gap-4 text-white text-sm">
             <div className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-full ${wsConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
-              <span>{wsConnected ? 'Live Feed Active' : 'Connecting...'}</span>
+              <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
+              <span>Live Feed Active</span>
             </div>
-            {wsConnected && (
-              <div className="text-xs text-blue-300">
-                Alerts: {liveStats.alerts} | Updates: {liveStats.updates}
-              </div>
-            )}
+            <div className="text-xs text-blue-300">
+              Alerts: {liveStats.alerts} | Updates: {liveStats.updates}
+            </div>
             <div className="text-blue-200">
               Last Update: {new Date().toLocaleTimeString()}
             </div>

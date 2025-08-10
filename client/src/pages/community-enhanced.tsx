@@ -104,13 +104,7 @@ export default function CommunityEnhanced() {
 
   const submitReportMutation = useMutation({
     mutationFn: async (data: any) => {
-      return await apiRequest('/api/community/reports', {
-        method: 'POST',
-        body: JSON.stringify(data),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      return await apiRequest('POST', '/api/community/reports', data);
     },
     onSuccess: () => {
       toast({
@@ -490,7 +484,7 @@ export default function CommunityEnhanced() {
             </CardContent>
           </Card>
         ) : (
-          reportsData?.reports?.map((report: CommunityReport) => (
+          (reportsData?.reports || []).map((report: CommunityReport) => (
             <Card key={report.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -579,7 +573,7 @@ export default function CommunityEnhanced() {
       </div>
 
       {/* Pagination */}
-      {reportsData?.hasMore && (
+      {(reportsData?.hasMore || false) && (
         <div className="flex justify-center">
           <Button 
             variant="outline" 

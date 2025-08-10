@@ -154,6 +154,11 @@ export class WebSocketHandler {
         this.sendToClient(ws, { type: 'pong', timestamp: Date.now() });
         break;
 
+      case 'request_data':
+        // Send fresh data when requested
+        this.sendInitialData(ws);
+        break;
+
       default:
         console.log('Unknown WebSocket message type:', message.type);
     }
