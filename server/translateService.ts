@@ -156,7 +156,7 @@ export class TranslateService {
       'es': {
         'Hello world': 'Hola mundo',
         'Upload a screenshot, paste text, or input a phone call transcript': 'Sube una captura de pantalla, pega texto o ingresa una transcripción de llamada telefónica',
-        'Is this message safe?': '¿Es seguro este mensaje?',
+        'Am I Being Scammed?': '¿Me están estafando?',
         'Fake Bank Email': 'Correo electrónico bancario falso',
         'Tech Support Call': 'Llamada de soporte técnico',
         'Screenshot of phishing email claiming urgent account verification needed': 'Captura de pantalla de correo electrónico de phishing que afirma que se necesita verificación urgente de cuenta',
@@ -183,7 +183,7 @@ export class TranslateService {
       'fr': {
         'Hello world': 'Bonjour le monde',
         'Upload a screenshot, paste text, or input a phone call transcript': 'Téléchargez une capture d\'écran, collez du texte ou saisissez une transcription d\'appel téléphonique',
-        'Is this message safe?': 'Ce message est-il sûr?',
+        'Am I Being Scammed?': 'Suis-je en train de me faire arnaquer?',
         'Fake Bank Email': 'Faux e-mail bancaire',
         'Tech Support Call': 'Appel de support technique',
         'About': 'À propos',
@@ -202,6 +202,7 @@ export class TranslateService {
         'Boomer Buddy': 'Boomer Buddy',
         'Scam Trends': 'Betrugs-Trends',
         'Community': 'Gemeinschaft',
+        'Am I Being Scammed?': 'Werde ich betrogen?',
         'Upload Screenshot': 'Screenshot hochladen',
         'Tell Us What Happened': 'Erzählen Sie uns, was passiert ist',
         'Upload Transcript': 'Transkript hochladen'

@@ -36,7 +36,7 @@ export default function Home() {
 
     const textsToTranslate = [
       "Upload a screenshot, paste text, or input a phone call transcript",
-      "Is this message safe?",
+      "Am I Being Scammed?",
       "Fake Bank Email",
       "Tech Support Call", 
       "Screenshot of phishing email claiming urgent account verification needed",
@@ -388,7 +388,7 @@ export default function Home() {
 
       <main className="max-w-4xl mx-auto px-6 py-8">
         <section className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4 text-boomer-navy">{translate("Is this message safe?")}</h2>
+          <h2 className="text-3xl font-bold mb-4 text-boomer-navy">{translate("Am I Being Scammed?")}</h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
             {translate("Upload a screenshot, paste text, or input a phone call transcript")}
           </p>
