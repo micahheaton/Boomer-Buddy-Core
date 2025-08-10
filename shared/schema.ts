@@ -1,11 +1,48 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, timestamp, jsonb, real, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Session storage table for authentication
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
+// Enhanced user table with OAuth and personal features
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: text("email").notNull().unique(),
+  name: text("name"),
+  profileImage: text("profile_image"),
+  googleId: text("google_id").unique(),
+  
+  // Personal safety features
+  safetyScore: real("safety_score").default(0), // Boomer Buddy Safety Score 0-100
+  totalAnalyses: integer("total_analyses").default(0),
+  scamsDetected: integer("scams_detected").default(0),
+  lastActiveAt: timestamp("last_active_at").defaultNow(),
+  
+  // Preferences
+  preferences: jsonb("preferences").default(sql`'{}'::jsonb`), // UI preferences, notification settings, etc.
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// User activity log for tracking safety improvements
+export const userActivities = pgTable("user_activities", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  activityType: text("activity_type").notNull(), // "analysis_completed", "scam_avoided", "trend_viewed", etc.
+  description: text("description"),
+  metadata: jsonb("metadata"), // Additional activity data
+  points: integer("points").default(0), // Points earned for this activity
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -23,8 +60,20 @@ export const analyses = pgTable("analyses", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Schema definitions for database operations
 export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
+  name: true,
+  profileImage: true,
+  googleId: true,
+});
+
+export const upsertUserSchema = createInsertSchema(users).pick({
+  id: true,
+  email: true,
+  name: true,
+  profileImage: true,
+  googleId: true,
 });
 
 export const insertAnalysisSchema = createInsertSchema(analyses).pick({
@@ -40,10 +89,22 @@ export const insertAnalysisSchema = createInsertSchema(analyses).pick({
   userId: z.string().optional(),
 });
 
+export const insertUserActivitySchema = createInsertSchema(userActivities).pick({
+  userId: true,
+  activityType: true,
+  description: true,
+  metadata: true,
+  points: true,
+});
+
+// Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UpsertUser = z.infer<typeof upsertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertAnalysis = z.infer<typeof insertAnalysisSchema>;
 export type Analysis = typeof analyses.$inferSelect;
+export type InsertUserActivity = z.infer<typeof insertUserActivitySchema>;
+export type UserActivity = typeof userActivities.$inferSelect;
 
 // Scam Analysis Types
 export const scamAnalysisRequestSchema = z.object({

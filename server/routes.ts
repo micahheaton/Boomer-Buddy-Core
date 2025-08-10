@@ -1,4 +1,4 @@
-import type { Express, Request } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { analyzeScam } from "./openai";
@@ -7,6 +7,7 @@ import { getMockAnalysis } from "./mockAnalysis";
 import { trendMonitor } from "./trendMonitor";
 import { mlPatternRecognizer } from "./mlModels";
 import { scamAnalysisRequestSchema, type ScamAnalysisResult } from "@shared/schema";
+import { setupAuthRoutes, requireAuth, optionalAuth } from "./auth";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -55,6 +56,8 @@ const openai = new OpenAI({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication routes
+  setupAuthRoutes(app);
   // Load knowledge base data and demo examples
   let federalContacts = {};
   let financialContacts = {};
@@ -89,8 +92,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     demoData = {};
   }
 
-  // POST /api/analyze - Analyze content for scam patterns
-  app.post("/api/analyze", upload.single("image"), async (req: Request & { file?: Express.Multer.File }, res) => {
+  // User dashboard routes
+  app.get("/api/user/dashboard", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as any;
+      const stats = await storage.getUserStats(user.id);
+      const recentAnalyses = await storage.getAnalysesByUser(user.id, 10);
+      
+      res.json({
+        user,
+        stats,
+        recentAnalyses,
+      });
+    } catch (error) {
+      console.error("Dashboard error:", error);
+      res.status(500).json({ error: "Failed to load dashboard" });
+    }
+  });
+
+  app.get("/api/user/history", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as any;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      
+      const analyses = await storage.getAnalysesByUser(user.id, limit);
+      res.json({ analyses, page, hasMore: analyses.length === limit });
+    } catch (error) {
+      console.error("History error:", error);
+      res.status(500).json({ error: "Failed to load history" });
+    }
+  });
+
+  app.get("/api/user/activities", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as any;
+      const activities = await storage.getUserActivities(user.id, 50);
+      res.json({ activities });
+    } catch (error) {
+      console.error("Activities error:", error);
+      res.status(500).json({ error: "Failed to load activities" });
+    }
+  });
+
+  // POST /api/analyze - Analyze content for scam patterns (with optional auth)
+  app.post("/api/analyze", optionalAuth, upload.single("image"), async (req: Request & { file?: Express.Multer.File }, res) => {
     let requestData;
     
     try {
@@ -226,8 +272,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Save analysis to database
+      // Get user ID if authenticated  
+      const user = req.user as any;
+      const userId = user?.id || undefined;
+
       const analysis = await storage.createAnalysis({
-        userId: requestData.userId || undefined,
+        userId: userId,
         inputType: requestData.inputType,
         text: requestData.text,
         imagePath: requestData.imageUrl,
