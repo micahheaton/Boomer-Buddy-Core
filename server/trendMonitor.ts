@@ -1,4 +1,4 @@
-import { openai } from './openai';
+// Advanced Scam Trend Monitoring and Alert System
 
 export interface ScamTrend {
   id: string;
@@ -161,7 +161,7 @@ class TrendMonitoringService {
         case 'case_increase':
           trend.reportedCases += update.newCases;
           if (update.regions) {
-            trend.regions = [...new Set([...trend.regions, ...update.regions])];
+            trend.regions = Array.from(new Set([...trend.regions, ...update.regions]));
           }
           break;
           

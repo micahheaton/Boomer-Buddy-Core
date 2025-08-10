@@ -4,6 +4,8 @@ import { storage } from "./storage";
 import { analyzeScam } from "./openai";
 import { extractTextFromImage } from "./ocr";
 import { getMockAnalysis } from "./mockAnalysis";
+import { trendMonitor } from "./trendMonitor";
+import { mlPatternRecognizer } from "./mlModels";
 import { scamAnalysisRequestSchema, type ScamAnalysisResult } from "@shared/schema";
 import multer from "multer";
 import path from "path";
@@ -135,27 +137,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No text content to analyze" });
       }
 
-      // Try OpenAI first, fallback to pattern-based analysis
+      // Enhanced analysis with ML pattern recognition and trend matching
+      const textToAnalyze = requestData.text;
+      
+      // First, run ML pattern recognition
+      const mlPrediction = mlPatternRecognizer.predict(textToAnalyze);
+      console.log(`ML Analysis - Risk Score: ${mlPrediction.riskScore}%, Confidence: ${(mlPrediction.confidence * 100).toFixed(1)}%`);
+      
+      // Check for matching scam trends
+      const matchingTrends = await trendMonitor.analyzeForTrendMatch(textToAnalyze);
+      if (matchingTrends.length > 0) {
+        console.log(`Found ${matchingTrends.length} matching scam trends`);
+      }
+      
       let analysisResult;
       try {
-        analysisResult = await analyzeScam(requestData.text, {
+        analysisResult = await analyzeScam(textToAnalyze, {
           channel: requestData.channel,
           state: requestData.state,
           federalContacts,
           financialContacts,
           stateContacts,
         });
-        console.log("Analysis completed with OpenAI");
+        
+        // Enhance with ML insights
+        const originalScore = analysisResult.scam_score;
+        analysisResult.scam_score = Math.round(
+          (originalScore * 0.7) + (mlPrediction.riskScore * 0.3) // 70% OpenAI, 30% ML
+        );
+        
+        // Add ML-detected patterns to signals
+        if (mlPrediction.patterns.length > 0) {
+          const mlPatterns = mlPrediction.patterns
+            .map(p => `Pattern detected: ${p.replace(/_/g, ' ')}`)
+            .slice(0, 2);
+          analysisResult.top_signals = [...mlPatterns, ...analysisResult.top_signals].slice(0, 5);
+        }
+        
+        // Add trend warnings if matches found
+        if (matchingTrends.length > 0) {
+          const highestRiskTrend = matchingTrends[0];
+          analysisResult.top_signals.unshift(
+            `⚠️ Matches active scam trend: ${highestRiskTrend.title}`
+          );
+          analysisResult.explanation = `TREND ALERT: ${analysisResult.explanation} This message matches patterns from "${highestRiskTrend.title}" - a currently active scam with ${highestRiskTrend.reportedCases} reported cases.`;
+        }
+        
+        console.log(`Enhanced analysis - Original: ${originalScore}%, ML-Enhanced: ${analysisResult.scam_score}%`);
+        
       } catch (aiError: any) {
-        console.log("OpenAI failed, using pattern-based analysis:", aiError.message);
-        analysisResult = getMockAnalysis(requestData.text, {
+        console.log("OpenAI failed, using ML + pattern-based analysis:", aiError.message);
+        
+        // Create enhanced analysis using ML prediction and mock analysis
+        const baseAnalysis = getMockAnalysis(textToAnalyze, {
           channel: requestData.channel,
           state: requestData.state,
           federalContacts,
           financialContacts,
           stateContacts,
         });
-        console.log("Analysis completed with pattern matching");
+        
+        // Override with ML insights
+        analysisResult = {
+          ...baseAnalysis,
+          scam_score: Math.round(mlPrediction.riskScore),
+          confidence: mlPrediction.confidence > 0.7 ? "high" : mlPrediction.confidence > 0.4 ? "medium" : "low",
+          top_signals: [
+            ...mlPrediction.patterns.map(p => `ML detected: ${p.replace(/_/g, ' ')}`),
+            ...baseAnalysis.top_signals
+          ].slice(0, 5)
+        };
+        
+        // Add trend information
+        if (matchingTrends.length > 0) {
+          const trend = matchingTrends[0];
+          analysisResult.top_signals.unshift(`Matches trend: ${trend.title}`);
+          analysisResult.explanation = `This matches the active scam trend "${trend.title}". ${trend.description} ${analysisResult.explanation}`;
+        }
+        
+        console.log("Analysis completed with ML + pattern matching");
+      }
+      
+      // Add training example for continuous learning
+      const confidence = analysisResult.scam_score / 100;
+      if (confidence > 0.6) {
+        const label = analysisResult.scam_score > 50 ? 'scam' : 'legitimate';
+        mlPatternRecognizer.addTrainingExample(textToAnalyze, label, confidence);
       }
 
       // Save analysis to database
@@ -199,6 +266,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Report retrieval error:", error);
       res.status(500).json({ error: "Failed to retrieve report" });
+    }
+  });
+
+  // GET /api/trends - Get current scam trends
+  app.get("/api/trends", async (req, res) => {
+    try {
+      const trends = trendMonitor.getCurrentTrends();
+      const alerts = trendMonitor.getActiveAlerts();
+      
+      res.json({
+        trends: trends.slice(0, 10), // Return top 10 trends
+        alerts: alerts.slice(0, 5),  // Return top 5 recent alerts
+        lastUpdated: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Trends retrieval error:", error);
+      res.status(500).json({ error: "Failed to retrieve trends" });
+    }
+  });
+
+  // GET /api/trends/search - Search scam trends
+  app.get("/api/trends/search", async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      if (!query) {
+        return res.status(400).json({ error: "Query parameter 'q' is required" });
+      }
+      
+      const trends = trendMonitor.searchTrends(query);
+      res.json({ trends, query });
+    } catch (error) {
+      console.error("Trend search error:", error);
+      res.status(500).json({ error: "Failed to search trends" });
+    }
+  });
+
+  // GET /api/ml/stats - Get ML model statistics
+  app.get("/api/ml/stats", async (req, res) => {
+    try {
+      const stats = mlPatternRecognizer.getModelStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("ML stats error:", error);
+      res.status(500).json({ error: "Failed to retrieve ML statistics" });
+    }
+  });
+
+  // POST /api/ml/predict - Get ML prediction for text
+  app.post("/api/ml/predict", async (req, res) => {
+    try {
+      const { text } = req.body;
+      if (!text) {
+        return res.status(400).json({ error: "Text is required" });
+      }
+      
+      const prediction = mlPatternRecognizer.predict(text);
+      const matchingTrends = await trendMonitor.analyzeForTrendMatch(text);
+      
+      res.json({
+        prediction,
+        matchingTrends: matchingTrends.slice(0, 3), // Top 3 matching trends
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("ML prediction error:", error);
+      res.status(500).json({ error: "Failed to generate ML prediction" });
     }
   });
 

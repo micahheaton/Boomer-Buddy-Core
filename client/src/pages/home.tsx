@@ -3,6 +3,7 @@ import { Shield, History, Play, FileText, Phone, Camera, Keyboard } from "lucide
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Logo from "@/components/logo";
+import Navigation from "@/components/navigation";
 import InputSelector from "@/components/input-selector";
 import UploadForm from "@/components/upload-form";
 import TextForm from "@/components/text-form";
@@ -339,22 +340,8 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
-            <Logo size="md" />
-            <Button 
-              variant="default" 
-              size="lg"
-              className="bg-boomer-navy hover:bg-boomer-teal text-lg px-6 py-3"
-            >
-              <History className="w-5 h-5 mr-2" />
-              My Reports
-            </Button>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <Navigation />
 
       <main className="max-w-4xl mx-auto px-6 py-8">
         <section className="text-center mb-12">
