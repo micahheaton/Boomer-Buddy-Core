@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, timestamp, jsonb, real, index } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, timestamp, jsonb, real, index, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -66,6 +66,57 @@ export const insertUserSchema = createInsertSchema(users).pick({
   name: true,
   profileImage: true,
   googleId: true,
+});
+
+// Real scam trends table for verified data from government sources
+export const scamTrends = pgTable("scam_trends", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  category: text("category").notNull(),
+  severity: text("severity").notNull(), // 'critical' | 'high' | 'medium' | 'low'
+  reportCount: integer("report_count").default(1),
+  affectedRegions: jsonb("affected_regions").default(sql`'[]'::jsonb`),
+  sourceAgency: text("source_agency").notNull(), // FTC, FBI, BBB, etc.
+  sourceUrl: text("source_url").notNull().unique(),
+  verificationStatus: text("verification_status").default('verified'),
+  tags: jsonb("tags").default(sql`'[]'::jsonb`),
+  firstReported: timestamp("first_reported").notNull(),
+  lastReported: timestamp("last_reported").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Real news items from verified sources
+export const newsItems = pgTable("news_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  summary: text("summary").notNull(),
+  content: text("content").notNull(),
+  category: text("category").notNull(),
+  sourceAgency: text("source_agency").notNull(),
+  sourceUrl: text("source_url").notNull().unique(),
+  sourceName: text("source_name").notNull(),
+  reliability: real("reliability").notNull(), // 0.0 to 1.0
+  publishDate: timestamp("publish_date").notNull(),
+  isVerified: boolean("is_verified").default(false),
+  relatedTrends: jsonb("related_trends").default(sql`'[]'::jsonb`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Data source monitoring table
+export const dataSources = pgTable("data_sources", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  url: text("url").notNull().unique(),
+  agency: text("agency").notNull(),
+  lastChecked: timestamp("last_checked"),
+  status: text("status").notNull().default('active'), // 'active' | 'error' | 'inactive'
+  reliability: real("reliability").notNull(),
+  lastError: text("last_error"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const upsertUserSchema = createInsertSchema(users).pick({

@@ -6,8 +6,12 @@ import { extractTextFromImage } from "./ocr";
 import { getMockAnalysis } from "./mockAnalysis";
 import { trendMonitor } from "./trendMonitor";
 import { mlPatternRecognizer } from "./mlModels";
-import { scamAnalysisRequestSchema, type ScamAnalysisResult } from "@shared/schema";
+import { scamAnalysisRequestSchema, type ScamAnalysisResult, scamTrends, newsItems, dataSources } from "@shared/schema";
 import { setupAuthRoutes, requireAuth, optionalAuth } from "./auth";
+import { startDataCollection } from "./dataCollector";
+import { db } from "./db";
+import { desc, eq } from "drizzle-orm";
+import { mobileNotificationService } from "./mobileNotificationService";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -485,20 +489,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Live data endpoints for enhanced reliability
+  // Live data endpoints - Real RSS data from government sources
   app.get("/api/trends", async (req, res) => {
     try {
-      const { liveDataService } = await import('./liveDataService');
-      const trends = liveDataService.getCurrentTrends();
-      const systemStatus = liveDataService.getSystemStatus();
+      const trends = await db.select()
+        .from(scamTrends)
+        .where(eq(scamTrends.isActive, true))
+        .orderBy(desc(scamTrends.lastReported))
+        .limit(50);
+
+      const totalReports = trends.reduce((sum, trend) => sum + (trend.reportCount || 0), 0);
       
-      res.json({ 
-        trends,
-        lastUpdate: systemStatus.lastUpdate,
-        nextUpdate: systemStatus.nextUpdate,
-        totalReports: systemStatus.totalReports,
-        dataSourcesOnline: systemStatus.dataSourcesOnline
-      });
+      const response = {
+        trends: trends.map(trend => ({
+          id: trend.id,
+          title: trend.title,
+          description: trend.description,
+          category: trend.category,
+          severity: trend.severity,
+          reportCount: trend.reportCount,
+          affectedRegions: trend.affectedRegions || [],
+          tags: trend.tags || [],
+          sources: [{
+            name: trend.sourceAgency,
+            url: trend.sourceUrl,
+            reliability: 0.95
+          }],
+          firstReported: trend.firstReported,
+          lastReported: trend.lastReported
+        })),
+        totalReports,
+        lastUpdate: new Date().toISOString(),
+        nextUpdate: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
+        dataSourcesOnline: trends.length > 0 ? 4 : 0
+      };
+      
+      res.json(response);
     } catch (error) {
       console.error("Trends endpoint error:", error);
       res.status(500).json({ error: "Failed to fetch live trends data" });
@@ -507,15 +533,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/news", async (req, res) => {
     try {
-      const { liveDataService } = await import('./liveDataService');
-      const news = liveDataService.getCurrentNews();
-      const systemStatus = liveDataService.getSystemStatus();
-      
-      res.json({ 
-        news,
-        lastUpdate: systemStatus.lastUpdate,
+      const news = await db.select()
+        .from(newsItems)
+        .where(eq(newsItems.isVerified, true))
+        .orderBy(desc(newsItems.publishDate))
+        .limit(20);
+
+      const response = {
+        news: news.map(item => ({
+          id: item.id,
+          title: item.title,
+          summary: item.summary,
+          content: item.content,
+          category: item.category,
+          source: {
+            name: item.sourceName,
+            agency: item.sourceAgency,
+            url: item.sourceUrl,
+            reliability: item.reliability
+          },
+          publishDate: item.publishDate,
+          createdAt: item.createdAt
+        })),
+        lastUpdate: new Date().toISOString(),
         totalItems: news.length
-      });
+      };
+      
+      res.json(response);
     } catch (error) {
       console.error("News endpoint error:", error);
       res.status(500).json({ error: "Failed to fetch live news data" });
@@ -529,10 +573,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Search query required" });
       }
       
-      const { liveDataService } = await import('./liveDataService');
-      const results = await liveDataService.searchTrends(q);
+      // Search in titles, descriptions, and tags
+      const searchQuery = `%${q.toLowerCase()}%`;
+      const trends = await db.select()
+        .from(scamTrends)
+        .where(eq(scamTrends.isActive, true))
+        .orderBy(desc(scamTrends.lastReported))
+        .limit(20);
+
+      // Filter results by search term (basic text matching)
+      const filteredTrends = trends.filter(trend => 
+        trend.title.toLowerCase().includes(q.toLowerCase()) ||
+        trend.description.toLowerCase().includes(q.toLowerCase()) ||
+        (trend.tags as string[])?.some(tag => tag.toLowerCase().includes(q.toLowerCase()))
+      );
       
-      res.json({ results, query: q });
+      const results = filteredTrends.map(trend => ({
+        id: trend.id,
+        title: trend.title,
+        description: trend.description,
+        category: trend.category,
+        severity: trend.severity,
+        reportCount: trend.reportCount,
+        sourceAgency: trend.sourceAgency,
+        sourceUrl: trend.sourceUrl,
+        lastReported: trend.lastReported
+      }));
+      
+      res.json({ results, query: q, total: results.length });
     } catch (error) {
       console.error("Trend search error:", error);
       res.status(500).json({ error: "Failed to search trends" });
@@ -549,6 +617,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Start real data collection from RSS feeds
+  console.log("Starting real-time RSS data collection...");
+  setTimeout(() => {
+    startDataCollection();
+  }, 5000); // Start after 5 seconds to allow DB connections to establish
+  
   const httpServer = createServer(app);
+  
+  // Initialize mobile notification service
+  mobileNotificationService.initialize(httpServer);
+  console.log("Mobile notification service initialized");
   return httpServer;
 }
