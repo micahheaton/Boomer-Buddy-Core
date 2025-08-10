@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/api";
+// Note: Using direct fetch instead of apiRequest for auth endpoints
 
 interface User {
   id: string;
