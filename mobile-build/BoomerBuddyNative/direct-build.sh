@@ -6,16 +6,39 @@
 echo "🛡️ Building Boomer Buddy Native APK (Direct Method)..."
 echo "📱 Target: Production Android APK with system-level permissions"
 
+# Check if we have Gradle available
+if command -v gradle &> /dev/null; then
+    echo "📦 Using system Gradle..."
+    GRADLE_CMD="gradle"
+elif [ -f "android/gradlew" ]; then
+    echo "📦 Using Gradle wrapper..."
+    GRADLE_CMD="android/gradlew"
+else
+    echo "❌ Gradle not found. Installing Gradle wrapper..."
+    cd android
+    gradle wrapper --gradle-version=8.1.1
+    cd ..
+    GRADLE_CMD="android/gradlew"
+fi
+
 # Navigate to android directory
 cd android
 
 # Clean previous builds
 echo "🧹 Cleaning previous builds..."
-./gradlew clean
+if [ -f "gradlew" ]; then
+    ./gradlew clean
+else
+    gradle clean
+fi
 
 # Build release APK
 echo "🔨 Building release APK..."
-./gradlew assembleRelease
+if [ -f "gradlew" ]; then
+    ./gradlew assembleRelease
+else
+    gradle assembleRelease
+fi
 
 # Check if build succeeded
 if [ $? -eq 0 ]; then
