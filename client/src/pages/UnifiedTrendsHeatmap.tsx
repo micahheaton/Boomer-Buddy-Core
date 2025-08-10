@@ -152,11 +152,15 @@ export default function UnifiedTrendsHeatmap() {
     const matchesSourceFilter = selectedSources.size === 0 || 
       selectedSources.has(alert.sourceAgency);
 
-    // State filter logic
+    // State filter logic - improved to match actual state data from heatmap
     const matchesStateFilter = !selectedState || 
-      alert.sourceAgency?.includes(selectedState) ||
-      alert.description?.includes(selectedState) ||
-      alert.title?.includes(selectedState);
+      alert.sourceAgency?.toLowerCase().includes(selectedState.toLowerCase()) ||
+      alert.description?.toLowerCase().includes(selectedState.toLowerCase()) ||
+      alert.title?.toLowerCase().includes(selectedState.toLowerCase()) ||
+      (alert as any).location?.toLowerCase().includes(selectedState.toLowerCase()) ||
+      // Check for state-specific agencies (e.g., "Washington State Attorney General")
+      alert.sourceAgency?.toLowerCase().includes(`${selectedState.toLowerCase()} state`) ||
+      alert.sourceAgency?.toLowerCase().includes(`${selectedState.toLowerCase()} attorney`);
     
     return matchesSearch && matchesType && matchesSeverity && matchesCardFilter && matchesSourceFilter && matchesStateFilter;
   }) || [];
@@ -179,7 +183,7 @@ export default function UnifiedTrendsHeatmap() {
       newAlertsToday: todayAlerts.length,
       highPriorityToday: todayAlerts.filter(a => a.severity === 'high' || a.severity === 'critical').length,
       scamAlertsToday: todayAlerts.filter(a => a.isScamAlert).length,
-      topScamTypes: [...new Set(todayAlerts.flatMap(a => a.scamTypes || []))].slice(0, 3),
+      topScamTypes: Array.from(new Set(todayAlerts.flatMap(a => a.scamTypes || []))).slice(0, 3),
       coverage: `${sourcesData?.stats?.totalSources || '60+'} government sources monitored`
     };
   };
@@ -454,7 +458,7 @@ export default function UnifiedTrendsHeatmap() {
       <USStatesHeatmap 
         data={unifiedData?.alerts || []}
         selectedState={selectedState}
-        onStateSelect={setSelectedState}
+        onStateSelect={setSelectedState as any}
       />
 
       {/* Active Filters Display */}

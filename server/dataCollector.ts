@@ -7,6 +7,7 @@ import { BOOMER_FOCUSED_DATA_SOURCES, isBoomerRelevant, calculateBoomerRelevance
 import { intelligentSourceManager } from './intelligentSourceManager';
 import { contentModerationSystem } from './contentModerationSystem';
 import { intelligentFeedParser } from './intelligentFeedParser';
+import { contentValidator } from './contentValidator';
 
 interface RSSFeed {
   name: string;
@@ -165,7 +166,7 @@ export class DataCollector {
     
     for (const feed of TRUSTED_FEEDS) {
       try {
-        await this.collectFromFeed(feed);
+        await this.collectFromFeedWithValidation(feed);
         await this.delay(2000); // Rate limiting - be respectful
       } catch (error) {
         console.error(`Failed to collect from ${feed.name}:`, error);
@@ -175,6 +176,54 @@ export class DataCollector {
 
     await this.updateDataSourceStatus();
     console.log('✅ Comprehensive data collection completed from all government sources');
+  }
+
+  /**
+   * Enhanced feed collection with LLM-based content validation
+   */
+  private async collectFromFeedWithValidation(feed: RSSFeed): Promise<void> {
+    try {
+      console.log(`🔍 Collecting from ${feed.name} with LLM validation...`);
+      const feedData = await this.parser.parseURL(feed.url);
+      
+      if (!feedData.items || feedData.items.length === 0) {
+        console.log(`No items found in ${feed.name}`);
+        return;
+      }
+
+      // Convert RSS items to validation format
+      const itemsForValidation = feedData.items.slice(0, 10).map(item => ({
+        title: item.title || '',
+        description: item.contentSnippet || item.content || '',
+        content: item.content || '',
+        source: feed.name,
+        url: item.link || ''
+      }));
+
+      // Batch validate with LLM for strict relevance filtering
+      const validationResults = await contentValidator.validateBatch(itemsForValidation);
+      
+      let relevantCount = 0;
+      for (let i = 0; i < itemsForValidation.length; i++) {
+        const item = feedData.items[i];
+        const validation = validationResults[i];
+        
+        if (validation.isRelevant && validation.relevanceScore >= 0.4) {
+          // Process and store only validated relevant items
+          const processedItem = this.createProcessedItem(item, feed, validation);
+          await this.storeValidatedItem(processedItem, feed);
+          relevantCount++;
+        } else {
+          console.log(`❌ Filtered out: "${item.title}" (score: ${validation.relevanceScore}, reason: ${validation.reason})`);
+        }
+      }
+
+      console.log(`✅ Stored ${relevantCount} relevant items from ${feedData.items.length} total items from ${feed.name}`);
+
+    } catch (error) {
+      console.error(`Failed to collect from ${feed.name}:`, error);
+      throw error;
+    }
   }
 
   private async collectFromFeed(feed: RSSFeed): Promise<void> {
@@ -201,6 +250,84 @@ export class DataCollector {
     } catch (error) {
       console.error(`Failed to collect from ${feed.name}:`, error);
       throw error;
+    }
+  }
+
+  /**
+   * Create processed item from RSS data and validation results
+   */
+  private createProcessedItem(rssItem: any, feed: RSSFeed, validation: any): any {
+    return {
+      id: `${feed.agency}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      title: rssItem.title || '',
+      description: rssItem.contentSnippet || rssItem.content || '',
+      link: rssItem.link || '',
+      publishedAt: new Date(rssItem.pubDate || rssItem.isoDate || Date.now()),
+      source: feed.name,
+      sourceAgency: feed.agency,
+      category: validation.category,
+      severity: validation.severity,
+      elderRelevanceScore: validation.relevanceScore,
+      scamTypes: validation.scamTypes,
+      affectedRegions: [],
+      reportCount: 1,
+      tags: []
+    };
+  }
+
+  /**
+   * Store LLM-validated item in database
+   */
+  private async storeValidatedItem(item: any, feed: RSSFeed): Promise<void> {
+    try {
+      // Check for duplicates by URL to avoid re-processing same content
+      const existingByUrl = await db
+        .select()
+        .from(scamTrends)
+        .where(eq(scamTrends.url, item.link))
+        .limit(1);
+
+      if (existingByUrl.length > 0) {
+        console.log(`Skipping duplicate URL: ${item.link}`);
+        return;
+      }
+
+      // Store in scamTrends table
+      await db.insert(scamTrends).values({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        url: item.link,
+        source: item.source,
+        sourceType: feed.category,
+        publishedAt: item.publishedAt,
+        category: item.category,
+        tags: item.tags,
+        elderRelevanceScore: item.elderRelevanceScore,
+        scamTypes: item.scamTypes,
+        affectedRegions: item.affectedRegions,
+        severity: item.severity,
+        reportCount: item.reportCount
+      }).onConflictDoNothing();
+
+      // Also store in newsItems for unified display
+      await db.insert(newsItems).values({
+        id: `news-${item.id}`,
+        title: item.title,
+        summary: item.description,
+        content: item.description,
+        publishDate: item.publishedAt,
+        sourceUrl: item.link,
+        sourceAgency: item.sourceAgency,
+        category: item.category,
+        tags: item.tags,
+        reliabilityScore: Math.round(feed.reliability * 100)
+      }).onConflictDoNothing();
+
+      console.log(`✅ Validated & stored: ${item.title} (Relevance: ${Math.round(item.elderRelevanceScore * 100)}%)`);
+
+    } catch (error) {
+      console.error(`Failed to store validated item ${item.title}:`, error);
     }
   }
 

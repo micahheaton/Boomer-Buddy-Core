@@ -66,11 +66,11 @@ export class CacheManager {
       // Check for new data since last update
       const newTrends = await db.select()
         .from(scamTrends)
-        .where(gt(scamTrends.updatedAt, lastUpdate));
+        .where(sql`${scamTrends.updatedAt} > ${lastUpdate.toISOString()}`);
 
       const newNews = await db.select()
         .from(newsItems)
-        .where(gt(newsItems.updatedAt, lastUpdate));
+        .where(sql`${newsItems.updatedAt} > ${lastUpdate.toISOString()}`);
 
       console.log(`📊 Found ${newTrends.length} new trends, ${newNews.length} new news items`);
 

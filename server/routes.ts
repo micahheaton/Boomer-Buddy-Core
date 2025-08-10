@@ -22,6 +22,8 @@ import path from "path";
 import fs from "fs";
 import { nanoid } from "nanoid";
 import OpenAI from "openai";
+import { archiveManager } from './archiveManager';
+import { enhancedDataCollector } from './enhancedDataCollector';
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(process.cwd(), "uploads");
@@ -1225,5 +1227,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
   console.log("Mobile notification service initialized");
   console.log("WebSocket handler initialized for real-time heatmap updates");
   console.log("🔄 Cache manager initialized with WebSocket notifications");
+
+  // Archive Management API Routes - Comprehensive 3-Month Lifecycle System
+  app.get("/api/archive/search", async (req, res) => {
+    try {
+      const query = String(req.query.q || '');
+      const startDate = req.query.startDate ? new Date(String(req.query.startDate)) : undefined;
+      const endDate = req.query.endDate ? new Date(String(req.query.endDate)) : undefined;
+      const category = req.query.category ? String(req.query.category) : undefined;
+      const severity = req.query.severity ? String(req.query.severity) : undefined;
+      
+      const results = await archiveManager.searchArchive(query, {
+        startDate,
+        endDate,
+        category,
+        severity
+      });
+      
+      res.json({
+        success: true,
+        results,
+        count: results.length,
+        query: {
+          search: query,
+          filters: { startDate, endDate, category, severity }
+        },
+        archiveDescription: "Historical scam alerts from 61 government sources (3+ months old)"
+      });
+    } catch (error) {
+      console.error("Archive search error:", error);
+      res.status(500).json({ success: false, error: "Failed to search archive" });
+    }
+  });
+
+  app.get("/api/archive/stats", async (req, res) => {
+    try {
+      const stats = await archiveManager.getArchiveStats();
+      res.json({ 
+        success: true, 
+        stats,
+        description: "Archive contains historical alerts from all 61 verified government sources"
+      });
+    } catch (error) {
+      console.error("Archive stats error:", error);
+      res.status(500).json({ success: false, error: "Failed to get archive stats" });
+    }
+  });
+
+  app.post("/api/archive/cleanup", async (req, res) => {
+    try {
+      const result = await archiveManager.archiveExpiredAlerts();
+      res.json({ 
+        success: true, 
+        archived: result.archived,
+        errors: result.errors,
+        message: `Successfully archived ${result.archived} expired alerts`,
+        lifecycle: "Alerts archived after 3-month active period"
+      });
+    } catch (error) {
+      console.error("Archive cleanup error:", error);
+      res.status(500).json({ success: false, error: "Failed to clean up archive" });
+    }
+  });
+
+  // Enhanced Data Collection Status Endpoint
+  app.get("/api/enhanced-collection/status", async (req, res) => {
+    try {
+      const status = enhancedDataCollector.getCollectionStatus();
+      res.json({
+        success: true,
+        status,
+        description: "LLM-validated collection from all 61 government sources with 3-month archive lifecycle"
+      });
+    } catch (error) {
+      console.error("Enhanced collection status error:", error);
+      res.status(500).json({ success: false, error: "Failed to get collection status" });
+    }
+  });
+
+  app.post("/api/enhanced-collection/run", async (req, res) => {
+    try {
+      const result = await enhancedDataCollector.runComprehensiveCollection();
+      res.json({
+        success: true,
+        result,
+        message: "Enhanced collection completed with LLM validation and archiving"
+      });
+    } catch (error) {
+      console.error("Enhanced collection run error:", error);
+      res.status(500).json({ success: false, error: "Failed to run enhanced collection" });
+    }
+  });
+
+  // Content Validation Testing Endpoint
+  app.post("/api/validate-content", async (req, res) => {
+    try {
+      const { title, description, source } = req.body;
+      if (!title || !description || !source) {
+        return res.status(400).json({ success: false, error: "Missing required fields" });
+      }
+
+      const validation = await enhancedDataCollector.validateContentItem(title, description, source);
+      res.json({
+        success: true,
+        validation,
+        explanation: "LLM-based relevance validation for scam/elderly protection content"
+      });
+    } catch (error) {
+      console.error("Content validation error:", error);
+      res.status(500).json({ success: false, error: "Failed to validate content" });
+    }
+  });
+
+  // Load historical data on startup
+  historicalDataSeeder.seedHistoricalData();
+
   return httpServer;
 }
