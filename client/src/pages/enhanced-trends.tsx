@@ -227,8 +227,8 @@ export default function EnhancedTrendsPage() {
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-md"
               >
-                {categories.map(category => (
-                  <option key={category} value={category}>
+                {categories.map((category, index) => (
+                  <option key={`${category}-${index}`} value={category}>
                     {category === "all" ? "All Categories" : category}
                   </option>
                 ))}
@@ -273,7 +273,7 @@ export default function EnhancedTrendsPage() {
                           </CardTitle>
                           <div className="flex items-center gap-2 mb-2">
                             <Badge className={getSeverityColor(trend.severity)}>
-                              {trend.severity.toUpperCase()}
+                              {trend.severity?.toUpperCase() || 'UNKNOWN'}
                             </Badge>
                             <Badge variant="outline">{trend.category}</Badge>
                           </div>
