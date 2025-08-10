@@ -3,6 +3,7 @@ import { Shield, History, Play, FileText, Phone, Camera, Keyboard } from "lucide
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Logo from "@/components/logo";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 import InputSelector from "@/components/input-selector";
 import UploadForm from "@/components/upload-form";
@@ -15,11 +16,49 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/api";
 
 export default function Home() {
+  const { currentLanguage, translate: translateFn } = useLanguage();
+  const [translations, setTranslations] = useState<Record<string, string>>({});
   const [selectedInputType, setSelectedInputType] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<ScamAnalysisResult | null>(null);
   const [analysisId, setAnalysisId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'demo' | 'report' | null>(null);
+
+  // Helper function for synchronous translation lookup
+  const translate = (text: string) => translations[text] || text;
+
+  // Translate common text when language changes
+  useEffect(() => {
+    if (currentLanguage.code === 'en') {
+      setTranslations({});
+      return;
+    }
+
+    const textsToTranslate = [
+      "Upload a screenshot, paste text, or input a phone call transcript",
+      "Is this message safe?",
+      "Fake Bank Email",
+      "Tech Support Call", 
+      "Screenshot of phishing email claiming urgent account verification needed",
+      "View Demo Report",
+      "No recent alerts",
+      "All systems monitoring normal activity"
+    ];
+
+    const translateTexts = async () => {
+      const newTranslations: Record<string, string> = {};
+      for (const text of textsToTranslate) {
+        try {
+          newTranslations[text] = await translateFn(text);
+        } catch (error) {
+          newTranslations[text] = text; // Fallback to original
+        }
+      }
+      setTranslations(newTranslations);
+    };
+
+    translateTexts();
+  }, [currentLanguage, translateFn]);
 
   // Fail-safe: Reset loading state on component mount
   useEffect(() => {
@@ -349,10 +388,9 @@ export default function Home() {
 
       <main className="max-w-4xl mx-auto px-6 py-8">
         <section className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4 text-boomer-navy">Is this message safe?</h2>
+          <h2 className="text-3xl font-bold mb-4 text-boomer-navy">{translate("Is this message safe?")}</h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            Upload a screenshot, paste suspicious text, or share a phone call transcript. 
-            We'll analyze it for scam patterns and give you clear next steps.
+            {translate("Upload a screenshot, paste text, or input a phone call transcript")}
           </p>
         </section>
 
@@ -378,14 +416,14 @@ export default function Home() {
                         <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
                           <Camera className="text-red-600 w-6 h-6" />
                         </div>
-                        <h4 className="font-semibold text-lg text-red-600">Fake Bank Email</h4>
-                        <p className="text-sm text-gray-600">Screenshot of phishing email</p>
+                        <h4 className="font-semibold text-lg text-red-600">{translate("Fake Bank Email")}</h4>
+                        <p className="text-sm text-gray-600">{translate("Screenshot of phishing email claiming urgent account verification needed")}</p>
                       </div>
                       <Button 
                         onClick={() => showDemoResult('phishing')}
                         className="w-full bg-red-600 hover:bg-red-700"
                       >
-                        View Demo Report
+                        {translate("View Demo Report")}
                       </Button>
                     </div>
 
@@ -395,14 +433,14 @@ export default function Home() {
                         <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
                           <Keyboard className="text-orange-600 w-6 h-6" />
                         </div>
-                        <h4 className="font-semibold text-lg text-orange-600">Tech Support Call</h4>
+                        <h4 className="font-semibold text-lg text-orange-600">{translate("Tech Support Call")}</h4>
                         <p className="text-sm text-gray-600">User describes suspicious call</p>
                       </div>
                       <Button 
                         onClick={() => showDemoResult('techsupport')}
                         className="w-full bg-orange-600 hover:bg-orange-700"
                       >
-                        View Demo Report
+                        {translate("View Demo Report")}
                       </Button>
                     </div>
 

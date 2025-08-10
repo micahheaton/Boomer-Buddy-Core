@@ -1,9 +1,50 @@
 import { Shield, Users, Globe, Brain, Heart, Award, AlertTriangle, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useState, useEffect } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
+
 export default function About() {
-  // Simple text without translation for now
-  const translate = (text: string) => text;
+  const { currentLanguage, translate: translateFn } = useLanguage();
+  const [translations, setTranslations] = useState<Record<string, string>>({});
+
+  // Helper function for synchronous translation lookup
+  const translate = (text: string) => translations[text] || text;
+
+  // Translate all text when language changes
+  useEffect(() => {
+    if (currentLanguage.code === 'en') {
+      setTranslations({});
+      return;
+    }
+
+    const textsToTranslate = [
+      "Launched Summer", "Official Sources", "Daily Updates", "Protection",
+      "Built by cybersecurity leaders with 20+ years experience",
+      "Government and authorized nonprofit data only",
+      "Real-time collection from trusted .gov/.us sources", 
+      "Continuous monitoring and personalized alerts",
+      "Compassionate Protection", "Universal Accessibility", "Official Sources Only", "Community Empowerment",
+      "We understand that scammers target seniors through emotional manipulation. Our platform provides not just detection, but empathetic guidance and support.",
+      "Available in multiple languages with simple interfaces designed specifically for older adults, ensuring no one is left behind.",
+      "Every alert comes from official government sources (FTC, FBI IC3, SSA, HHS-OIG, CISA) and authorized nonprofits (AARP, BBB) - no false alarms.",
+      "Seniors helping seniors through shared experiences, verified reports, and collective wisdom to outsmart scammers."
+    ];
+
+    const translateTexts = async () => {
+      const newTranslations: Record<string, string> = {};
+      for (const text of textsToTranslate) {
+        try {
+          newTranslations[text] = await translateFn(text);
+        } catch (error) {
+          newTranslations[text] = text; // Fallback to original
+        }
+      }
+      setTranslations(newTranslations);
+    };
+
+    translateTexts();
+  }, [currentLanguage, translateFn]);
 
   const missionStats = [
     { 
