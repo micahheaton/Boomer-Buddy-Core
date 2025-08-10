@@ -1,0 +1,232 @@
+Got it — you want a **turnkey, point-and-click runbook** so you can feed it straight to Replit and go from “zero” to “Boomer Buddy running on your Android phone” without needing prior mobile dev experience.
+We’ll keep it **step-by-step**, **non-assumptive**, and we’ll explicitly bridge the Replit → Android gap so you’re not stuck in Expo Go purgatory without your call/SMS integrations.
+
+---
+
+## **Boomer Buddy Mobile — Replit-to-Android Build Guide (Full Runbook)**
+
+### **1. What you’re building right now**
+
+* **Platform**: React Native (TypeScript) with **native Android modules** for call screening and SMS filtering.
+* **Backend**: Your existing Replit Node/Python API + feeds worker.
+* **Goal**: Installable `.apk` file on your Android phone with:
+
+  * Shell UI (menu, reports, history)
+  * Basic **call/SMS warning** stubs (real native modules wired in)
+  * Local history + report submission
+  * Pulls from your feeds.json
+
+---
+
+### **2. Prerequisites (one-time)**
+
+You’ll do these just once:
+
+#### On Replit
+
+1. Make sure you have **Hacker plan** (needed for Android build container).
+2. In your Replit workspace, enable **Nix** (for RN CLI + Gradle).
+
+#### On your laptop/desktop
+
+1. **Install Android Studio** (you won’t be coding in it, but it’s needed for the build tools).
+
+   * Download: [https://developer.android.com/studio](https://developer.android.com/studio)
+   * During install, select “Android SDK”, “Android SDK Platform”, and “Android Virtual Device”.
+2. **Enable Developer Mode on your Android phone**:
+
+   * Settings → About Phone → Tap “Build number” 7 times.
+3. **Enable USB Debugging**:
+
+   * Settings → Developer Options → USB Debugging ON.
+4. Install **ADB** (Android Debug Bridge):
+
+   * Windows: `choco install adb` (if using Chocolatey)
+   * Mac: `brew install android-platform-tools`
+
+---
+
+### **3. Fork & scaffold the mobile repo in Replit**
+
+In your Replit workspace:
+
+```bash
+# 1. Create the monorepo structure
+mkdir -p boomer-buddy/apps/mobile
+cd boomer-buddy/apps/mobile
+
+# 2. Init React Native bare workflow (not Expo Go)
+npx react-native@latest init BoomerBuddyMobile --template react-native-template-typescript
+
+# 3. Install dependencies
+cd BoomerBuddyMobile
+npm install @react-navigation/native @react-navigation/native-stack react-native-gesture-handler react-native-reanimated react-native-safe-area-context react-native-screens axios
+npm install react-native-fs react-native-permissions zustand
+npm install --save-dev typescript @types/react @types/react-native
+```
+
+**Why bare RN?**
+Because Expo Go can’t give you real call/SMS access — bare RN lets us drop in Kotlin native code.
+
+---
+
+### **4. Add Android native services**
+
+Inside `android/app/src/main/java/com/boomerbuddymobile/`:
+
+#### `BoomerBuddyCallScreeningService.kt`
+
+```kotlin
+package com.boomerbuddymobile
+
+import android.telecom.CallScreeningService
+import android.telecom.Call
+import android.util.Log
+
+class BoomerBuddyCallScreeningService : CallScreeningService() {
+    override fun onScreenCall(callDetails: Call.Details) {
+        val number = callDetails.handle?.schemeSpecificPart ?: ""
+        Log.d("BoomerBuddy", "Incoming call: $number")
+        // TODO: hook into risk engine
+        val response = CallResponse.Builder()
+        respondToCall(callDetails, response.build())
+    }
+}
+```
+
+#### Update `AndroidManifest.xml`
+
+Add inside `<application>`:
+
+```xml
+<service
+  android:name=".BoomerBuddyCallScreeningService"
+  android:permission="android.permission.BIND_SCREENING_SERVICE"
+  android:exported="true">
+  <intent-filter>
+    <action android:name="android.telecom.CallScreeningService" />
+  </intent-filter>
+</service>
+```
+
+And add permissions:
+
+```xml
+<uses-permission android:name="android.permission.READ_CALL_LOG"/>
+<uses-permission android:name="android.permission.ANSWER_PHONE_CALLS"/>
+<uses-permission android:name="android.permission.READ_SMS"/>
+<uses-permission android:name="android.permission.RECEIVE_SMS"/>
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+```
+
+---
+
+### **5. Hook your backend**
+
+In `src/api.ts`:
+
+```ts
+import axios from 'axios';
+
+const API_BASE = 'https://api.boomerbuddy.net';
+
+export const getFeeds = async () => {
+  const { data } = await axios.get(`${API_BASE}/v1/feeds.json`);
+  return data;
+};
+```
+
+---
+
+### **6. Basic UI scaffold**
+
+In `App.tsx`:
+
+```tsx
+import React, { useEffect, useState } from 'react';
+import { SafeAreaView, Text, FlatList } from 'react-native';
+import { getFeeds } from './src/api';
+
+export default function App() {
+  const [feeds, setFeeds] = useState([]);
+  useEffect(() => { getFeeds().then(setFeeds); }, []);
+  return (
+    <SafeAreaView>
+      <Text style={{ fontSize: 24, fontWeight: 'bold', margin: 10 }}>
+        Boomer Buddy
+      </Text>
+      <FlatList
+        data={feeds}
+        keyExtractor={(item, i) => i.toString()}
+        renderItem={({ item }) => (
+          <Text>{item.title}</Text>
+        )}
+      />
+    </SafeAreaView>
+  );
+}
+```
+
+---
+
+### **7. Build the APK in Replit**
+
+In the Replit shell:
+
+```bash
+cd boomer-buddy/apps/mobile/BoomerBuddyMobile
+npx react-native build-android
+```
+
+The built file will be in:
+
+```
+android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+---
+
+### **8. Install on your phone**
+
+Plug in your Android phone via USB and run:
+
+```bash
+adb install android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+OR upload the APK to Google Drive, download it on your phone, and install (allow “install from unknown sources”).
+
+---
+
+### **9. Test & iterate**
+
+* You’ll see the **Boomer Buddy app** with a feed list from your backend.
+* Calls will log in Android’s logcat (you can see in Replit or via `adb logcat`).
+* Next steps:
+
+  * Add **risk engine** code to `BoomerBuddyCallScreeningService.kt`.
+  * Expand RN screens for Reports, History, Settings.
+  * Wire SMS listener service for warnings.
+
+---
+
+### **10. Why this works better than Expo Go**
+
+* Real `.apk` build — you can side-load, not just preview.
+* Access to **CallScreeningService** and **SMS APIs** that Expo Go blocks.
+* Full integration with your existing Replit backend.
+* Easy to extend — you can still use RN components and hot-reload in dev.
+
+---
+
+If you want, I can now **package all of this into a ready-to-import Replit project** with:
+
+* Monorepo folder structure
+* Mobile RN app pre-wired
+* Android native stubs ready
+* Backend API calls already hitting your `feeds.json`
+
+So you’d just hit **Run → Build APK → Install** and see it live on your Android device.
+
+Do you want me to produce that zip next? That would make this 100% ready to run without you doing the manual setup.
