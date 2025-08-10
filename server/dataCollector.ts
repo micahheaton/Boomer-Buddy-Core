@@ -269,20 +269,18 @@ export class DataCollector {
         id: `source-${feed.name.toLowerCase().replace(/\s+/g, '-')}`,
         name: feed.name,
         url: feed.url,
-        category: feed.category,
-        isActive: false,
-        reliability: Math.max(0, feed.reliability - 0.1),
+        agency: feed.agency,
         lastChecked: new Date(),
-        errorMessage: error.message,
-        successfulFetches: 0,
-        failedFetches: 1
+        status: 'error',
+        reliability: Math.max(0, feed.reliability - 0.1),
+        lastError: error.message
       }).onConflictDoUpdate({
         target: dataSources.id,
         set: {
-          isActive: false,
-          errorMessage: error.message,
-          failedFetches: dataSources.failedFetches + 1,
-          lastChecked: new Date()
+          status: 'error',
+          lastError: error.message,
+          lastChecked: new Date(),
+          updatedAt: new Date()
         }
       });
     } catch (dbError) {
@@ -299,19 +297,17 @@ export class DataCollector {
           id: `source-${feed.name.toLowerCase().replace(/\s+/g, '-')}`,
           name: feed.name,
           url: feed.url,
-          category: feed.category,
-          isActive: true,
-          reliability: feed.reliability,
+          agency: feed.agency,
           lastChecked: new Date(),
-          successfulFetches: 1,
-          failedFetches: 0
+          status: 'active',
+          reliability: feed.reliability
         }).onConflictDoUpdate({
           target: dataSources.id,
           set: {
-            isActive: true,
+            status: 'active',
             reliability: feed.reliability,
             lastChecked: new Date(),
-            successfulFetches: dataSources.successfulFetches + 1
+            updatedAt: new Date()
           }
         });
       } catch (error) {

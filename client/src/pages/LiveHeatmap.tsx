@@ -161,7 +161,7 @@ export default function LiveHeatmap() {
     (trendsData.trends as any[]).forEach((trend: any) => {
       if (trend.affectedRegions && Array.isArray(trend.affectedRegions)) {
         trend.affectedRegions.forEach((region: string) => {
-          const stateCode = region.toUpperCase();
+          const stateCode = region?.toString()?.toUpperCase() || 'US';
           if (stateData[stateCode]) {
             stateData[stateCode].riskLevel = Math.min(100, 
               stateData[stateCode].riskLevel + (trend.severity === 'critical' ? 25 : 
@@ -223,7 +223,7 @@ export default function LiveHeatmap() {
           if (alert.affectedRegions && Array.isArray(alert.affectedRegions)) {
             alert.affectedRegions.forEach((region: string) => {
               if (region && typeof region === 'string') {
-                affectedStates.add(region.toUpperCase());
+                affectedStates.add(region?.toString()?.toUpperCase() || 'US');
               }
             });
           }
@@ -326,7 +326,7 @@ export default function LiveHeatmap() {
         
         // Trigger pulse animation for affected states
         if (newAlert.affectedRegions) {
-          const affectedStates = new Set(newAlert.affectedRegions.map(r => r.toUpperCase()));
+          const affectedStates = new Set(newAlert.affectedRegions?.map(r => r?.toString()?.toUpperCase() || 'US') || ['US']);
           setPulseAnimations(affectedStates);
           
           // Play alert sound
@@ -576,7 +576,7 @@ export default function LiveHeatmap() {
                   {/* Live Alert Detonations */}
                   {recentAlerts.map((alert, index) => (
                     alert.affectedRegions?.map((region) => {
-                      const stateInfo = stateCoordinates[region.toUpperCase()];
+                      const stateInfo = stateCoordinates[region?.toString()?.toUpperCase() || 'US'];
                       if (!stateInfo) return null;
                       
                       const position = calculateMapPosition(stateInfo.lat, stateInfo.lng);
@@ -644,7 +644,7 @@ export default function LiveHeatmap() {
                   <div key={alert.id} className="p-3 bg-slate-700 rounded-lg border border-slate-600">
                     <div className="flex justify-between items-start mb-2">
                       <Badge className={`${getSeverityColor(alert.severity)} text-white text-xs`}>
-                        {alert.severity.toUpperCase()}
+                        {alert.severity?.toString()?.toUpperCase() || 'MEDIUM'}
                       </Badge>
                       <span className="text-xs text-gray-400">
                         {new Date(alert.timestamp).toLocaleTimeString()}
