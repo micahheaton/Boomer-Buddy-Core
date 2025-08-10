@@ -1094,15 +1094,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Unified trends and heatmap endpoint
   app.get("/api/unified-trends-heatmap", async (req, res) => {
     try {
-      // Get comprehensive data from both trends and news
+      // Get comprehensive data from both trends and news using correct column names
       const trends = await db.select()
         .from(scamTrends)
-        .orderBy(sql`${scamTrends.publishedAt} DESC`)
+        .where(eq(scamTrends.isActive, true))
+        .orderBy(desc(scamTrends.lastReported))
         .limit(100);
 
       const news = await db.select()
         .from(newsItems)
-        .orderBy(sql`${newsItems.publishedAt} DESC`)
+        .where(eq(newsItems.isVerified, true))
+        .orderBy(desc(newsItems.publishDate))
         .limit(50);
 
       // Get data sources stats
@@ -1117,28 +1119,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: trend.id,
           title: trend.title,
           description: trend.description,
-          url: trend.url,
-          severity: trend.riskLevel || 'medium',
-          category: trend.scamTypes?.[0] || 'General',
-          timestamp: trend.publishedAt,
-          sourceAgency: trend.agency,
+          url: trend.sourceUrl || '#',
+          severity: trend.severity || 'medium',
+          category: trend.category || 'General',
+          timestamp: trend.lastReported || trend.createdAt,
+          sourceAgency: trend.sourceAgency || 'Government Source',
           isScamAlert: true,
           type: 'scam-alert' as const,
-          scamTypes: trend.scamTypes,
-          elderRelevanceScore: trend.elderRelevanceScore
+          scamTypes: trend.affectedRegions || [],
+          elderRelevanceScore: 85
         })),
         ...news.map(item => ({
           id: item.id,
           title: item.title,
-          description: item.description,
-          url: item.url,
-          severity: item.riskLevel || 'medium',
-          category: item.contentType || 'news',
-          timestamp: item.publishedAt,
-          sourceAgency: item.agency,
+          description: item.summary?.substring(0, 150) + '...' || 'Government News Update',
+          url: item.sourceUrl || '#',
+          severity: item.category?.includes('alert') ? 'high' : 'medium',
+          category: item.category || 'Government News',
+          timestamp: item.publishDate || item.createdAt,
+          sourceAgency: item.sourceAgency || 'Government Source',
           isScamAlert: false,
           type: 'news' as const,
-          elderRelevanceScore: item.elderRelevanceScore
+          elderRelevanceScore: item.elderRelevanceScore || 75
         }))
       ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
@@ -1172,7 +1174,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Unified endpoint error:", error);
-      res.status(500).json({ error: "Failed to fetch unified data" });
+      console.error("Error details:", (error as Error).message);
+      console.error("Stack trace:", (error as Error).stack);
+      res.status(500).json({ 
+        error: "Failed to fetch unified data",
+        details: (error as Error).message 
+      });
     }
   });
 
