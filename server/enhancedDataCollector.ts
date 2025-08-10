@@ -3,7 +3,7 @@ import { dataSources, scamTrends, newsItems } from "../shared/schema";
 import { discoverStateFeeds, discoverFederalFeeds } from "./feedDiscovery";
 import Parser from 'rss-parser';
 import fetch from 'node-fetch';
-import cheerio from 'cheerio';
+import { load as cheerioLoad } from 'cheerio';
 import { eq, desc } from "drizzle-orm";
 
 interface FeedItem {
@@ -244,7 +244,7 @@ export class EnhancedDataCollector {
       }
       
       const html = await response.text();
-      const $ = cheerio.load(html);
+      const $ = cheerioLoad(html);
       const items: FeedItem[] = [];
       
       // Generic selectors for news/alert items

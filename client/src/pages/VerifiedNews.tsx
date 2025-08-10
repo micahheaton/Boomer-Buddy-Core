@@ -24,9 +24,11 @@ export default function VerifiedNews() {
   const { data: newsData, isLoading } = useQuery<{
     news: NewsItem[];
     lastUpdated: string;
+    comprehensiveCollection?: boolean;
+    intelligentTriage?: string;
   }>({
-    queryKey: ["/api/v2/news"],
-    refetchInterval: 300000, // 5 minutes
+    queryKey: ["/api/news"], // Use enhanced news endpoint
+    refetchInterval: 300000, // 5 minutes for comprehensive collection
   });
 
   const filteredNews = newsData?.news.filter(item =>
@@ -80,7 +82,7 @@ export default function VerifiedNews() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Verified News</h1>
           <p className="text-gray-600 dark:text-gray-300 mt-2">
-            Latest updates and advisories from government agencies
+            Latest updates from comprehensive government collection system (All 50 states + federal)
           </p>
         </div>
         <div className="text-right text-sm text-gray-500">

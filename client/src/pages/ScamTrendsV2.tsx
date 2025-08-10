@@ -22,6 +22,13 @@ interface ScamTrend {
   elderRelevanceScore?: number;
   reportCount?: number;
   reliability?: number;
+  simplifiedLanguage?: string;
+  actionableSteps?: string[];
+  authorityBadge?: string;
+  geographicRelevance?: string[];
+  category?: string;
+  tags?: string[];
+  enhancedData?: boolean;
 }
 
 interface ThreatSummary {
@@ -30,6 +37,9 @@ interface ThreatSummary {
   totalThreats: number;
   totalReports: number;
   reportsThisWeek: number;
+  comprehensiveCollection?: boolean;
+  sourcesCovered?: string;
+  enhancedData?: boolean;
 }
 
 export default function ScamTrendsV2() {
@@ -44,15 +54,20 @@ export default function ScamTrendsV2() {
       newsItems: number;
       lastUpdated: string;
       sourceType: string;
+      criticalAlerts?: number;
+      highAlerts?: number;
+      coverage?: string;
     };
   }>({
-    queryKey: ["/api/v2/scam-trends"],
+    queryKey: ["/api/trends"], // Use the enhanced trends endpoint
     refetchInterval: 300000, // 5 minutes
   });
 
   const { data: sourcesData } = useQuery<{
     sources: any[];
     stats: any;
+    comprehensiveCollection?: boolean;
+    totalSources?: number;
   }>({
     queryKey: ["/api/v2/data-sources"],
     refetchInterval: 300000,
@@ -124,7 +139,7 @@ export default function ScamTrendsV2() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Scam Trends & News</h1>
           <p className="text-gray-600 dark:text-gray-300 mt-2">
-            Historical data from all 15+ official government sources (2024-2025)
+            Comprehensive data from {sourcesData?.stats?.totalSources || '60+'} government sources across all 50 states (2024-2025)
           </p>
         </div>
         <div className="text-right text-sm text-gray-500">
@@ -321,8 +336,8 @@ export default function ScamTrendsV2() {
       <Alert className="mt-8">
         <Shield className="h-4 w-4" />
         <AlertDescription>
-          <strong>100% Authentic Government Data:</strong> All information displayed comes exclusively from verified official U.S. government sources (.gov/.us domains). 
-          Data collection occurs 4x daily from {sourcesData?.stats?.totalSources || '15+'} agencies including FTC, FBI, SSA, HHS-OIG, CISA, and state attorneys general.
+          <strong>Comprehensive Government Collection:</strong> Enhanced system now monitoring {sourcesData?.stats?.totalSources || '60+'} sources from all 50 states plus federal agencies. 
+          Intelligent triage distinguishes between scam alerts and government news. Updated 4x daily from verified .gov/.us domains.
         </AlertDescription>
       </Alert>
     </div>

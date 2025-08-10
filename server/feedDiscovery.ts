@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import cheerio from 'cheerio';
+import { load as cheerioLoad } from 'cheerio';
 
 interface FeedCandidate {
   url: string;
@@ -152,7 +152,7 @@ async function extractFeedsFromPage(url: string): Promise<FeedCandidate[]> {
     }
 
     const html = await response.text();
-    const $ = cheerio.load(html);
+    const $ = cheerioLoad(html);
     const candidates: FeedCandidate[] = [];
 
     // Find RSS link tags

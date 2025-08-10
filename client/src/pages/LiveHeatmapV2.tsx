@@ -103,14 +103,17 @@ export default function LiveHeatmapV2() {
   const [lastAlertCount, setLastAlertCount] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Fetch live heatmap data from our government sources
+  // Fetch live heatmap data from comprehensive collection system
   const { data: heatmapData, refetch } = useQuery<{
     alerts: LiveAlert[];
-    statistics: HeatmapStatistics;
+    statistics: HeatmapStatistics & {
+      enhancedData?: boolean;
+      collectionSystem?: string;
+    };
     realTimeData: boolean;
   }>({
     queryKey: ['/api/heatmap/live-alerts'],
-    refetchInterval: 15000, // Refresh every 15 seconds for live updates
+    refetchInterval: 15000, // Refresh every 15 seconds for comprehensive live updates
   });
 
   // Play sound alert when new alerts arrive
