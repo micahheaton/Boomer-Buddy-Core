@@ -15,6 +15,9 @@ Preferred communication style: Simple, everyday language.
 - **Data Expansion**: Added 15+ verified government sources including FTC, FBI, DOJ, SEC, CFPB, FCC, HHS-OIG, CISA, and state AGs
 - **Smart Filtering**: Implemented elder-relevance scoring and scam-type detection to filter mixed-content feeds
 - **Fixed**: Resolved LiveHeatmap WebSocket errors and array handling issues for better stability
+- **CRITICAL FIX**: Improved intelligent triage logic to properly distinguish between government news items (legislation, announcements) and actual scam alerts
+- **Navigation Update**: Removed "Verified News" link since news is now consolidated in unified Scam Trends page
+- **Enhanced Classification**: Added specific detection for "Big Beautiful Bill" and similar legislation as news rather than critical alerts
 
 # System Architecture
 

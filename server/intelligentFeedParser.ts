@@ -72,8 +72,9 @@ export class IntelligentFeedParser {
     // Extract scam types
     const scamTypes = this.extractScamTypes(content);
     
-    // Determine severity
-    const severity = this.determineSeverity(content);
+    // Determine content type (news vs alert) and severity
+    const contentType = this.determineContentType(content, title);
+    const severity = contentType === 'news' ? 'low' : this.determineSeverity(content);
     
     // Extract affected regions (if mentioned)
     const affectedRegions = this.extractAffectedRegions(content);
@@ -89,7 +90,7 @@ export class IntelligentFeedParser {
       publishedAt: this.normalizeDate(item.pubDate || item.isoDate || new Date().toISOString()),
       source: feedSource.name,
       sourceAgency: feedSource.agency,
-      category: feedSource.category,
+      category: contentType, // 'news' or 'scam-alert'
       tags: tags,
       elderRelevanceScore: elderRelevanceScore,
       scamTypes: scamTypes,
@@ -97,6 +98,58 @@ export class IntelligentFeedParser {
       severity: severity,
       reportCount: this.estimateReportCount(content, severity)
     };
+  }
+
+  /**
+   * Determine if content is news or a scam alert
+   */
+  private determineContentType(content: string, title: string): 'news' | 'scam-alert' {
+    const newsIndicators = [
+      'bill', 'act', 'legislation', 'law', 'passed', 'signed',
+      'announces', 'agency', 'department', 'new rule', 'regulation',
+      'policy', 'program', 'initiative', 'enforcement action',
+      'settlement', 'fine', 'penalty', 'charges filed',
+      'indictment', 'arrest', 'prosecution', 'conviction',
+      'beautiful bill', 'funding', 'appropriation', 'budget'
+    ];
+
+    const alertIndicators = [
+      'warning', 'alert', 'scam', 'fraud', 'beware', 'avoid',
+      'don\'t fall', 'protect yourself', 'be aware', 'caution',
+      'suspicious', 'phishing', 'imposter', 'fake'
+    ];
+
+    const fullText = `${title} ${content}`.toLowerCase();
+    
+    let newsScore = 0;
+    let alertScore = 0;
+
+    // Score news indicators
+    for (const indicator of newsIndicators) {
+      if (fullText.includes(indicator)) {
+        newsScore++;
+      }
+    }
+
+    // Score alert indicators
+    for (const indicator of alertIndicators) {
+      if (fullText.includes(indicator)) {
+        alertScore++;
+      }
+    }
+
+    // If it's about legislation/enforcement actions, it's probably news
+    if (newsScore > alertScore) {
+      return 'news';
+    }
+
+    // If it has clear warning language, it's an alert
+    if (alertScore > 0) {
+      return 'scam-alert';
+    }
+
+    // Default to news for government announcements
+    return 'news';
   }
 
   /**

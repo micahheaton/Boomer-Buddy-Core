@@ -20,7 +20,6 @@ import About from "@/pages/About";
 import VulnerabilityAssessment from "@/pages/VulnerabilityAssessment";
 import LiveHeatmap from "@/pages/LiveHeatmap";
 import ScamTrendsV2 from "@/pages/ScamTrendsV2";
-import VerifiedNews from "@/pages/VerifiedNews";
 import DataSourcesV2 from "@/pages/DataSourcesV2";
 
 function Router() {
@@ -30,7 +29,6 @@ function Router() {
       <Route path="/report/:id" component={Report} />
       <Route path="/trends" component={EnhancedTrendsPage} />
       <Route path="/scam-trends-v2" component={ScamTrendsV2} />
-      <Route path="/verified-news" component={VerifiedNews} />
       <Route path="/data-sources-v2" component={DataSourcesV2} />
 
       <Route path="/dashboard" component={Dashboard} />

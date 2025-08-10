@@ -60,15 +60,7 @@ export default function Navigation() {
                 Scam Trends
               </button>
               
-              <button
-                onClick={() => setLocation("/verified-news")}
-                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                  location === "/verified-news" ? "text-boomer-navy" : "text-gray-600 hover:text-boomer-navy"
-                }`}
-              >
-                <BarChart3 className="w-4 h-4" />
-                Verified News
-              </button>
+
 
               <button
                 onClick={() => setLocation("/about")}

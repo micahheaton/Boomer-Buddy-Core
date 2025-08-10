@@ -122,7 +122,7 @@ export default function LiveHeatmap() {
   const wsRef = useRef<WebSocket | null>(null);
 
   // Fetch live trends data
-  const { data: trendsData, refetch: refetchTrends } = useQuery({
+  const { data: trendsData, refetch: refetchTrends } = useQuery<{trends: any[]}>({
     queryKey: ['/api/trends'],
     refetchInterval: 30000, // Refresh every 30 seconds for live updates
   });
@@ -135,7 +135,7 @@ export default function LiveHeatmap() {
 
   // Generate heatmap data from trends and news
   const generateHeatmapData = (): HeatmapData[] => {
-    if (!trendsData || !Array.isArray(trendsData.trends)) return [];
+    if (!trendsData?.trends || !Array.isArray(trendsData.trends)) return [];
 
     const stateData: Record<string, HeatmapData> = {};
 
@@ -158,7 +158,7 @@ export default function LiveHeatmap() {
     });
 
     // Process trends data to update state risk levels
-    (trendsData.trends as any[]).forEach((trend: any) => {
+    trendsData.trends.forEach((trend: any) => {
       if (trend.affectedRegions && Array.isArray(trend.affectedRegions)) {
         trend.affectedRegions.forEach((region: string) => {
           const stateCode = region?.toString()?.toUpperCase() || 'US';
@@ -192,17 +192,17 @@ export default function LiveHeatmap() {
 
   // Monitor for new alerts and trigger animations
   useEffect(() => {
-    if (trendsData && Array.isArray(trendsData.trends)) {
+    if (trendsData?.trends && Array.isArray(trendsData.trends)) {
       const currentTime = Date.now();
       const recentThreshold = 5 * 60 * 1000; // 5 minutes
 
-      const newAlerts = (trendsData.trends as any[]).filter((trend: any) => {
+      const newAlerts = trendsData.trends.filter((trend: any) => {
         const trendTime = new Date(trend.lastReported || trend.firstReported).getTime();
         return (currentTime - trendTime) < recentThreshold;
       });
 
       // Always show the latest 10 alerts, regardless of timing
-      const latestAlerts = (trendsData.trends as any[]).slice(0, 10).map((trend: any) => ({
+      const latestAlerts = trendsData.trends.slice(0, 10).map((trend: any) => ({
         id: trend.id,
         title: trend.title,
         description: trend.description,
