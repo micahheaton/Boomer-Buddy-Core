@@ -1,18 +1,7 @@
-// Multiple translation service support with fallbacks
-let translate: any = null;
+// LibreTranslate API endpoint
+const LIBRE_TRANSLATE_URL = 'https://libretranslate.de/translate';
 
-// Try Google Translate first (best quality)
-if (process.env.GOOGLE_TRANSLATE_API_KEY) {
-  try {
-    const { Translate } = require('@google-cloud/translate').v2;
-    translate = new Translate({
-      key: process.env.GOOGLE_TRANSLATE_API_KEY,
-    });
-    console.log('✅ Google Translate API configured');
-  } catch (error) {
-    console.warn('Google Translate setup failed:', error.message);
-  }
-}
+console.log('✅ LibreTranslate configured as primary translation service');
 
 export interface TranslateRequest {
   text: string;
@@ -46,19 +35,8 @@ export class TranslateService {
     }
 
     try {
-      let translatedText = text;
-
-      if (translate) {
-        // Use Google Translate (best quality)
-        const [translation, metadata] = await translate.translate(text, {
-          from: sourceLanguage || undefined,
-          to: targetLanguage,
-        });
-        translatedText = Array.isArray(translation) ? translation[0] : translation;
-      } else {
-        // Fallback to free LibreTranslate service
-        translatedText = await this.translateWithLibre(text, targetLanguage, sourceLanguage);
-      }
+      // Try LibreTranslate first, then fallback to basic dictionary
+      let translatedText = await this.translateWithLibre(text, targetLanguage, sourceLanguage);
       
       // Store in cache
       if (this.cache.size >= this.MAX_CACHE_SIZE) {
@@ -72,7 +50,7 @@ export class TranslateService {
 
       return {
         translatedText,
-        confidence: translate ? 1.0 : 0.8 // Lower confidence for fallback
+        confidence: 0.9 // High confidence for LibreTranslate
       };
     } catch (error) {
       console.error('Translation error:', error);
@@ -104,22 +82,37 @@ export class TranslateService {
   }
 
   async detectLanguage(text: string): Promise<{ language: string; confidence: number }> {
-    if (!translate || !text.trim()) {
+    if (!text.trim()) {
       return { language: 'en', confidence: 1.0 };
     }
 
-    try {
-      const [detection] = await translate.detect(text);
-      const result = Array.isArray(detection) ? detection[0] : detection;
-      
-      return {
-        language: result.language || 'en',
-        confidence: result.confidence || 0.5
-      };
-    } catch (error) {
-      console.error('Language detection error:', error);
-      return { language: 'en', confidence: 1.0 };
+    // Simple language detection based on common words
+    const spanishWords = ['el', 'la', 'es', 'y', 'de', 'en', 'un', 'que', 'con', 'se'];
+    const frenchWords = ['le', 'de', 'et', 'à', 'un', 'il', 'être', 'et', 'en', 'avoir'];
+    const germanWords = ['der', 'die', 'und', 'in', 'den', 'von', 'zu', 'das', 'mit', 'sich'];
+
+    const words = text.toLowerCase().split(/\s+/);
+    let spanishScore = 0;
+    let frenchScore = 0;
+    let germanScore = 0;
+
+    words.forEach(word => {
+      if (spanishWords.includes(word)) spanishScore++;
+      if (frenchWords.includes(word)) frenchScore++;
+      if (germanWords.includes(word)) germanScore++;
+    });
+
+    if (spanishScore > frenchScore && spanishScore > germanScore) {
+      return { language: 'es', confidence: 0.7 };
     }
+    if (frenchScore > germanScore) {
+      return { language: 'fr', confidence: 0.7 };
+    }
+    if (germanScore > 0) {
+      return { language: 'de', confidence: 0.7 };
+    }
+
+    return { language: 'en', confidence: 1.0 };
   }
 
   clearCache(): void {
@@ -130,9 +123,35 @@ export class TranslateService {
     return this.cache.size;
   }
 
-  // Free fallback translation using multiple sources
+  // LibreTranslate with dictionary fallback
   private async translateWithLibre(text: string, targetLanguage: string, sourceLanguage?: string): Promise<string> {
-    // Basic translation dictionary for common phrases (demo purposes)
+    // Try LibreTranslate.de (free without API key)
+    try {
+      const response = await fetch(LIBRE_TRANSLATE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          q: text,
+          source: sourceLanguage || 'auto',
+          target: targetLanguage,
+          format: 'text'
+        }),
+        signal: AbortSignal.timeout(5000) // 5 second timeout
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.translatedText && result.translatedText !== text) {
+          return result.translatedText;
+        }
+      }
+    } catch (error) {
+      console.log(`LibreTranslate failed, using dictionary fallback: ${error.message}`);
+    }
+
+    // Fallback to basic translation dictionary
     const commonTranslations: Record<string, Record<string, string>> = {
       'es': {
         'Hello world': 'Hola mundo',
@@ -148,7 +167,18 @@ export class TranslateService {
         'Analyze': 'Analizar',
         'Boomer Buddy': 'Boomer Buddy',
         'Scam Trends': 'Tendencias de estafas',
-        'Community': 'Comunidad'
+        'Community': 'Comunidad',
+        'Upload Screenshot': 'Subir captura de pantalla',
+        'Tell Us What Happened': 'Cuéntanos qué pasó',
+        'Upload Transcript': 'Subir transcripción',
+        'Take a photo of suspicious messages on your phone or computer': 'Toma una foto de mensajes sospechosos en tu teléfono o computadora',
+        'Describe what happened or leave an audio message': 'Describe lo que pasó o deja un mensaje de audio',
+        'Upload or paste call transcripts from Zoom, Teams, or phone apps': 'Sube o pega transcripciones de llamadas de Zoom, Teams o aplicaciones de teléfono',
+        'Phone call transcript': 'Transcripción de llamada telefónica',
+        'User describes suspicious call': 'Usuario describe llamada sospechosa',
+        'SSA Phone Scam': 'Estafa telefónica del SSA',
+        'Translation complete': 'Traducción completa',
+        '- Your trusted companion for staying safe online': '- Tu compañero de confianza para mantenerte seguro en línea'
       },
       'fr': {
         'Hello world': 'Bonjour le monde',
@@ -160,7 +190,10 @@ export class TranslateService {
         'Analyze': 'Analyser',
         'Boomer Buddy': 'Boomer Buddy',
         'Scam Trends': 'Tendances des arnaques',
-        'Community': 'Communauté'
+        'Community': 'Communauté',
+        'Upload Screenshot': 'Télécharger une capture d\'écran',
+        'Tell Us What Happened': 'Dites-nous ce qui s\'est passé',
+        'Upload Transcript': 'Télécharger la transcription'
       },
       'de': {
         'Hello world': 'Hallo Welt',
@@ -168,7 +201,10 @@ export class TranslateService {
         'Analyze': 'Analysieren',
         'Boomer Buddy': 'Boomer Buddy',
         'Scam Trends': 'Betrugs-Trends',
-        'Community': 'Gemeinschaft'
+        'Community': 'Gemeinschaft',
+        'Upload Screenshot': 'Screenshot hochladen',
+        'Tell Us What Happened': 'Erzählen Sie uns, was passiert ist',
+        'Upload Transcript': 'Transkript hochladen'
       }
     };
 
