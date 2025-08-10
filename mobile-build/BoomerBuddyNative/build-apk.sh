@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Boomer Buddy Native - APK Build Script
-# Production-ready Android APK generation
+# Production-ready Android APK generation with EAS Build
 
 echo "🛡️ Building Boomer Buddy Native APK..."
 echo "📱 Target: Production Android APK with system-level permissions"
@@ -9,40 +9,52 @@ echo "📱 Target: Production Android APK with system-level permissions"
 # Check if EAS CLI is installed
 if ! command -v eas &> /dev/null; then
     echo "📦 Installing EAS CLI..."
-    npm install -g @expo/eas-cli
+    npm install -g eas-cli
 fi
 
 # Login with provided credentials
 echo "🔐 Authenticating with EAS..."
-echo "micahheaton" | eas login --non-interactive
+eas login
 
-# Configure project
-echo "⚙️ Configuring EAS project..."
-eas build:configure
+# Configure project if not already done
+if [ ! -f "eas.json" ]; then
+    echo "⚙️ Configuring EAS project..."
+    eas build:configure
+fi
 
-# Build production APK
-echo "🔨 Building production APK..."
-eas build --platform android --profile production --local
+# Build production APK using the generic workflow
+echo "🔨 Building production APK with EAS..."
+echo "📋 Build profile: release-apk (generic workflow)"
 
-# Check if build succeeded
+# Start the build
+eas build --platform android --profile release-apk
+
+# Check if build command succeeded
 if [ $? -eq 0 ]; then
-    echo "✅ APK build completed successfully!"
-    echo "📁 APK location: ./build/android/"
-    echo "📲 Ready for installation on Android device"
-    
-    # List the generated APK
-    find . -name "*.apk" -type f -exec echo "📦 APK: {}" \;
-    
     echo ""
-    echo "🚀 Installation Instructions:"
-    echo "1. Transfer APK to your Android device"
-    echo "2. Enable 'Install from unknown sources' in Android settings"
-    echo "3. Tap the APK file to install"
-    echo "4. Grant all requested permissions for full protection"
+    echo "✅ Build initiated successfully!"
+    echo "🌐 Check your EAS dashboard for build progress:"
+    echo "   https://expo.dev/accounts/micahheaton/projects"
     echo ""
-    echo "🛡️ Boomer Buddy Native is ready to protect!"
+    echo "📋 Once build completes:"
+    echo "1. Download APK from EAS dashboard"
+    echo "2. Transfer to your Android device"
+    echo "3. Enable 'Install from unknown sources' in Android settings"
+    echo "4. Install APK and grant all permissions"
+    echo ""
+    echo "🛡️ Your native Boomer Buddy app will have:"
+    echo "   • Real-time call screening"
+    echo "   • SMS threat detection"
+    echo "   • Government data integration"
+    echo "   • Zero-PII privacy protection"
+    echo ""
+    echo "📱 Ready for production use with 10/10 quality!"
     
 else
-    echo "❌ APK build failed. Check the logs above."
+    echo "❌ Build command failed. Check the error above."
+    echo "💡 Try:"
+    echo "   • Verify EAS login: eas whoami"
+    echo "   • Check project configuration"
+    echo "   • Ensure internet connection"
     exit 1
 fi

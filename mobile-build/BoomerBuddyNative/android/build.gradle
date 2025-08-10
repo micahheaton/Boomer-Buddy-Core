@@ -1,0 +1,31 @@
+// Top-level build file for Boomer Buddy Native
+
+buildscript {
+    ext {
+        buildToolsVersion = "34.0.0"
+        minSdkVersion = 24
+        compileSdkVersion = 34
+        targetSdkVersion = 34
+        kotlinVersion = "1.8.10"
+    }
+    
+    repositories {
+        google()
+        mavenCentral()
+    }
+    
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.1.4")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
+        classpath("com.facebook.react:react-native-gradle-plugin")
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url "https://www.jitpack.io" }
+        maven { url "https://maven.google.com" }
+    }
+}

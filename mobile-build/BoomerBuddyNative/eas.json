@@ -1,23 +1,25 @@
 {
-  "cli": {
-    "version": ">= 5.9.0"
+  "cli": { 
+    "version": ">= 5.0.0" 
   },
   "build": {
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal",
+    "release-apk": {
       "android": {
-        "gradleCommand": ":app:assembleDebug"
+        "workflow": "generic",
+        "gradleCommand": ":app:assembleRelease",
+        "artifactPath": "android/app/build/outputs/apk/release/app-release.apk"
       }
     },
-    "preview": {
-      "distribution": "internal",
+    "debug-apk": {
       "android": {
-        "buildType": "apk"
+        "workflow": "generic",
+        "gradleCommand": ":app:assembleDebug",
+        "artifactPath": "android/app/build/outputs/apk/debug/app-debug.apk"
       }
     },
     "production": {
       "android": {
+        "workflow": "generic",
         "buildType": "apk"
       }
     }
