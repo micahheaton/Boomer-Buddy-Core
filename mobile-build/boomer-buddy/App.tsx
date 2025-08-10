@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput, Modal, Animated, Dimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-// import * as ImagePicker from 'expo-image-picker'; // Temporarily commented due to version conflict
 import { apiService, type ScamAnalysisResult, type ThreatAlert } from './src/services/ApiService';
 import { piiScrubber } from './src/services/PiiScrubber';
 import { riskEngine, type RiskAssessment } from './src/services/RiskEngine';
+import ThreatShieldAnimation from './src/components/ThreatShieldAnimation';
+import GamificationHub from './src/components/GamificationHub';
+import PersonalizedSafetyCarousel from './src/components/PersonalizedSafetyCarousel';
+
+const { width, height } = Dimensions.get('window');
 
 export default function App() {
   const [threatAlerts, setThreatAlerts] = useState<ThreatAlert[]>([]);
@@ -14,6 +18,15 @@ export default function App() {
   const [emergencyModalVisible, setEmergencyModalVisible] = useState(false);
   const [analysisText, setAnalysisText] = useState('');
   const [analysisResult, setAnalysisResult] = useState<RiskAssessment | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [shieldAnimation] = useState(new Animated.Value(0));
+  const [userStats, setUserStats] = useState({
+    xp: 1250,
+    level: 5,
+    streak: 12,
+    scamsBlocked: 27,
+    badges: ['First Defense', 'Week Warrior', 'Scam Spotter']
+  });
 
   useEffect(() => {
     loadThreatAlerts();
@@ -65,7 +78,9 @@ export default function App() {
       return;
     }
 
+    setIsAnalyzing(true);
     setLoading(true);
+    
     try {
       // First scrub PII for privacy
       const scrubResult = piiScrubber.scrubText(analysisText);
@@ -77,9 +92,23 @@ export default function App() {
         );
       }
 
-      // Perform on-device risk assessment
-      const riskAssessment = riskEngine.analyzeText(analysisText);
-      setAnalysisResult(riskAssessment);
+      // Show analysis animation for 3 seconds
+      setTimeout(() => {
+        setIsAnalyzing(false);
+        
+        // Perform on-device risk assessment
+        const riskAssessment = riskEngine.analyzeText(analysisText);
+        setAnalysisResult(riskAssessment);
+
+        // Update user stats based on analysis
+        if (riskAssessment.overallRisk === 'critical' || riskAssessment.overallRisk === 'high') {
+          setUserStats(prev => ({
+            ...prev,
+            scamsBlocked: prev.scamsBlocked + 1,
+            xp: prev.xp + 25
+          }));
+        }
+      }, 3000);
 
       // Try to get enhanced analysis from server (optional)
       try {
@@ -91,6 +120,7 @@ export default function App() {
 
     } catch (error) {
       Alert.alert('Analysis Error', 'Could not complete analysis. Please try again.');
+      setIsAnalyzing(false);
     } finally {
       setLoading(false);
     }
@@ -219,8 +249,35 @@ export default function App() {
         <View style={styles.header}>
           <Text style={styles.title}>🛡️ Boomer Buddy</Text>
           <Text style={styles.subtitle}>Your Digital Safety Companion</Text>
-          <Text style={styles.version}>Native Mobile App v1.0</Text>
+          <Text style={styles.version}>Advanced Mobile Protection • v2.0</Text>
         </View>
+
+        {/* Threat Shield Animation */}
+        <View style={styles.shieldContainer}>
+          <ThreatShieldAnimation 
+            isAnalyzing={isAnalyzing}
+            threatLevel={analysisResult ? 
+              (analysisResult.overallRisk === 'critical' || analysisResult.overallRisk === 'high' ? 'danger' : 
+               analysisResult.overallRisk === 'medium' ? 'warning' : 'safe') : 'safe'
+            }
+          />
+          <Text style={styles.shieldStatus}>
+            {isAnalyzing ? 'Analyzing threat...' : 
+             analysisResult ? `${analysisResult.overallRisk.toUpperCase()} RISK DETECTED` : 
+             'Protection Active'}
+          </Text>
+        </View>
+
+        {/* Gamification Hub */}
+        <GamificationHub 
+          userStats={userStats}
+          onBadgePress={(badge) => Alert.alert('Achievement Unlocked!', `${badge}: Great job staying protected!`)}
+        />
+
+        {/* Personalized Safety Carousel */}
+        <PersonalizedSafetyCarousel 
+          userVulnerabilities={['phone', 'email', 'financial']}
+        />
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>🔍 Quick Protection Check</Text>
@@ -432,6 +489,33 @@ const styles = StyleSheet.create({
     backgroundColor: '#17948E',
     padding: 24,
     alignItems: 'center',
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  shieldContainer: {
+    alignItems: 'center',
+    paddingVertical: 32,
+    backgroundColor: '#F8FAFC',
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  shieldStatus: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+    marginTop: 16,
+    textAlign: 'center',
   },
   title: {
     fontSize: 28,
