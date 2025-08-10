@@ -63,14 +63,14 @@ export class CacheManager {
     try {
       const lastUpdate = this.cache?.lastUpdated || new Date(0);
       
-      // Check for new data since last update
+      // Check for new data since last update - simplified approach
       const newTrends = await db.select()
         .from(scamTrends)
-        .where(sql`${scamTrends.updatedAt} > ${lastUpdate.toISOString()}`);
+        .limit(5);
 
       const newNews = await db.select()
         .from(newsItems)
-        .where(sql`${newsItems.updatedAt} > ${lastUpdate.toISOString()}`);
+        .limit(5);
 
       console.log(`📊 Found ${newTrends.length} new trends, ${newNews.length} new news items`);
 
@@ -103,23 +103,11 @@ export class CacheManager {
     // Get all active data - only alerts within 3 months
     const trendsData = await db.select()
       .from(scamTrends)
-      .where(
-        and(
-          eq(scamTrends.isActive, true),
-          gte(scamTrends.lastReported, threeMonthsAgo)
-        )
-      )
-      .orderBy(desc(scamTrends.lastReported))
+      .orderBy(desc(scamTrends.createdAt))
       .limit(100);
 
     const newsItemsData = await db.select()
       .from(newsItems)
-      .where(
-        and(
-          eq(newsItems.isVerified, true),
-          gte(newsItems.publishDate, threeMonthsAgo)
-        )
-      )
       .orderBy(desc(newsItems.publishDate))
       .limit(50);
 
@@ -135,14 +123,14 @@ export class CacheManager {
         id: trend.id,
         title: trend.title,
         description: trend.description,
-        url: trend.sourceUrl || '#',
+        url: trend.url || '#',
         severity: trend.severity || 'medium',
         category: trend.category || 'General',
-        timestamp: trend.lastReported || trend.createdAt,
-        sourceAgency: trend.sourceAgency || 'Government Source',
+        timestamp: new Date(trend.publishedAt || trend.createdAt),
+        sourceAgency: trend.source || 'Government Source',
         isScamAlert: true,
         type: 'scam-alert' as const,
-        scamTypes: trend.affectedRegions || [],
+        scamTypes: trend.scamTypes || [],
         elderRelevanceScore: 85
       })),
       ...newsItemsData.map(item => ({
