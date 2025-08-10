@@ -17,6 +17,7 @@ import CommunityEnhanced from "@/pages/community-enhanced";
 import FeaturesPage from "@/pages/features";
 import About from "@/pages/About";
 import VulnerabilityAssessment from "@/pages/VulnerabilityAssessment";
+import LiveHeatmap from "@/pages/LiveHeatmap";
 
 function Router() {
   return (
@@ -32,6 +33,7 @@ function Router() {
       <Route path="/features" component={FeaturesPage} />
       <Route path="/about" component={About} />
       <Route path="/assessment" component={VulnerabilityAssessment} />
+      <Route path="/heatmap" component={LiveHeatmap} />
       <Route component={NotFound} />
     </Switch>
   );

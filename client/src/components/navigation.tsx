@@ -1,4 +1,4 @@
-import { Shield, User, LogOut, TrendingUp, BarChart3, History, Users, Settings } from "lucide-react";
+import { Shield, User, LogOut, TrendingUp, BarChart3, History, Users, Settings, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -98,6 +98,16 @@ export default function Navigation() {
               >
                 <Shield className="w-4 h-4" />
                 Risk Assessment
+              </button>
+
+              <button
+                onClick={() => setLocation("/heatmap")}
+                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                  location === "/heatmap" ? "text-boomer-navy" : "text-gray-600 hover:text-boomer-navy"
+                }`}
+              >
+                <Activity className="w-4 h-4" />
+                Live Heatmap
               </button>
 
               {isAuthenticated && (

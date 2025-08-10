@@ -869,6 +869,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const { registerVulnerabilityRoutes } = await import('./routes/vulnerability.js');
   registerVulnerabilityRoutes(app);
 
+  // Demo endpoint to simulate live alerts for heatmap testing
+  app.post("/api/demo/simulate-alert", async (req, res) => {
+    try {
+      const { webSocketHandler } = await import('./websocketHandler.js');
+      
+      const demoAlerts = [
+        {
+          id: `demo-${Date.now()}`,
+          title: "Romance Scam Surge in California",
+          description: "Significant increase in dating app romance scams targeting seniors. Losses averaging $15,000 per victim.",
+          severity: "high",
+          category: "romance",
+          affectedRegions: ["CA", "NV", "AZ"],
+          reportCount: 47,
+          sourceAgency: "FTC Consumer Sentinel",
+          timestamp: new Date().toISOString()
+        },
+        {
+          id: `demo-${Date.now() + 1}`,
+          title: "CRITICAL: Medicare Scam Wave",
+          description: "Nationwide phone scam impersonating Medicare representatives. Targeting seniors for personal information theft.",
+          severity: "critical",
+          category: "government-impersonation",
+          affectedRegions: ["FL", "TX", "NY", "IL", "OH"],
+          reportCount: 124,
+          sourceAgency: "FBI Internet Crime Center",
+          timestamp: new Date().toISOString()
+        },
+        {
+          id: `demo-${Date.now() + 2}`,
+          title: "Tech Support Fraud Increase",
+          description: "Fake Microsoft and Apple support calls targeting elderly users. Pop-up warnings leading to remote access scams.",
+          severity: "high",
+          category: "tech-support",
+          affectedRegions: ["WA", "OR", "CA"],
+          reportCount: 89,
+          sourceAgency: "Better Business Bureau",
+          timestamp: new Date().toISOString()
+        }
+      ];
+
+      // Send random alert
+      const randomAlert = demoAlerts[Math.floor(Math.random() * demoAlerts.length)];
+      webSocketHandler.broadcastNewAlert(randomAlert);
+      
+      res.json({ 
+        message: "Demo alert simulated", 
+        alert: randomAlert,
+        clients: webSocketHandler.getStats().connectedClients
+      });
+    } catch (error) {
+      console.error("Error simulating demo alert:", error);
+      res.status(500).json({ error: "Failed to simulate alert" });
+    }
+  });
+
   // Initialize historical data to show 18+ months of operation
   console.log('Initializing historical data...');
   setTimeout(async () => {
@@ -887,8 +943,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   const httpServer = createServer(app);
   
+  // Initialize WebSocket handler for real-time heatmap updates
+  const { webSocketHandler } = await import('./websocketHandler.js');
+  webSocketHandler.initialize(httpServer);
+  
   // Initialize mobile notification service
   mobileNotificationService.initialize(httpServer);
   console.log("Mobile notification service initialized");
+  console.log("WebSocket handler initialized for real-time heatmap updates");
   return httpServer;
 }
