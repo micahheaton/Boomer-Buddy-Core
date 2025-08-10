@@ -1,5 +1,6 @@
 
 import CommunityProtection from "@/components/community-protection";
+import Navigation from "@/components/Navigation";
 
 export default function CommunityPage() {
   return (
@@ -13,8 +14,8 @@ export default function CommunityPage() {
             Community Protection Network
           </h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Join thousands of community members working together to identify, report, and prevent scams. 
-            Your shared experiences help protect others from falling victim to similar threats.
+            Connect with the community while staying informed through official government data sources. 
+            Built by cybersecurity leaders launched summer 2025 with transparency and official data integrity.
           </p>
         </div>
 

@@ -8,27 +8,27 @@ export default function About() {
   const missionStats = [
     { 
       icon: Shield, 
-      number: "18+", 
-      label: translate("Months of Protection"),
-      description: translate("Continuously safeguarding seniors since 2023")
+      number: "2025", 
+      label: translate("Launched Summer"),
+      description: translate("Built by cybersecurity leaders with 20+ years experience")
     },
     { 
       icon: Users, 
-      number: "1,200+", 
-      label: translate("Community Reports"),
-      description: translate("Real experiences from our protected community")
+      number: "9", 
+      label: translate("Official Sources"),
+      description: translate("Government and authorized nonprofit data only")
     },
     { 
       icon: Brain, 
-      number: "95%+", 
-      label: translate("Detection Accuracy"),
-      description: translate("AI-powered scam identification success rate")
+      number: "4x", 
+      label: translate("Daily Updates"),
+      description: translate("Real-time collection from trusted .gov/.us sources")
     },
     { 
       icon: AlertTriangle, 
-      number: "$4.6B", 
-      label: translate("Losses Prevented"),
-      description: translate("Total fraud amount our community avoided in 2024")
+      number: "24/7", 
+      label: translate("Protection"),
+      description: translate("Continuous monitoring and personalized alerts")
     }
   ];
 
@@ -45,13 +45,26 @@ export default function About() {
     },
     {
       icon: CheckCircle,
-      title: translate("Verified Intelligence"),
-      description: translate("Every alert comes from trusted government sources like FTC, FBI, SSA, and verified community reports - no false alarms.")
+      title: translate("Official Sources Only"),
+      description: translate("Every alert comes from official government sources (FTC, FBI IC3, SSA, HHS-OIG, CISA) and authorized nonprofits (AARP, BBB) - no false alarms.")
     },
     {
       icon: Award,
       title: translate("Community Empowerment"),
       description: translate("Seniors helping seniors through shared experiences, verified reports, and collective wisdom to outsmart scammers.")
+    }
+  ];
+
+  const teamMembers = [
+    {
+      role: translate("Cybersecurity Leadership Team"),
+      background: translate("20+ years combined experience in cybersecurity, digital forensics, and elder protection services across government and private sectors"),
+      expertise: translate("Threat intelligence, social engineering detection, vulnerable population protection, and government source verification")
+    },
+    {
+      role: translate("AI & Data Science Team"),
+      background: translate("Machine learning specialists with expertise in pattern recognition, natural language processing, and personalized vulnerability assessment"),
+      expertise: translate("GPT-4o integration, elder-focused social engineering detection, real-time threat correlation, and automated content filtering")
     }
   ];
 
@@ -85,29 +98,6 @@ export default function About() {
       name: translate("Investment Fraud"),
       description: translate("Fake retirement and cryptocurrency schemes"),
       impact: translate("$2.1B retirement savings stolen")
-    }
-  ];
-
-  const teamMembers = [
-    {
-      role: translate("AI Safety Researcher"),
-      background: translate("Former FTC fraud analyst with 15+ years protecting seniors"),
-      expertise: translate("Social engineering detection, elder psychology")
-    },
-    {
-      role: translate("Community Safety Director"),
-      background: translate("Retired law enforcement, specialized in elder fraud cases"),
-      expertise: translate("Investigation techniques, victim support")
-    },
-    {
-      role: translate("Technology Accessibility Lead"),
-      background: translate("Senior UX designer focused on age-friendly interfaces"),
-      expertise: translate("Senior-friendly design, multilingual support")
-    },
-    {
-      role: translate("Data Intelligence Analyst"),
-      background: translate("Former cybersecurity researcher at major tech company"),
-      expertise: translate("Threat pattern recognition, source verification")
     }
   ];
 
@@ -306,8 +296,8 @@ export default function About() {
                     {translate("Verified Intelligence Network")}
                   </h3>
                   <ul className="space-y-2 text-sm">
-                    <li>• {translate("Direct feeds from FTC, FBI, SSA, and SEC")}</li>
-                    <li>• {translate("24/7 monitoring of 20+ government sources")}</li>
+                    <li>• {translate("Direct feeds from FTC, FBI IC3, SSA, HHS-OIG, and CISA")}</li>
+                    <li>• {translate("4x daily monitoring of 9 official government sources")}</li>
                     <li>• {translate("Community-verified reports with authenticity scoring")}</li>
                     <li>• {translate("Multilingual support for diverse communities")}</li>
                   </ul>

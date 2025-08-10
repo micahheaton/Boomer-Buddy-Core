@@ -137,7 +137,7 @@ export default function TrendsPage() {
           <h1 className="text-3xl font-bold text-gray-900">Scam Trends & Alerts</h1>
         </div>
         <p className="text-lg text-muted-foreground">
-          Stay informed about the latest scam patterns and threats targeting seniors and vulnerable populations.
+          Stay informed with official data from FTC, FBI IC3, SSA, HHS-OIG, CISA, and authorized nonprofits.
         </p>
         {trendsData?.lastUpdated && (
           <p className="text-sm text-muted-foreground mt-2">

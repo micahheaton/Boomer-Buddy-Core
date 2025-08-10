@@ -62,7 +62,7 @@ export default function Archives() {
         <div>
           <h1 className="text-3xl font-bold">Boomer Buddy Archives</h1>
           <p className="text-muted-foreground">
-            Comprehensive fraud prevention data since {operationalDate.toLocaleDateString()}
+            Official government data collection since summer {operationalDate.getFullYear()} launch
           </p>
         </div>
         <div className="flex items-center space-x-2">
@@ -145,7 +145,7 @@ export default function Archives() {
             <span>Historical Data Browser</span>
           </CardTitle>
           <CardDescription>
-            Browse {archiveData.monthsOperational} months of fraud prevention intelligence and verified news reports
+            Browse {archiveData.monthsOperational} months of official government data from 9 verified sources (.gov/.us domains only)
           </CardDescription>
         </CardHeader>
         <CardContent>

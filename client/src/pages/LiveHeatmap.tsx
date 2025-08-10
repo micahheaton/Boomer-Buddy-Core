@@ -372,7 +372,7 @@ export default function LiveHeatmap() {
             Live Scam Intelligence Heatmap
           </h1>
           <p className="text-blue-200">
-            Real-time visualization of scam threats across the United States
+            Real-time visualization from 9 official government sources with 4x daily updates
           </p>
         </div>
 
