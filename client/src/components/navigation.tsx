@@ -51,13 +51,23 @@ export default function Navigation() {
               </button>
               
               <button
-                onClick={() => setLocation("/trends")}
+                onClick={() => setLocation("/scam-trends-v2")}
                 className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                  location === "/trends" ? "text-boomer-navy" : "text-gray-600 hover:text-boomer-navy"
+                  location === "/scam-trends-v2" ? "text-boomer-navy" : "text-gray-600 hover:text-boomer-navy"
                 }`}
               >
                 <TrendingUp className="w-4 h-4" />
                 Scam Trends
+              </button>
+              
+              <button
+                onClick={() => setLocation("/verified-news")}
+                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                  location === "/verified-news" ? "text-boomer-navy" : "text-gray-600 hover:text-boomer-navy"
+                }`}
+              >
+                <BarChart3 className="w-4 h-4" />
+                Verified News
               </button>
 
               <button
