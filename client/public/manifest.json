@@ -1,0 +1,17 @@
+{
+  "name": "Boomer Buddy - We Watch Out for You",
+  "short_name": "Boomer Buddy",
+  "description": "Your trusted companion for identifying scams and fraud",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#17948E",
+  "background_color": "#ffffff"
+}
