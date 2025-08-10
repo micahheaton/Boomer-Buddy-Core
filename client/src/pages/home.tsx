@@ -40,22 +40,22 @@ export default function Home() {
   // Demo data - canned responses that don't call the API
   const demoResults = {
     phishing: {
-      scam_score: 9,
+      scam_score: 92,
       confidence: "high" as const,
       label: "Likely scam" as const,
-      explanation: "This email exhibits multiple classic phishing indicators including urgent language, suspicious sender domain, requests for personal information, and mismatched branding elements.",
+      explanation: "This appears to be a high-risk scam attempt. Multiple red flags are present including threats, urgency tactics, and requests for unusual payment methods. Government agencies never demand immediate payment via gift cards.",
       red_flags: [
-        "Suspicious sender domain: 'security@bankofamerica-verify.net' is not an official Bank of America domain",
-        "Urgent language demanding immediate action",
-        "Requests for social security number and account details",
-        "Generic greeting without personalization",
-        "Threatens account closure to create pressure"
+        "Fake email domain: 'security@bankofamerica-verify.net' is not Bank of America's official domain",
+        "Urgency tactics: Claims account will be suspended unless immediate action is taken",
+        "Requests sensitive information: Asks for Social Security Number and account details",
+        "Creates artificial deadline: 'This action expires in 24 hours'",
+        "Impersonates trusted institution: Pretends to be Bank of America security team"
       ],
       top_signals: [
-        "Suspicious sender domain",
-        "Urgent language",
-        "Requests personal information",
-        "Threatens account closure"
+        "Fake email domain: 'security@bankofamerica-verify.net' is not Bank of America's official domain",
+        "Urgency tactics: Claims account will be suspended unless immediate action is taken",
+        "Requests sensitive information: Asks for Social Security Number and account details",
+        "Creates artificial deadline: 'This action expires in 24 hours'"
       ],
       next_steps: [
         "DO NOT click any links in this email",
@@ -66,45 +66,46 @@ export default function Home() {
       ],
       recommended_actions: [
         {
-          title: "Immediate Actions",
-          steps: ["Do not click any links", "Do not provide personal information"],
-          when: "Right now"
+          title: "Do Not Respond or Click Links",
+          steps: [
+            "Delete this email immediately",
+            "Do not click any links or download attachments",
+            "Do not provide personal information"
+          ],
+          when: "immediately"
         },
         {
-          title: "Contact Your Bank",
-          steps: ["Call the number on your bank card", "Verify if communication is legitimate"],
-          when: "Within 1 hour"
-        },
-        {
-          title: "Report the Scam",
-          steps: ["Forward email to reportphishing@apwg.org", "Report to FBI IC3"],
-          when: "Today"
+          title: "Verify with Bank of America",
+          steps: [
+            "Call Bank of America directly at 1-800-432-1000",
+            "Log into your account through the official website only",
+            "Ask about any legitimate security concerns"
+          ],
+          when: "if concerned about your account"
         }
       ],
-      legal_language: "This appears to be a phishing attempt designed to steal personal and financial information. Engaging with this communication could result in identity theft or financial fraud.",
+      legal_language: "This analysis is for educational purposes. Always verify suspicious communications through official channels. When in doubt, contact the organization directly using official contact methods.",
       contacts: {
         law_enforcement: [
-          { name: "FBI Internet Crime Complaint Center", contact: "1-800-CALL-FBI", type: "Federal" }
+          { name: "Federal Trade Commission", contact: "1-877-382-4357", type: "federal" }
         ],
-        state_local: [
-          { name: "California Attorney General - Consumer Protection", contact: "1-800-952-5225", state: "CA" }
-        ],
+        state_local: [],
         financial: [
-          { name: "Bank of America Fraud Hotline", contact: "1-800-432-1000" }
+          { name: "Bank of America Fraud Department", contact: "1-800-432-1000", type: "financial" }
         ]
       },
       version: "1.0"
     },
     techsupport: {
-      scam_score: 8,
+      scam_score: 88,
       confidence: "high" as const,
       label: "Likely scam" as const,
-      explanation: "This is a classic tech support scam. Microsoft never makes unsolicited calls about computer viruses and legitimate companies don't ask you to download remote access software.",
+      explanation: "This is a classic tech support scam. Legitimate companies like Microsoft do not make unsolicited calls about computer problems, and never ask for remote access through third-party software.",
       top_signals: [
-        "Unsolicited call from tech company",
-        "Claims computer has viruses",
-        "Requests to download software",
-        "Creates urgency and fear"
+        "Unsolicited call claiming computer problems: Microsoft does not cold-call customers",
+        "Requests remote access: Asking to download TeamViewer is a major red flag",
+        "Creates false urgency: Claims computer will crash if not acted upon immediately",
+        "Impersonates trusted company: Pretends to be Microsoft support"
       ],
       next_steps: [
         "Hang up immediately - this is 100% a scam",
@@ -115,14 +116,22 @@ export default function Home() {
       ],
       recommended_actions: [
         {
-          title: "Immediate Actions",
-          steps: ["Hang up immediately", "Do not download any software"],
-          when: "Right now"
+          title: "Hang Up Immediately",
+          steps: [
+            "End the call right away",
+            "Do not download any software",
+            "Do not give remote access to your computer"
+          ],
+          when: "immediately"
         },
         {
-          title: "Verify Computer Security",
-          steps: ["Run legitimate antivirus scan", "Check with local tech support"],
-          when: "Today"
+          title: "Secure Your Computer",
+          steps: [
+            "Run a legitimate antivirus scan",
+            "Update your operating system and software",
+            "Change passwords if you shared any information"
+          ],
+          when: "after hanging up"
         },
         {
           title: "Report the Scam",
@@ -130,11 +139,10 @@ export default function Home() {
           when: "Today"
         }
       ],
-      legal_language: "This appears to be a tech support scam designed to gain remote access to your computer and steal personal information or install malware.",
+      legal_language: "This analysis is for educational purposes. Always verify suspicious communications through official channels. When in doubt, contact the organization directly using official contact methods.",
       contacts: {
         law_enforcement: [
-          { name: "FTC Consumer Sentinel", contact: "1-877-FTC-HELP", type: "Federal" },
-          { name: "FBI Internet Crime Complaint Center", contact: "1-800-CALL-FBI", type: "Federal" }
+          { name: "Federal Trade Commission", contact: "1-877-382-4357", type: "federal" }
         ],
         state_local: [],
         financial: []
@@ -142,16 +150,15 @@ export default function Home() {
       version: "1.0"
     },
     ssa: {
-      scam_score: 10,
+      scam_score: 95,
       confidence: "high" as const,
       label: "Likely scam" as const,
-      explanation: "This is definitely a Social Security Administration impersonation scam. The SSA never threatens arrest or demands gift cards. All the tactics used are classic scam indicators.",
+      explanation: "This appears to be a high-risk scam attempt. Multiple red flags are present including threats, urgency tactics, and requests for unusual payment methods. Government agencies never demand immediate payment via gift cards.",
       top_signals: [
-        "Threatens arrest",
-        "Demands gift cards",
-        "Creates artificial urgency",
-        "Claims SSN is suspended",
-        "Requests personal information"
+        "Threatens arrest: SSA never threatens immediate arrest over phone calls",
+        "Demands gift cards: Government agencies never request gift card payments",
+        "Creates artificial urgency: Claims immediate action required to avoid arrest",
+        "Claims SSN is suspended: Social Security numbers cannot be suspended"
       ],
       next_steps: [
         "You were right to hang up - this was 100% a scam",
@@ -162,30 +169,30 @@ export default function Home() {
       ],
       recommended_actions: [
         {
-          title: "Immediate Actions",
-          steps: ["Do not call them back", "Do not provide any information"],
-          when: "Right now"
+          title: "Do Not Respond or Pay",
+          steps: [
+            "Hang up immediately or delete the message",
+            "Do not provide any personal information",
+            "Do not make any payments, especially via gift cards"
+          ],
+          when: "immediately"
         },
         {
-          title: "Verify SSA Account",
-          steps: ["Visit ssa.gov", "Call official SSA number if needed"],
-          when: "Today"
-        },
-        {
-          title: "Report the Scam",
-          steps: ["Report to SSA Inspector General", "File report with FTC"],
-          when: "Today"
+          title: "Verify Through Official Channels",
+          steps: [
+            "Visit ssa.gov to check account status",
+            "Call SSA directly at 1-800-772-1213 if needed",
+            "Verify any legitimate concerns through official channels"
+          ],
+          when: "if concerned"
         }
       ],
-      legal_language: "This is a government impersonation scam. The Social Security Administration does not make unsolicited calls threatening legal action or demanding payment.",
+      legal_language: "This analysis is for educational purposes. Always verify suspicious communications through official channels. When in doubt, contact the organization directly using official contact methods.",
       contacts: {
         law_enforcement: [
-          { name: "SSA Office of Inspector General", contact: "1-800-269-0271", type: "Federal" },
-          { name: "FTC Consumer Sentinel", contact: "1-877-FTC-HELP", type: "Federal" }
+          { name: "Social Security Administration Office of Inspector General", contact: "1-800-269-0271", type: "federal" }
         ],
-        state_local: [
-          { name: "Florida Attorney General", contact: "1-866-966-7226", state: "FL" }
-        ],
+        state_local: [],
         financial: []
       },
       version: "1.0"
