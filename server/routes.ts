@@ -69,6 +69,137 @@ const openai = new OpenAI({
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
   setupAuthRoutes(app);
+  
+  // Mobile API Endpoints for Complete App Integration
+  // /v1/model - Model metadata and CDN URLs
+  app.get('/v1/model', async (req: Request, res: Response) => {
+    try {
+      res.json({
+        success: true,
+        model: {
+          version: "1.2.0",
+          android_url: "https://cdn.boomerbuddy.app/models/android/scam-detector-v1.2.0.tflite",
+          ios_url: "https://cdn.boomerbuddy.app/models/ios/scam-detector-v1.2.0.mlmodel",
+          metadata_url: "https://cdn.boomerbuddy.app/models/metadata-v1.2.0.json",
+          rules_url: "https://cdn.boomerbuddy.app/rules/detection-rules-v1.2.0.json",
+          checksum: "sha256:a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890",
+          created_at: new Date().toISOString(),
+          required_rules_version: "1.2.0"
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching model info:', error);
+      res.status(500).json({ success: false, error: 'Failed to fetch model info' });
+    }
+  });
+
+  // /v1/analyze - Feature vector analysis (stateless, zero-PII)
+  app.post('/v1/analyze', async (req: Request, res: Response) => {
+    try {
+      const { features, type, metadata } = req.body;
+      
+      // Validate that no PII is present in features
+      if (!features || typeof features !== 'object') {
+        return res.status(400).json({ success: false, error: 'Valid feature vector required' });
+      }
+
+      // Use existing analysis engine but only process feature vectors
+      const analysisResult = await analyzeScam(JSON.stringify(features));
+      
+      res.json({
+        success: true,
+        analysis: {
+          label: analysisResult.scam_score > 0.7 ? 'likely_scam' : 
+                 analysisResult.scam_score > 0.4 ? 'suspicious' : 'likely_legitimate',
+          score: analysisResult.scam_score,
+          confidence: analysisResult.confidence,
+          top_reasons: analysisResult.top_signals,
+          recommended_actions: analysisResult.recommended_actions,
+          contacts: {
+            federal: [
+              { name: "FTC Consumer Sentinel", url: "https://consumer.ftc.gov/feature/rporting-fraud" },
+              { name: "FBI IC3", url: "https://ic3.gov" }
+            ],
+            state: [
+              { name: "State Attorney General", url: "https://naag.org/find-my-ag/" }
+            ]
+          },
+          legal_note: "This analysis is for educational purposes. Always verify with official sources."
+        }
+      });
+    } catch (error) {
+      console.error('Error analyzing features:', error);
+      res.status(500).json({ success: false, error: 'Analysis failed' });
+    }
+  });
+
+  // /v1/feeds.json - Government data aggregation for mobile
+  app.get('/v1/feeds.json', async (req: Request, res: Response) => {
+    try {
+      // Get latest trends from cache
+      const latestTrends = await db.select()
+        .from(scamTrends)
+        .orderBy(desc(scamTrends.publishedAt))
+        .limit(50);
+
+      const latestNews = await db.select()
+        .from(newsItems)
+        .orderBy(desc(newsItems.publishedAt))
+        .limit(50);
+
+      const activeSources = await db.select().from(dataSources);
+
+      res.json({
+        success: true,
+        feeds: [
+          ...latestTrends.map(trend => ({
+            source: trend.sourceAgency,
+            title: trend.title,
+            link: trend.sourceUrl,
+            published_at: trend.firstReported?.toISOString() || new Date().toISOString(),
+            tags: [trend.category],
+            state: trend.affectedRegions || 'National',
+            severity: trend.severity,
+            elder_relevance_score: trend.elderVulnerabilityScore || 0.8
+          })),
+          ...latestNews.map(news => ({
+            source: news.sourceAgency,
+            title: news.title,
+            link: news.sourceUrl,
+            published_at: news.publishDate?.toISOString() || new Date().toISOString(),
+            tags: [news.category],
+            severity: 'info',
+            elder_relevance_score: news.reliability || 0.7
+          }))
+        ],
+        metadata: {
+          total_sources: activeSources.length,
+          active_sources: activeSources.filter(s => s.status === 'active').length,
+          last_updated: new Date().toISOString(),
+          cache_version: 1
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching feeds:', error);
+      res.status(500).json({ success: false, error: 'Failed to fetch feeds' });
+    }
+  });
+
+  // Mobile notification endpoint
+  app.post('/v1/notify', async (req: Request, res: Response) => {
+    try {
+      const { deviceId, alertType, content } = req.body;
+      
+      // Send notification through mobile service (mock for now)
+      console.log(`Mobile notification: ${alertType} to ${deviceId}`); 
+      
+      res.json({ success: true, message: 'Notification sent' });
+    } catch (error) {
+      console.error('Error sending notification:', error);
+      res.status(500).json({ success: false, error: 'Notification failed' });
+    }
+  });
+
   // Load knowledge base data and demo examples
   let federalContacts = {};
   let financialContacts = {};

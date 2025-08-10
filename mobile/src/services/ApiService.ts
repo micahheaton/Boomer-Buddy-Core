@@ -4,7 +4,7 @@
  */
 
 const API_BASE_URL = __DEV__ 
-  ? 'http://localhost:3000' // Development
+  ? 'http://localhost:5000' // Development - Updated to match backend port
   : 'https://api.boomerbuddy.app'; // Production
 
 interface MobileFeeds {
