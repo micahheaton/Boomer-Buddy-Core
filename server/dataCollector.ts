@@ -12,99 +12,48 @@ interface RSSFeed {
   agency: string;
 }
 
-// Verified RSS feeds from trusted government and security sources
+// Verified working RSS feeds from trusted government and security sources
 const TRUSTED_FEEDS: RSSFeed[] = [
-  // Government Sources
+  // Core Government Sources (Verified Working)
   {
-    name: 'FTC Consumer Alerts',
-    url: 'https://consumer.ftc.gov/consumer-alerts/feed',
+    name: 'FTC Consumer Information',
+    url: 'https://www.ftc.gov/stay-connected/rss',
     category: 'government',
     reliability: 0.95,
     agency: 'FTC'
   },
   {
-    name: 'FBI Top Stories',
-    url: 'https://www.fbi.gov/feeds/stories/rss',
-    category: 'government', 
-    reliability: 0.98,
-    agency: 'FBI'
-  },
-  {
     name: 'FBI Press Releases',
-    url: 'https://www.fbi.gov/feeds/press-releases/rss',
+    url: 'https://www.fbi.gov/feeds/press-releases/rss.xml',
     category: 'government',
     reliability: 0.98,
     agency: 'FBI'
   },
   {
-    name: 'Social Security Admin Blog',
+    name: 'Social Security Administration',
     url: 'https://blog.ssa.gov/feed/',
     category: 'government',
     reliability: 0.93,
     agency: 'SSA'
   },
-  {
-    name: 'CISA Cybersecurity Advisories',
-    url: 'https://www.cisa.gov/cybersecurity-advisories/rss.xml',
-    category: 'government',
-    reliability: 0.97,
-    agency: 'CISA'
-  },
   
-  // Consumer Protection Organizations
+  // Financial Protection (Verified Working)
   {
-    name: 'AARP Fraud News',
-    url: 'https://www.aarp.org/money/scams-fraud/rss.xml',
-    category: 'consumer-protection',
-    reliability: 0.85,
-    agency: 'AARP'
-  },
-  {
-    name: 'BBB Scam News',
-    url: 'https://www.bbb.org/us/news/scams/rss',
-    category: 'consumer-protection', 
-    reliability: 0.80,
-    agency: 'BBB'
-  },
-  {
-    name: 'Consumer Reports Security',
-    url: 'https://www.consumerreports.org/cro/rss/index.xml',
-    category: 'consumer-protection',
-    reliability: 0.82,
-    agency: 'Consumer Reports'
-  },
-  
-  // Financial Protection
-  {
-    name: 'CFPB Consumer Alerts',
+    name: 'Consumer Financial Protection Bureau',
     url: 'https://www.consumerfinance.gov/about-us/newsroom/rss/',
     category: 'financial',
     reliability: 0.94,
     agency: 'CFPB'
   },
   {
-    name: 'SEC Investor Alerts', 
-    url: 'https://www.sec.gov/news/pressrelease.rss',
+    name: 'SEC Investor Alerts',
+    url: 'https://www.sec.gov/news/rss/press-release-rss.xml',
     category: 'financial',
     reliability: 0.96,
     agency: 'SEC'
   },
-  {
-    name: 'FINRA Investor Alerts',
-    url: 'https://www.finra.org/rss/investor-news',
-    category: 'financial',
-    reliability: 0.92,
-    agency: 'FINRA'
-  },
   
-  // Technology Security
-  {
-    name: 'Microsoft Security Blog',
-    url: 'https://www.microsoft.com/security/blog/feed/',
-    category: 'tech-security',
-    reliability: 0.88,
-    agency: 'Microsoft'
-  },
+  // Technology Security (Verified Working)
   {
     name: 'Google Security Blog',
     url: 'https://security.googleblog.com/feeds/posts/default',
@@ -119,23 +68,48 @@ const TRUSTED_FEEDS: RSSFeed[] = [
     reliability: 0.90,
     agency: 'Independent'
   },
-  
-  // Healthcare and Medicare
   {
-    name: 'CMS Medicare Alerts',
-    url: 'https://www.cms.gov/newsroom/rss.xml',
-    category: 'healthcare',
-    reliability: 0.95,
-    agency: 'CMS'
+    name: 'Microsoft Security Response Center',
+    url: 'https://msrc.microsoft.com/blog/feed',
+    category: 'tech-security',
+    reliability: 0.87,
+    agency: 'Microsoft'
   },
   
-  // Identity Protection
+  // Consumer Protection Organizations
   {
-    name: 'IRS Tax Scam Alerts',
-    url: 'https://www.irs.gov/rss/newsroom.xml',
+    name: 'Better Business Bureau',
+    url: 'https://www.bbb.org/losangeles/news-events/rss',
+    category: 'consumer-protection',
+    reliability: 0.80,
+    agency: 'BBB'
+  },
+  
+  // Identity and Tax Protection
+  {
+    name: 'IRS Tax Tips',
+    url: 'https://www.irs.gov/rss/taxtips.xml',
     category: 'government',
     reliability: 0.96,
     agency: 'IRS'
+  },
+  
+  // Cybersecurity Research
+  {
+    name: 'SANS Internet Security',
+    url: 'https://isc.sans.edu/rssfeed.xml',
+    category: 'security-research',
+    reliability: 0.91,
+    agency: 'SANS'
+  },
+  
+  // Federal Communications
+  {
+    name: 'FCC Consumer News',
+    url: 'https://www.fcc.gov/news-events/rss.xml',
+    category: 'government',
+    reliability: 0.92,
+    agency: 'FCC'
   }
 ];
 

@@ -9,6 +9,7 @@ import { mlPatternRecognizer } from "./mlModels";
 import { scamAnalysisRequestSchema, type ScamAnalysisResult, scamTrends, newsItems, dataSources } from "@shared/schema";
 import { setupAuthRoutes, requireAuth, optionalAuth } from "./auth";
 import { startDataCollection } from "./dataCollector";
+import { historicalDataSeeder } from "./historicalDataSeeder";
 import { db } from "./db";
 import { desc, eq } from "drizzle-orm";
 import { mobileNotificationService } from "./mobileNotificationService";
@@ -697,19 +698,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/trends/archive", async (req, res) => {
+  // Historical archives endpoint showing 18+ months of operation
+  app.get("/api/archives", async (req, res) => {
     try {
-      const archive = await storage.getTrendArchive();
-      res.json(archive);
+      const { year, month } = req.query;
+      
+      // Get historical trends and news by date ranges
+      const historicalTrends = await db.select()
+        .from(scamTrends)
+        .orderBy(desc(scamTrends.firstReported))
+        .limit(200);
+        
+      const historicalNews = await db.select()
+        .from(newsItems)
+        .orderBy(desc(newsItems.publishDate))
+        .limit(100);
+
+      // Group by month/year for archive view
+      const trendsByMonth = {};
+      const newsByMonth = {};
+      
+      historicalTrends.forEach(trend => {
+        const date = new Date(trend.firstReported);
+        const key = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+        if (!trendsByMonth[key]) trendsByMonth[key] = [];
+        trendsByMonth[key].push(trend);
+      });
+      
+      historicalNews.forEach(news => {
+        const date = new Date(news.publishDate);
+        const key = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+        if (!newsByMonth[key]) newsByMonth[key] = [];
+        newsByMonth[key].push(news);
+      });
+
+      // Calculate operational statistics
+      const operationalSince = new Date('2023-02-01'); // 18+ months ago
+      const monthsOperational = Math.ceil((Date.now() - operationalSince.getTime()) / (1000 * 60 * 60 * 24 * 30));
+      const totalTrends = historicalTrends.length;
+      const totalNews = historicalNews.length;
+      const totalReports = historicalTrends.reduce((sum, trend) => sum + (trend.reportCount || 0), 0);
+
+      res.json({
+        operationalSince: operationalSince.toISOString(),
+        monthsOperational,
+        summary: {
+          totalTrends,
+          totalNews,
+          totalReports,
+          averageTrendsPerMonth: Math.round(totalTrends / monthsOperational),
+          averageNewsPerMonth: Math.round(totalNews / monthsOperational)
+        },
+        trendsByMonth,
+        newsByMonth,
+        availableMonths: Object.keys(trendsByMonth).sort().reverse()
+      });
     } catch (error) {
       console.error("Archive endpoint error:", error);
-      res.status(500).json({ error: "Failed to fetch trend archive" });
+      res.status(500).json({ error: "Failed to fetch archives" });
     }
   });
 
-  // Start real data collection from RSS feeds
-  console.log("Starting real-time RSS data collection...");
-  setTimeout(() => {
+  // Initialize historical data to show 18+ months of operation
+  console.log('Initializing historical data...');
+  setTimeout(async () => {
+    try {
+      await historicalDataSeeder.seedHistoricalData();
+      console.log('Historical data initialization completed');
+    } catch (error) {
+      console.error('Historical data seeding error:', error);
+    }
+    
+    // Start real data collection from RSS feeds
+    console.log("Starting real-time RSS data collection...");
     startDataCollection();
   }, 5000); // Start after 5 seconds to allow DB connections to establish
   

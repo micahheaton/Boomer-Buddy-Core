@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Report from "@/pages/report";
 import EnhancedTrendsPage from "@/pages/enhanced-trends";
+import Archives from "@/pages/archives";
 import Dashboard from "@/pages/dashboard";
 import History from "@/pages/history";
 import AdminDashboard from "@/pages/admin";
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/report/:id" component={Report} />
       <Route path="/trends" component={EnhancedTrendsPage} />
+      <Route path="/archives" component={Archives} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/history" component={History} />
       <Route path="/admin" component={AdminDashboard} />
