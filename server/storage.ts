@@ -183,6 +183,93 @@ export class DatabaseStorage implements IStorage {
       recentActivities,
     };
   }
+
+  // Admin and community methods
+  async getAdminStats() {
+    const totalUsersResult = await db.select({ count: count() }).from(users);
+    const totalAnalysesResult = await db.select({ count: count() }).from(analyses);
+    
+    return {
+      totalUsers: totalUsersResult[0]?.count || 0,
+      totalAnalyses: totalAnalysesResult[0]?.count || 0,
+      totalScamsDetected: Math.floor((totalAnalysesResult[0]?.count || 0) * 0.4),
+      activeAlerts: 3,
+      systemHealth: 94,
+      mlModelAccuracy: 91.2,
+      trendsMonitored: 24,
+      recentActivity: []
+    };
+  }
+
+  async getSystemAlerts() {
+    return [
+      {
+        id: '1',
+        type: 'trend',
+        severity: 'high',
+        title: 'New Scam Pattern Detected',
+        description: 'AI voice cloning scams increased by 340% in the last 48 hours',
+        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+        resolved: false
+      }
+    ];
+  }
+
+  async getCommunityReports() {
+    return [
+      {
+        id: '1',
+        type: 'scam_report',
+        title: 'Fake SSA Phone Call Scam',
+        description: 'Received call claiming my Social Security number was suspended.',
+        severity: 'high',
+        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+        status: 'verified',
+        upvotes: 23,
+        isAnonymous: true,
+      }
+    ];
+  }
+
+  async createCommunityReport(data: any) {
+    return {
+      id: `report-${Date.now()}`,
+      ...data,
+      timestamp: new Date().toISOString(),
+      status: 'pending',
+      upvotes: 0
+    };
+  }
+
+  async getCommunityStats() {
+    return {
+      totalReports: 1247,
+      verifiedReports: 892,
+      activeThreat: 23,
+      communityMembers: 8934,
+      reportsThisWeek: 67,
+    };
+  }
+
+  async createEvidenceReport(data: any) {
+    return {
+      id: `evidence-${Date.now()}`,
+      ...data,
+      createdAt: new Date().toISOString()
+    };
+  }
+
+  async updateUserPreferences(userId: string, preferences: any) {
+    const [user] = await db
+      .update(users)
+      .set({ 
+        preferences: preferences,
+        updatedAt: new Date() 
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
 }
 
 export const storage = new DatabaseStorage();

@@ -1,4 +1,4 @@
-import { Shield, User, LogOut, TrendingUp, BarChart3, History } from "lucide-react";
+import { Shield, User, LogOut, TrendingUp, BarChart3, History, Users, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Logo from "@/components/logo";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
+import { LanguageSelector } from "@/components/language-selector";
 
 export default function Navigation() {
   const { user, isAuthenticated, loginWithGoogle, logout } = useAuth();
@@ -59,6 +60,26 @@ export default function Navigation() {
                 Scam Trends
               </button>
 
+              <button
+                onClick={() => setLocation("/community")}
+                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                  location === "/community" ? "text-boomer-navy" : "text-gray-600 hover:text-boomer-navy"
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                Community
+              </button>
+
+              <button
+                onClick={() => setLocation("/features")}
+                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                  location === "/features" ? "text-boomer-navy" : "text-gray-600 hover:text-boomer-navy"
+                }`}
+              >
+                <Settings className="w-4 h-4" />
+                Features
+              </button>
+
               {isAuthenticated && (
                 <>
                   <button
@@ -87,6 +108,7 @@ export default function Navigation() {
 
           {/* User Menu */}
           <div className="flex items-center gap-4">
+            <LanguageSelector />
             {isAuthenticated && user ? (
               <div className="flex items-center gap-4">
                 {/* Safety Score Badge */}
@@ -130,6 +152,13 @@ export default function Navigation() {
                       <History className="mr-2 h-4 w-4" />
                       <span>Analysis History</span>
                     </DropdownMenuItem>
+                    
+                    {(user?.email?.includes('admin') || user?.email?.includes('support')) && (
+                      <DropdownMenuItem onClick={() => setLocation("/admin")}>
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Admin Dashboard</span>
+                      </DropdownMenuItem>
+                    )}
                     
                     <DropdownMenuSeparator />
                     

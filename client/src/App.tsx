@@ -9,6 +9,9 @@ import Report from "@/pages/report";
 import TrendsPage from "@/pages/trends";
 import Dashboard from "@/pages/dashboard";
 import History from "@/pages/history";
+import AdminDashboard from "@/pages/admin";
+import CommunityPage from "@/pages/community";
+import FeaturesPage from "@/pages/features";
 
 function Router() {
   return (
@@ -18,6 +21,9 @@ function Router() {
       <Route path="/trends" component={TrendsPage} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/history" component={History} />
+      <Route path="/admin" component={AdminDashboard} />
+      <Route path="/community" component={CommunityPage} />
+      <Route path="/features" component={FeaturesPage} />
       <Route component={NotFound} />
     </Switch>
   );
