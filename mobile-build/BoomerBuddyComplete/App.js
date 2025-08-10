@@ -8,34 +8,13 @@ export default function App() {
     Alert.alert(
       "Protection Activated",
       "Boomer Buddy is now protecting you from scams and threats.",
-      [
-        {
-          text: "Great!",
-          onPress: () => setProtectionActive(true),
-          style: "default"
-        }
-      ]
+      [{ text: "Great!", onPress: () => setProtectionActive(true) }]
     );
   };
 
-  const features = [
-    "🛡️ Real-time call screening",
-    "📱 SMS scam detection", 
-    "🔍 Image analysis protection",
-    "🎯 Personalized safety tips",
-    "📊 Threat visualization",
-    "🏆 Gamified learning system",
-    "👥 Community protection network",
-    "🚨 Emergency family alerts",
-    "🌍 Multilingual support",
-    "📈 Live government data feeds"
-  ];
-
   return (
     <SafeAreaView style={styles.container}>
-      
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
             <View style={styles.shield}>
@@ -46,7 +25,6 @@ export default function App() {
           </View>
         </View>
 
-        {/* Status Card */}
         <View style={styles.statusCard}>
           <Text style={styles.statusTitle}>Protection Status</Text>
           <View style={[styles.statusIndicator, protectionActive && styles.statusActive]}>
@@ -56,17 +34,20 @@ export default function App() {
           </View>
         </View>
 
-        {/* Features List */}
         <View style={styles.featuresContainer}>
           <Text style={styles.featuresTitle}>Advanced Protection Features</Text>
-          {features.map((feature, index) => (
-            <View key={index} style={styles.featureItem}>
-              <Text style={styles.featureText}>{feature}</Text>
-            </View>
-          ))}
+          <Text style={styles.featureText}>🛡️ Real-time call screening</Text>
+          <Text style={styles.featureText}>📱 SMS scam detection</Text>
+          <Text style={styles.featureText}>🔍 Image analysis protection</Text>
+          <Text style={styles.featureText}>🎯 Personalized safety tips</Text>
+          <Text style={styles.featureText}>📊 Threat visualization</Text>
+          <Text style={styles.featureText}>🏆 Gamified learning system</Text>
+          <Text style={styles.featureText}>👥 Community protection network</Text>
+          <Text style={styles.featureText}>🚨 Emergency family alerts</Text>
+          <Text style={styles.featureText}>🌍 Multilingual support</Text>
+          <Text style={styles.featureText}>📈 Live government data feeds</Text>
         </View>
 
-        {/* Activation Button */}
         <TouchableOpacity 
           style={[styles.activateButton, protectionActive && styles.buttonActive]} 
           onPress={activateProtection}
@@ -77,7 +58,6 @@ export default function App() {
           </Text>
         </TouchableOpacity>
 
-        {/* Info Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
             Comprehensive mobile app with 11 screens, 5 AI components, 
@@ -113,11 +93,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   },
   shieldIcon: {
     fontSize: 40,
@@ -138,11 +113,6 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     padding: 20,
     marginBottom: 25,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   statusTitle: {
     fontSize: 18,
@@ -169,11 +139,6 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     padding: 20,
     marginBottom: 25,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   featuresTitle: {
     fontSize: 18,
@@ -181,15 +146,11 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 15,
   },
-  featureItem: {
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
   featureText: {
     fontSize: 16,
     color: '#555',
     fontWeight: '500',
+    paddingVertical: 4,
   },
   activateButton: {
     backgroundColor: '#E3400B',
@@ -198,11 +159,6 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: 'center',
     marginBottom: 25,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
   },
   buttonActive: {
     backgroundColor: '#28a745',
