@@ -15,74 +15,24 @@ interface RSSFeed {
   agency: string;
 }
 
-// CURATED GOVERNMENT-ONLY DATA SOURCES (.gov/.us domains + select nonprofits)
-// Focused on actionable intelligence for seniors from extremely reliable sources
+// VERIFIED OFFICIAL GOVERNMENT RSS FEEDS ONLY (.gov/.us domains)
+// These URLs are verified working as of August 2025
 const TRUSTED_FEEDS: RSSFeed[] = [
-  // Federal Government Sources (.gov domains only)
+  // Federal Trade Commission - WORKING RSS FEED (verified 2025)
   {
-    name: 'Federal Trade Commission Consumer Alerts',
-    url: 'https://www.consumer.ftc.gov/rss/consumer-alerts.xml',
+    name: 'FTC Consumer Blog - Scam Alerts',
+    url: 'https://consumer.ftc.gov/blog/rss',
     category: 'government-consumer',
     reliability: 0.98,
     agency: 'FTC'
   },
-  {
-    name: 'FBI Internet Crime Complaint Center Public Service Announcements',
-    url: 'https://www.ic3.gov/rss/PSA.xml',
-    category: 'government-security',
-    reliability: 0.97,
-    agency: 'FBI-IC3'
-  },
+  // Social Security Administration - VERIFIED WORKING
   {
     name: 'Social Security Administration Blog',
     url: 'https://blog.ssa.gov/feed/',
-    category: 'government-benefits',
-    reliability: 0.98,
+    category: 'government-benefits', 
+    reliability: 0.95,
     agency: 'SSA'
-  },
-  {
-    name: 'HHS Office of Inspector General Consumer Alerts',
-    url: 'https://oig.hhs.gov/fraud/consumer-alerts/rss.xml',
-    category: 'government-healthcare',
-    reliability: 0.97,
-    agency: 'HHS-OIG'
-  },
-  {
-    name: 'CISA Cybersecurity and Infrastructure Security Agency',
-    url: 'https://www.cisa.gov/news.xml',
-    category: 'government-cybersecurity',
-    reliability: 0.96,
-    agency: 'CISA'
-  },
-  // State Government Sources (.us domains and verified .gov state sites)
-  {
-    name: 'Washington State Attorney General Consumer Protection',
-    url: 'https://www.atg.wa.gov/news/rss.xml',
-    category: 'state-consumer',
-    reliability: 0.95,
-    agency: 'WA-AG'
-  },
-  {
-    name: 'California Attorney General Consumer Alerts',
-    url: 'https://oag.ca.gov/rss/consumer-alerts',
-    category: 'state-consumer',
-    reliability: 0.95,
-    agency: 'CA-AG'
-  },
-  // Authorized Elder-Focused Nonprofits (strict curation)
-  {
-    name: 'AARP Fraud Watch Network',
-    url: 'https://www.aarp.org/money/scams-fraud/info-2019/scams-fraud.xml',
-    category: 'nonprofit-elder',
-    reliability: 0.94,
-    agency: 'AARP'
-  },
-  {
-    name: 'Better Business Bureau Scam Tracker',
-    url: 'https://www.bbb.org/alerts/rss',
-    category: 'nonprofit-business',
-    reliability: 0.92,
-    agency: 'BBB'
   }
 ];
 
@@ -144,7 +94,7 @@ export class DataCollector {
     } catch (error) {
       console.error(`Failed to collect from ${feed.name}:`, error);
       await this.logDataSourceError(feed, error as Error);
-      throw new Error(`RSS parsing failed for ${feed.name}: ${error.message}`);
+      throw new Error(`RSS parsing failed for ${feed.name}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
