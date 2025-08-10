@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Shield, History, Play, FileText, Phone, Camera, Keyboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +20,11 @@ export default function Home() {
   const [analysisId, setAnalysisId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'demo' | 'report' | null>(null);
+
+  // Fail-safe: Reset loading state on component mount
+  useEffect(() => {
+    setIsLoading(false);
+  }, []);
 
   const handleAnalysisComplete = (result: ScamAnalysisResult, id: string) => {
     setAnalysisResult(result);
