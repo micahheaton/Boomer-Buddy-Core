@@ -511,6 +511,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .orderBy(desc(newsItems.publishDate))
         .limit(50);
 
+      // Get count of active data sources
+      const activeSources = await db.select()
+        .from(dataSources);
+
       // Combine and format for live alerts
       const liveAlerts = [
         ...recentTrends.map(trend => ({
@@ -557,7 +561,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           highSeverityAlerts,
           scamAlertsToday: totalActiveAlerts,
           governmentAdvisories: liveAlerts.length - scamAlertsCount,
-          dataSourcesOnline: 15, // Our 15 government sources
+          dataSourcesOnline: activeSources.length, // Actual count of active sources
           lastUpdate: new Date().toISOString(),
           coverage: "All 50 States + DC"
         },
@@ -896,8 +900,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .limit(100);
 
       // Group by month/year for archive view
-      const trendsByMonth = {};
-      const newsByMonth = {};
+      const trendsByMonth: Record<string, any[]> = {};
+      const newsByMonth: Record<string, any[]> = {};
       
       historicalTrends.forEach(trend => {
         const date = new Date(trend.firstReported);
@@ -1027,6 +1031,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const { webSocketHandler } = await import('./websocketHandler.js');
   webSocketHandler.initialize(httpServer);
   
+  // Initialize comprehensive data collection
+  app.post("/api/admin/initialize-sources", async (req, res) => {
+    try {
+      const { EnhancedDataCollector } = await import('./enhancedDataCollector');
+      const collector = new EnhancedDataCollector();
+      
+      console.log('🚀 Starting comprehensive source initialization...');
+      await collector.initializeAllSources();
+      
+      res.json({ 
+        success: true, 
+        message: "Source discovery and initialization completed" 
+      });
+    } catch (error) {
+      console.error('Error initializing sources:', error);
+      res.status(500).json({ 
+        error: "Failed to initialize sources",
+        details: (error as Error).message 
+      });
+    }
+  });
+
+  // Trigger comprehensive data collection
+  app.post("/api/admin/collect-all-data", async (req, res) => {
+    try {
+      const { EnhancedDataCollector } = await import('./enhancedDataCollector');
+      const collector = new EnhancedDataCollector();
+      
+      console.log('📊 Starting comprehensive data collection...');
+      await collector.collectFromAllSources();
+      
+      res.json({ 
+        success: true, 
+        message: "Comprehensive data collection completed" 
+      });
+    } catch (error) {
+      console.error('Error collecting data:', error);
+      res.status(500).json({ 
+        error: "Failed to collect data",
+        details: (error as Error).message 
+      });
+    }
+  });
+
   // Data collection schedule status endpoint
   app.get("/api/schedule-status", async (req: Request, res: Response) => {
     try {

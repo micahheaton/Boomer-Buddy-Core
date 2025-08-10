@@ -312,6 +312,27 @@ export default function LiveHeatmapV2() {
                     {/* Background */}
                     <rect width="100%" height="100%" fill="#0f172a" />
                     
+                    {/* State boundaries (simplified outlines) */}
+                    <g opacity="0.15" stroke="#475569" strokeWidth="1" fill="none">
+                      {/* Simplified US state boundaries - basic rectangles to show state separation */}
+                      {Object.entries(stateCoordinates).map(([state, data]) => {
+                        const pos = projectToSVG(data.lat, data.lng);
+                        return (
+                          <rect
+                            key={`border-${state}`}
+                            x={pos.x - 25}
+                            y={pos.y - 15}
+                            width="50"
+                            height="30"
+                            stroke="#475569"
+                            strokeWidth="0.5"
+                            fill="none"
+                            opacity="0.3"
+                          />
+                        );
+                      })}
+                    </g>
+                    
                     {/* US State Circles */}
                     {Object.entries(stateCoordinates).map(([state, data]) => {
                       const pos = projectToSVG(data.lat, data.lng);
@@ -434,14 +455,21 @@ export default function LiveHeatmapV2() {
                       className="p-3 bg-slate-900 rounded-lg border border-slate-600 hover:border-slate-500 transition-colors"
                     >
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <Badge 
-                          className={`text-xs px-2 py-1 ${getSeverityColor(alert.severity)}`}
-                        >
-                          <div className="flex items-center gap-1">
-                            {getSeverityIcon(alert.severity)}
-                            {alert.severity.toUpperCase()}
-                          </div>
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            className={`text-xs px-2 py-1 ${getSeverityColor(alert.severity)}`}
+                          >
+                            <div className="flex items-center gap-1">
+                              {getSeverityIcon(alert.severity)}
+                              {alert.severity.toUpperCase()}
+                            </div>
+                          </Badge>
+                          {!alert.isScamAlert && (
+                            <Badge className="text-xs px-2 py-1 bg-blue-100 text-blue-600 border-blue-200">
+                              NEWS
+                            </Badge>
+                          )}
+                        </div>
                         <span className="text-xs text-slate-400 flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           {formatTimeAgo(alert.timestamp)}
@@ -459,10 +487,17 @@ export default function LiveHeatmapV2() {
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-slate-400">{alert.sourceAgency}</span>
                         <div className="flex items-center gap-1">
-                          <Users className="w-3 h-3" />
-                          <span className="text-slate-400">
-                            {alert.reportCount > 0 ? `${alert.reportCount} reports` : 'Government Source'}
-                          </span>
+                          {alert.isScamAlert ? (
+                            <>
+                              <AlertTriangle className="w-3 h-3 text-orange-400" />
+                              <span className="text-orange-400">Scam Alert</span>
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="w-3 h-3 text-blue-400" />
+                              <span className="text-blue-400">Gov News</span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>

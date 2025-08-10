@@ -1,0 +1,363 @@
+Got you. Here is a clean, legal way to discover and capture “subscribe-gated” RSS endpoints for scam and consumer alerts across all 50 states, then output one consolidated JSON your app can ingest daily.
+
+I built three things for you:
+
+1. a Python crawler that finds feeds, including GovDelivery endpoints behind subscribe pages
+2. a rules file with state seeds
+3. the output format your app will read
+
+If you want, I can also bundle this into a Replit-ready repo structure.
+
+# 1) Python crawler
+
+Drop this into `discover_state_feeds.py`.
+
+```python
+import re
+import json
+import time
+import urllib.parse
+from typing import List, Dict, Any
+import requests
+from bs4 import BeautifulSoup
+
+HEADERS = {
+    "User-Agent": "BoomerBuddyFeedDiscover/1.0 (+https://boomerbuddy.net)"
+}
+TIMEOUT = 20
+
+# Heuristics
+RSS_HINT_WORDS = ["rss", "atom", "feed", "xml"]
+SCAM_HINT_WORDS = [
+    "scam", "fraud", "consumer alert", "consumer-protection", "elder", "robocall",
+    "identity theft", "phishing", "imposter", "spoof", "gift card", "romance", "grandparent"
+]
+
+def get(url: str) -> requests.Response:
+    return requests.get(url, headers=HEADERS, timeout=TIMEOUT, allow_redirects=True)
+
+def absolutize(base: str, href: str) -> str:
+    return urllib.parse.urljoin(base, href)
+
+def looks_like_feed(href: str) -> bool:
+    if not href:
+        return False
+    h = href.lower()
+    if any(w in h for w in ["rss", "atom"]) and h.endswith((".xml", ".rss", ".atom")):
+        return True
+    # Common feed endpoints even without extension
+    if any(seg in h for seg in ["/rss", "/feed", "/feeds", "/atom"]):
+        return True
+    return False
+
+def candidate_score(text: str) -> int:
+    """Score link text or nearby text for scam relevance."""
+    t = (text or "").lower()
+    score = 0
+    for w in SCAM_HINT_WORDS:
+        if w in t:
+            score += 2
+    return score
+
+def extract_links(url: str) -> List[Dict[str, str]]:
+    try:
+        r = get(url)
+        r.raise_for_status()
+    except Exception:
+        return []
+    soup = BeautifulSoup(r.text, "html.parser")
+    links = []
+    # <link rel="alternate" type="application/rss+xml" ...>
+    for l in soup.find_all("link"):
+        rel = " ".join(l.get("rel", [])).lower()
+        typ = (l.get("type") or "").lower()
+        href = l.get("href")
+        if "alternate" in rel and ("rss" in typ or "atom" in typ):
+            links.append({"href": absolutize(url, href), "text": l.get("title") or ""})
+
+    # Visible anchors
+    for a in soup.find_all("a"):
+        href = a.get("href")
+        txt = a.get_text(" ", strip=True)
+        if href and looks_like_feed(href):
+            links.append({"href": absolutize(url, href), "text": txt})
+
+        # GovDelivery discovery: capture account slug to form bulletins.rss
+        if href and "content.govdelivery.com/accounts/" in href:
+            # Example: https://content.govdelivery.com/accounts/USCISA/subscriber/new
+            m = re.search(r"content\.govdelivery\.com/accounts/([^/]+)/", href)
+            if m:
+                acct = m.group(1)
+                gd_feed = f"https://content.govdelivery.com/accounts/{acct}/bulletins.rss"
+                links.append({"href": gd_feed, "text": f"GovDelivery bulletins for {acct}"})
+
+    # Also scan raw HTML for hidden govdelivery accounts
+    for m in re.finditer(r"https://content\.govdelivery\.com/accounts/([^/]+)/", soup.decode()):
+        acct = m.group(1)
+        gd_feed = f"https://content.govdelivery.com/accounts/{acct}/bulletins.rss"
+        links.append({"href": gd_feed, "text": f"GovDelivery bulletins for {acct}"})
+
+    # De-dupe
+    seen = set()
+    uniq = []
+    for L in links:
+        key = L["href"]
+        if key not in seen:
+            seen.add(key)
+            uniq.append(L)
+    return uniq
+
+def classify_feed(url: str) -> str:
+    u = url.lower()
+    if "govdelivery" in u:
+        return "govdelivery"
+    if any(x in u for x in ["rss", "atom", ".xml", "/feed", "/feeds"]):
+        return "rss"
+    return "unknown"
+
+def probe_feed(url: str) -> Dict[str, Any]:
+    info = {"url": url, "type": classify_feed(url), "http_ok": False, "scam_relevance": 0, "title_hint": ""}
+    try:
+        r = get(url)
+        info["http_ok"] = r.ok
+        if r.ok:
+            # Light sniff for relevance
+            sample = r.text[:5000].lower()
+            rel = 0
+            for w in SCAM_HINT_WORDS:
+                if w in sample:
+                    rel += 1
+            info["scam_relevance"] = rel
+            # Try to pull a title
+            m = re.search(r"<title>(.*?)</title>", r.text, re.IGNORECASE | re.DOTALL)
+            if m:
+                info["title_hint"] = re.sub(r"\s+", " ", m.group(1)).strip()
+    except Exception:
+        pass
+    return info
+
+def discover_for_state(state_obj: Dict[str, Any]) -> Dict[str, Any]:
+    state_name = state_obj["state"]
+    seeds = state_obj["seeds"]
+    found = []
+    for seed in seeds:
+        try:
+            links = extract_links(seed)
+            for L in links:
+                # Quick filter for scam related terms if present in link text or URL
+                rel_score = candidate_score(L.get("text", "")) + candidate_score(L.get("href", ""))
+                if rel_score == 0 and "consumer" not in L.get("href", "").lower():
+                    # keep but mark as low confidence
+                    pass
+                info = probe_feed(L["href"])
+                info["source_seed"] = seed
+                found.append(info)
+            time.sleep(0.8)
+        except Exception:
+            continue
+
+    # Also try common paths if nothing was found
+    if not found:
+        common = ["/rss", "/rss.xml", "/feed", "/feeds", "/news/rss", "/news.xml"]
+        for seed in seeds:
+            base = seed.rstrip("/")
+            for c in common:
+                test = base + c
+                info = probe_feed(test)
+                if info["http_ok"]:
+                    info["source_seed"] = seed
+                    found.append(info)
+
+    # Rank feeds by OK, scam relevance, and rss type
+    found.sort(key=lambda x: (x["http_ok"], x["scam_relevance"], x["type"] == "rss"), reverse=True)
+    # Keep top N
+    top = []
+    seen_urls = set()
+    for f in found:
+        if f["url"] in seen_urls:
+            continue
+        seen_urls.add(f["url"])
+        top.append(f)
+        if len(top) >= 8:
+            break
+
+    return {
+        "state": state_name,
+        "feeds": top
+    }
+
+def main():
+    with open("state_seeds.json", "r") as f:
+        states = json.load(f)
+
+    results = []
+    for s in states:
+        print(f"Discovering feeds for {s['state']}...")
+        results.append(discover_for_state(s))
+
+    with open("state_feeds.json", "w") as f:
+        json.dump(results, f, indent=2)
+
+    # Also flatten to a simple list your app can consume easily
+    flat = []
+    for st in results:
+        for f in st["feeds"]:
+            flat.append({
+                "state": st["state"],
+                "url": f["url"],
+                "title_hint": f.get("title_hint", ""),
+                "type": f.get("type", ""),
+                "scam_relevance": f.get("scam_relevance", 0)
+            })
+    with open("state_feeds_flat.json", "w") as f:
+        json.dump(flat, f, indent=2)
+
+if __name__ == "__main__":
+    main()
+```
+
+What this does
+
+* Crawls each state seed page
+* Finds visible RSS links and invisible GovDelivery accounts
+* Forms the GovDelivery bulletins.rss URL from the account code
+* Sniffs content for scam keywords to score relevance
+* Writes `state_feeds.json` and `state_feeds_flat.json`
+
+# 2) State seed file
+
+Save as `state_seeds.json`. These are safe starting points that frequently link to consumer alerts, scam alerts, or subscription hubs. The crawler will follow and discover feeds. You can add or swap later without code changes.
+
+```json
+[
+  {"state":"Alabama","seeds":["https://www.alabamaag.gov/newsroom","https://www.alabamaag.gov/consumercomplaints"]},
+  {"state":"Alaska","seeds":["https://law.alaska.gov/department/civil/consumer/","https://law.alaska.gov/press/"]},
+  {"state":"Arizona","seeds":["https://www.azag.gov/press-releases","https://www.azag.gov/consumer"]},
+  {"state":"Arkansas","seeds":["https://arkansasag.gov/news-releases/","https://arkansasag.gov/resources/consumer-protection/"]},
+  {"state":"California","seeds":["https://oag.ca.gov/consumers","https://oag.ca.gov/media/news"]},
+  {"state":"Colorado","seeds":["https://coag.gov/press-releases/","https://coag.gov/office-sections/consumer-protection/"]},
+  {"state":"Connecticut","seeds":["https://portal.ct.gov/AG/Press-Releases","https://portal.ct.gov/DCP/Common-Elements/Consumer-Fact-Sheets"]},
+  {"state":"Delaware","seeds":["https://attorneygeneral.delaware.gov/newsroom/","https://attorneygeneral.delaware.gov/fraud/consumer-protection/"]},
+  {"state":"Florida","seeds":["http://www.myfloridalegal.com/newsrel.nsf/newsreleases","http://www.myfloridalegal.com/consumer"]},
+  {"state":"Georgia","seeds":["https://law.georgia.gov/press-releases","https://consumer.georgia.gov/consumer-topics"]},
+  {"state":"Hawaii","seeds":["https://ag.hawaii.gov/news/","https://cca.hawaii.gov/ocp/"]},
+  {"state":"Idaho","seeds":["https://www.ag.idaho.gov/media/press-releases/","https://www.ag.idaho.gov/office-resources/consumer-protection/"]},
+  {"state":"Illinois","seeds":["https://illinoisattorneygeneral.gov/pressroom/","https://illinoisattorneygeneral.gov/consumer/"]},
+  {"state":"Indiana","seeds":["https://www.in.gov/attorneygeneral/newsroom/","https://www.in.gov/attorneygeneral/consumer-protection/"]},
+  {"state":"Iowa","seeds":["https://www.iowaattorneygeneral.gov/newsroom","https://www.iowaattorneygeneral.gov/for-consumers"]},
+  {"state":"Kansas","seeds":["https://ag.ks.gov/media-center/news-releases","https://ag.ks.gov/consumer-protection"]},
+  {"state":"Kentucky","seeds":["https://www.ag.ky.gov/Media/News/Pages/default.aspx","https://www.ag.ky.gov/consumer-protection/Pages/default.aspx"]},
+  {"state":"Louisiana","seeds":["https://www.ag.state.la.us/News.aspx","https://www.ag.state.la.us/ConsumerMedia.aspx"]},
+  {"state":"Maine","seeds":["https://www.maine.gov/ag/news/index.shtml","https://www.maine.gov/ag/consumer/"]},
+  {"state":"Maryland","seeds":["https://www.marylandattorneygeneral.gov/press/","https://www.marylandattorneygeneral.gov/Pages/CPD/"]},
+  {"state":"Massachusetts","seeds":["https://www.mass.gov/orgs/office-of-attorney-general-andrea-joy-campbell/news","https://www.mass.gov/consumer-protection"]},
+  {"state":"Michigan","seeds":["https://www.michigan.gov/ag/news","https://www.michigan.gov/ag/consumer-protection"]},
+  {"state":"Minnesota","seeds":["https://www.ag.state.mn.us/Office/PressReleases.asp","https://www.ag.state.mn.us/Consumer/"]},
+  {"state":"Mississippi","seeds":["https://www.ago.state.ms.us/releases/","https://www.ago.state.ms.us/divisions/consumer"]},
+  {"state":"Missouri","seeds":["https://ago.mo.gov/home/news/press-releases","https://ago.mo.gov/civil-division/consumer/consumer-education"]},
+  {"state":"Montana","seeds":["https://dojmt.gov/news/","https://dojmt.gov/consumer/"]},
+  {"state":"Nebraska","seeds":["https://ago.nebraska.gov/news","https://protectthegoodlife.nebraska.gov/"]},
+  {"state":"Nevada","seeds":["https://ag.nv.gov/News/","https://ag.nv.gov/About/Consumer_Protection/"]},
+  {"state":"New Hampshire","seeds":["https://www.doj.nh.gov/news/","https://www.doj.nh.gov/consumer/"]},
+  {"state":"New Jersey","seeds":["https://www.nj.gov/oag/newsreleases.htm","https://www.njconsumeraffairs.gov/"]},
+  {"state":"New Mexico","seeds":["https://www.nmag.gov/media/press-releases/","https://www.nmag.gov/consumer-protection/"]},
+  {"state":"New York","seeds":["https://ag.ny.gov/press-releases","https://ag.ny.gov/consumer-frauds"]},
+  {"state":"North Carolina","seeds":["https://ncdoj.gov/media/press-releases/","https://ncdoj.gov/protecting-consumers/"]},
+  {"state":"North Dakota","seeds":["https://attorneygeneral.nd.gov/news","https://attorneygeneral.nd.gov/consumer-resources"]},
+  {"state":"Ohio","seeds":["https://www.ohioattorneygeneral.gov/Media/News-Releases","https://www.ohioattorneygeneral.gov/Individuals-and-Families/Consumers"]},
+  {"state":"Oklahoma","seeds":["https://www.oag.ok.gov/press-releases","https://www.oag.ok.gov/consumer-protection"]},
+  {"state":"Oregon","seeds":["https://www.doj.state.or.us/media-home/news-media-releases/","https://www.doj.state.or.us/consumer-protection/"]},
+  {"state":"Pennsylvania","seeds":["https://www.attorneygeneral.gov/taking-action/press-releases/","https://www.attorneygeneral.gov/protect-yourself/consumer-advisories/"]},
+  {"state":"Rhode Island","seeds":["https://riag.ri.gov/press-releases","https://riag.ri.gov/consumer-protection"]},
+  {"state":"South Carolina","seeds":["https://www.scag.gov/newsroom/","https://www.scag.gov/scams/"]},
+  {"state":"South Dakota","seeds":["https://atg.sd.gov/OurOffice/Media/pressreleases.aspx","https://atg.sd.gov/Consumers/Default.aspx"]},
+  {"state":"Tennessee","seeds":["https://www.tn.gov/attorneygeneral/news.html","https://www.tn.gov/attorneygeneral/working-for-tennessee/consumer-protection.html"]},
+  {"state":"Texas","seeds":["https://www.texasattorneygeneral.gov/news/releases","https://www.texasattorneygeneral.gov/consumer-protection"]},
+  {"state":"Utah","seeds":["https://attorneygeneral.utah.gov/news/","https://consumerprotection.utah.gov/"]},
+  {"state":"Vermont","seeds":["https://ago.vermont.gov/press-releases/","https://ago.vermont.gov/cap/"]},
+  {"state":"Virginia","seeds":["https://www.oag.state.va.us/media-center/news-releases","https://www.oag.state.va.us/consumer-protection"]},
+  {"state":"Washington","seeds":["https://www.atg.wa.gov/consumer-alerts","https://www.atg.wa.gov/news"]},
+  {"state":"West Virginia","seeds":["https://ago.wv.gov/News/Pages/default.aspx","https://ago.wv.gov/consumerprotection/Pages/default.aspx"]},
+  {"state":"Wisconsin","seeds":["https://www.doj.state.wi.us/news","https://www.doj.state.wi.us/dls/consumer-protection"]},
+  {"state":"Wyoming","seeds":["https://attorneygeneral.wyo.gov/press-releases","https://attorneygeneral.wyo.gov/consumer-protection"]},
+  {"state":"District of Columbia","seeds":["https://oag.dc.gov/release","https://oag.dc.gov/consumer-protection"]}
+]
+```
+
+Notes
+
+* These are official AG or state consumer pages. Many expose feeds or link to GovDelivery lists.
+* The crawler will discover the actual XML endpoints, including GovDelivery `.../accounts/<ACCT>/bulletins.rss` even when hidden behind a subscribe button.
+
+# 3) Output your app can read
+
+The script writes two files.
+
+`state_feeds.json` per state
+
+```json
+[
+  {
+    "state": "Washington",
+    "feeds": [
+      {
+        "url": "https://www.atg.wa.gov/feeds/consumer-alerts",
+        "type": "rss",
+        "http_ok": true,
+        "scam_relevance": 7,
+        "title_hint": "Consumer Alerts",
+        "source_seed": "https://www.atg.wa.gov/consumer-alerts"
+      },
+      {
+        "url": "https://content.govdelivery.com/accounts/WAOAG/bulletins.rss",
+        "type": "govdelivery",
+        "http_ok": true,
+        "scam_relevance": 6,
+        "title_hint": "Washington State Attorney General bulletins",
+        "source_seed": "https://www.atg.wa.gov/news"
+      }
+    ]
+  }
+]
+```
+
+`state_feeds_flat.json` for quick client load
+
+```json
+[
+  {
+    "state": "Washington",
+    "url": "https://www.atg.wa.gov/feeds/consumer-alerts",
+    "title_hint": "Consumer Alerts",
+    "type": "rss",
+    "scam_relevance": 7
+  },
+  {
+    "state": "Washington",
+    "url": "https://content.govdelivery.com/accounts/WAOAG/bulletins.rss",
+    "title_hint": "Washington State Attorney General bulletins",
+    "type": "govdelivery",
+    "scam_relevance": 6
+  }
+]
+```
+
+How to run
+
+1. `pip install requests beautifulsoup4`
+2. Save both files
+3. `python discover_state_feeds.py`
+4. Wire `state_feeds_flat.json` into your daily ingest
+
+Daily refresh
+
+* Put this behind a cron job or GitHub Actions workflow
+* Add a tiny de-dupe and cache in your app so you never show stale or broken links
+
+Why this is safe and effective
+
+* You are not bypassing paywalls or auth
+* You are discovering public XML endpoints that the subscribe pages already expose
+* GovDelivery discovery is based on public account codes embedded in the page or email templates
+
+If you want, I can add a second script that fetches each feed daily, normalizes items into a single `alerts.json`, tags elder risk terms, geo-tags by state, and serves it from a tiny Flask endpoint so your app has one URL to hit.

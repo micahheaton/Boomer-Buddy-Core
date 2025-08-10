@@ -1,0 +1,253 @@
+Great target list. Here’s a **practical acquisition plan** for each source + the **exact feed URLs (where they exist)** and **fallback tactics** when they don’t. I also give you a **single JSON block** you can drop into your app to seed your fetcher.
+
+---
+
+# Strategy + Feed Endpoints
+
+## 1) FTC Consumer Alerts — **Primary**
+
+* **How**: Use FTC’s public RSS hub.
+* **Feeds** (pick at least these two):
+
+  * Consumer Blog (alerts/how-tos): [https://www.ftc.gov/stay-connected/rss](https://www.ftc.gov/stay-connected/rss)
+  * Consumer Protection Press Releases (RSS item on page). ([Federal Trade Commission][1])
+
+## 2) FBI IC3 Alerts — **Primary**
+
+* **How**: IC3 PSAs page exposes RSS.
+* **Feed**: (via page) [https://www.ic3.gov/PSA](https://www.ic3.gov/PSA)  → click RSS icon (same for CSA). ([Internet Crime Complaint Center][2])
+
+## 3) Social Security Administration (SSA/OIG) — **Primary**
+
+* **How**: Use OIG’s RSS page + “Scam Alerts” listing.
+* **Feeds**: [https://oig.ssa.gov/rss/](https://oig.ssa.gov/rss/) (News Releases RSS; pair with Scam Alerts page polling). ([oig.ssa.gov][3])
+
+## 4) HHS-OIG Consumer Alerts (Medicare/health) — **Primary**
+
+* **How**: Poll “Consumer Alerts” and “Special Fraud Alerts” pages (RSS not always exposed; cadence steady).
+* **Pages**: [https://oig.hhs.gov/fraud/consumer-alerts/](https://oig.hhs.gov/fraud/consumer-alerts/) and [https://oig.hhs.gov/compliance/alerts/](https://oig.hhs.gov/compliance/alerts/) (some sections have RSS; if not, scrape + diff). ([Office of Inspector General][4])
+
+## 5) CISA Cybersecurity Advisories — **Context / trend**
+
+* **How**: CISA publishes public RSS endpoints (news, blog, advisories, ICS).
+* **Feeds**:
+
+  * News: [https://www.cisa.gov/news.xml](https://www.cisa.gov/news.xml)
+  * Blog: [https://www.cisa.gov/cisa/blog.xml](https://www.cisa.gov/cisa/blog.xml)
+  * Advisories (all): [https://www.cisa.gov/cybersecurity-advisories/all.xml](https://www.cisa.gov/cybersecurity-advisories/all.xml)
+  * ICS: [https://www.cisa.gov/cybersecurity-advisories/ics-advisories.xml](https://www.cisa.gov/cybersecurity-advisories/ics-advisories.xml) (and /ics-medical-advisories.xml). ([CISA][5])
+
+## 6) SEC Investor Alerts — **Primary for investment scams**
+
+* **How**: Investor.gov alerts page exposes RSS.
+* **Feed**: from page [https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins](https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins) (RSS link on page). ([Investor.gov][6])
+
+## 7) CFPB Consumer Protection — **Primary**
+
+* **How**: CFPB blog has RSS; newsroom too.
+* **Feeds**:
+
+  * Blog: (RSS link on page) [https://www.consumerfinance.gov/about-us/blog/](https://www.consumerfinance.gov/about-us/blog/)
+  * Newsroom (optional): [https://www.consumerfinance.gov/about-us/newsroom/](https://www.consumerfinance.gov/about-us/newsroom/) (RSS link on page). ([Consumer Financial Protection Bureau][7])
+
+## 8) FCC Consumer Alerts — **Primary (phone/text scams)**
+
+* **How**: FCC maintains an RSS directory; pick “Consumer” feeds.
+* **Hub**: [https://www.fcc.gov/news-events/rss-feeds-and-email-updates-fcc](https://www.fcc.gov/news-events/rss-feeds-and-email-updates-fcc)
+* **Context pages**: fraud/robocall guides. ([Federal Communications Commission][8])
+
+## 9) DOJ Consumer Protection — **Mixed cadence, still useful**
+
+* **How**: Use DOJ Civil Division / Consumer Protection Branch press room + USAO feeds.
+* **Feeds/Pages**:
+
+  * CPB Press Releases page (subscribe/email; some sections provide RSS via Civil Division press room). [https://www.justice.gov/civil/consumer-protection-branch-press-releases](https://www.justice.gov/civil/consumer-protection-branch-press-releases)
+  * USAO RSS directory (per district): [https://www.justice.gov/usao/rss](https://www.justice.gov/usao/rss)
+    *(Note: DOJ has been restructuring CPB; keep these but weight lower.)* ([Department of Justice][9], [Reuters][10])
+
+## 10) AARP Fraud Watch — **.org, very relevant**
+
+* **How**: AARP press center provides RSS; Fraud Watch items appear there. (Fraud Watch Network itself doesn’t expose a clean global RSS.)
+* **Feed**: [https://press.aarp.org/rss](https://press.aarp.org/rss) ([MediaRoom][11])
+
+## 11) BBB Scam Tracker — **.org, high value**
+
+* **How**: No universal public RSS/API for Scam Tracker; two approaches:
+
+  * Poll “Latest Scams news” (national): [https://www.bbb.org/us/news/scams](https://www.bbb.org/us/news/scams)
+  * Regional BBB sites often have “Scam Alerts” pages you can poll; enrich with links to Scam Tracker detail items.
+* *(Treat as scrape-with-diff; respect robots.txt and cadence.)* ([Better Business Bureau][12])
+
+## 12) Treasury FinCEN — **Mixed, more B2B but good signals**
+
+* **How**: No obvious global RSS; poll News + Advisories pages and diff.
+* **Pages**:
+
+  * Newsroom: [https://www.fincen.gov/news-room/news](https://www.fincen.gov/news-room/news)
+  * Advisories/Bulletins/Fact Sheets: [https://www.fincen.gov/resources/advisoriesbulletinsfact-sheets](https://www.fincen.gov/resources/advisoriesbulletinsfact-sheets)
+    *(Good for “red flags” your model can translate for consumers.)* ([FinCEN.gov][13])
+
+## 13) Medicare Fraud Alerts (CMS/Medicare.gov) — **Primary for older adults**
+
+* **How**: CMS Fraud pages don’t expose a clean RSS; poll CMS fraud hub + Medicare fraud guidance pages and diff.
+* **Pages**:
+
+  * CMS Fraud Hub: [https://www.cms.gov/fraud](https://www.cms.gov/fraud)
+  * Medicare.gov reporting page (evergreen resource): [https://www.medicare.gov/basics/reporting-medicare-fraud-and-abuse](https://www.medicare.gov/basics/reporting-medicare-fraud-and-abuse)
+    *(If you must have an RSS, pair with HHS-OIG Consumer Alerts above.)* ([CMS][14], [Medicare][15])
+
+---
+
+# One JSON config your app can ingest
+
+```json
+{
+  "sources": [
+    {
+      "name": "FTC Consumer Alerts",
+      "type": "rss",
+      "url": "https://www.ftc.gov/stay-connected/rss",
+      "weight": 1.0,
+      "notes": "Consumer blog + alerts; also add Consumer Protection Press Releases from same page."
+    },
+    {
+      "name": "FBI IC3 PSAs",
+      "type": "rss",
+      "url": "https://www.ic3.gov/PSA",
+      "discover": "click RSS icon on page",
+      "weight": 0.95
+    },
+    {
+      "name": "SSA OIG – News/Scam",
+      "type": "rss+poll",
+      "url": "https://oig.ssa.gov/rss/",
+      "supplement": ["https://oig.ssa.gov/scam-awareness/prior-scam-alerts/"],
+      "weight": 0.9
+    },
+    {
+      "name": "HHS OIG – Consumer Alerts",
+      "type": "poll",
+      "urls": [
+        "https://oig.hhs.gov/fraud/consumer-alerts/",
+        "https://oig.hhs.gov/compliance/alerts/"
+      ],
+      "weight": 0.9
+    },
+    {
+      "name": "CISA – News",
+      "type": "rss",
+      "url": "https://www.cisa.gov/news.xml",
+      "weight": 0.6
+    },
+    {
+      "name": "CISA – Advisories (All)",
+      "type": "rss",
+      "url": "https://www.cisa.gov/cybersecurity-advisories/all.xml",
+      "weight": 0.7
+    },
+    {
+      "name": "CISA – ICS Advisories",
+      "type": "rss",
+      "url": "https://www.cisa.gov/cybersecurity-advisories/ics-advisories.xml",
+      "weight": 0.6
+    },
+    {
+      "name": "SEC Investor Alerts",
+      "type": "rss",
+      "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins",
+      "discover": "RSS link on page",
+      "weight": 0.9
+    },
+    {
+      "name": "CFPB Blog",
+      "type": "rss",
+      "url": "https://www.consumerfinance.gov/about-us/blog/",
+      "discover": "RSS link on page",
+      "weight": 0.85
+    },
+    {
+      "name": "FCC Consumer/Scam Alerts",
+      "type": "rss",
+      "url": "https://www.fcc.gov/news-events/rss-feeds-and-email-updates-fcc",
+      "discover": "choose Consumer-focused feeds",
+      "weight": 0.85
+    },
+    {
+      "name": "DOJ – Consumer Protection (Civil Division)",
+      "type": "poll",
+      "url": "https://www.justice.gov/civil/consumer-protection-branch-press-releases",
+      "weight": 0.6
+    },
+    {
+      "name": "DOJ – USAO (district feeds)",
+      "type": "rss-directory",
+      "url": "https://www.justice.gov/usao/rss",
+      "weight": 0.6
+    },
+    {
+      "name": "AARP Press (Fraud & Scams)",
+      "type": "rss",
+      "url": "https://press.aarp.org/rss",
+      "weight": 0.8
+    },
+    {
+      "name": "BBB – Latest Scams (national)",
+      "type": "poll",
+      "url": "https://www.bbb.org/us/news/scams",
+      "weight": 0.75
+    },
+    {
+      "name": "FinCEN – Newsroom",
+      "type": "poll",
+      "url": "https://www.fincen.gov/news-room/news",
+      "weight": 0.6
+    },
+    {
+      "name": "FinCEN – Advisories/Bulletins",
+      "type": "poll",
+      "url": "https://www.fincen.gov/resources/advisoriesbulletinsfact-sheets",
+      "weight": 0.65
+    },
+    {
+      "name": "CMS – Fraud Hub (Medicare)",
+      "type": "poll",
+      "url": "https://www.cms.gov/fraud",
+      "weight": 0.85
+    },
+    {
+      "name": "Medicare.gov – Reporting Fraud",
+      "type": "poll",
+      "url": "https://www.medicare.gov/basics/reporting-medicare-fraud-and-abuse",
+      "weight": 0.7
+    }
+  ]
+}
+```
+
+---
+
+## Implementation notes (so this “just works”)
+
+* **Fetcher**: for `type: rss`, fetch XML; for `poll`, fetch HTML and extract new cards with date/title/URL; for `rss-directory`, crawl the page and capture each sub-feed URL once.
+* **De-dupe**: hash on `(normalized_title + domain + yyyymmdd)`; keep the most “consumer-plain-English” version.
+* **Tagging**: add simple keyword flags (`irs`, `ssa`, `medicare`, `gift card`, `crypto`, `romance`, `grandparent`, `utility`, `package`, `invoice`, `warranty`).
+* **Ranking**: FTC/IC3/HHS-OIG/CFPB/FCC get top priority for seniors; CISA/SEC/FinCEN are secondary context unless item mentions consumers directly.
+* **Compliance**: follow robots.txt; respect `Cache-Control`; backoff on 429; crawl 1–2/minute per domain max.
+
+If you want, I’ll wire these into your existing Replit worker and output a single `alerts.json` you can hit from Boomer Buddy by morning.
+
+[1]: https://www.ftc.gov/stay-connected/rss?utm_source=chatgpt.com "RSS | Federal Trade Commission"
+[2]: https://www.ic3.gov/PSA?utm_source=chatgpt.com "Press Releases - Internet Crime Complaint Center (IC3)"
+[3]: https://oig.ssa.gov/rss/?utm_source=chatgpt.com "RSS Feeds - Office of the Inspector General - SSA"
+[4]: https://oig.hhs.gov/fraud/consumer-alerts/?utm_source=chatgpt.com "Consumer Alerts | Office of Inspector General - HHS.gov"
+[5]: https://www.cisa.gov/about/contact-us/subscribe-updates-cisa?utm_source=chatgpt.com "Subscribe to Updates from CISA"
+[6]: https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins?utm_source=chatgpt.com "Investor Alerts and Bulletins"
+[7]: https://www.consumerfinance.gov/about-us/blog/?utm_source=chatgpt.com "Blog | Consumer Financial Protection Bureau"
+[8]: https://www.fcc.gov/news-events/rss-feeds-and-email-updates-fcc?utm_source=chatgpt.com "RSS Feeds and Email Updates from the FCC"
+[9]: https://www.justice.gov/civil/consumer-protection-branch-press-releases?utm_source=chatgpt.com "Civil Division | Consumer Protection Branch Press Releases"
+[10]: https://www.reuters.com/business/healthcare-pharmaceuticals/us-justice-department-unit-drug-food-safety-cases-being-disbanded-2025-04-25/?utm_source=chatgpt.com "US Justice Department unit for drug and food safety cases being disbanded"
+[11]: https://press.aarp.org/rss?utm_source=chatgpt.com "MediaRoom - RSS"
+[12]: https://www.bbb.org/us/news/scams?utm_source=chatgpt.com "Latest Scams news from BBB near United States"
+[13]: https://www.fincen.gov/news-room/news?utm_source=chatgpt.com "News"
+[14]: https://www.cms.gov/fraud?utm_source=chatgpt.com "Crushing Fraud, Waste, & Abuse"
+[15]: https://www.medicare.gov/basics/reporting-medicare-fraud-and-abuse?utm_source=chatgpt.com "Reporting Medicare fraud & abuse"
