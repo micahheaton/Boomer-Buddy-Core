@@ -208,7 +208,7 @@ export default function LiveHeatmap() {
         description: trend.description,
         severity: trend.severity,
         category: trend.category,
-        affectedRegions: trend.affectedRegions || ['national'],
+        affectedRegions: Array.isArray(trend.affectedRegions) ? trend.affectedRegions : ['national'],
         reportCount: trend.reportCount || 0,
         timestamp: trend.lastReported || trend.firstReported,
         sourceAgency: trend.sourceAgency || 'Government Source'
@@ -220,9 +220,11 @@ export default function LiveHeatmap() {
         // Trigger pulse animations for affected states
         const affectedStates = new Set<string>();
         newAlerts.forEach((alert: any) => {
-          if (alert.affectedRegions) {
+          if (alert.affectedRegions && Array.isArray(alert.affectedRegions)) {
             alert.affectedRegions.forEach((region: string) => {
-              affectedStates.add(region.toUpperCase());
+              if (region && typeof region === 'string') {
+                affectedStates.add(region.toUpperCase());
+              }
             });
           }
         });

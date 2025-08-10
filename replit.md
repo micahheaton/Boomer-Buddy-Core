@@ -10,6 +10,11 @@ Preferred communication style: Simple, everyday language.
 - Removed Archives page from navigation (backed up to client/src/pages/backup/archives.tsx for future use)
 - Replaced Archives with About page in main navigation
 - Updated all pages to reflect summer 2025 launch transparency
+- **Major Enhancement**: Integrated comprehensive government RSS feeds from GPT-4 curated list
+- **New System**: Created intelligent feed parser (`intelligentFeedParser.ts`) for advanced content filtering
+- **Data Expansion**: Added 15+ verified government sources including FTC, FBI, DOJ, SEC, CFPB, FCC, HHS-OIG, CISA, and state AGs
+- **Smart Filtering**: Implemented elder-relevance scoring and scam-type detection to filter mixed-content feeds
+- **Fixed**: Resolved LiveHeatmap WebSocket errors and array handling issues for better stability
 
 # System Architecture
 

@@ -8,7 +8,7 @@ import { trendMonitor } from "./trendMonitor";
 import { mlPatternRecognizer } from "./mlModels";
 import { scamAnalysisRequestSchema, type ScamAnalysisResult, scamTrends, newsItems, dataSources } from "@shared/schema";
 import { setupAuthRoutes, requireAuth, optionalAuth } from "./auth";
-import { startDataCollection } from "./dataCollector";
+import { dataCollector } from "./dataCollector";
 import { historicalDataSeeder } from "./historicalDataSeeder";
 import { communitySystem } from "./communitySystem";
 import { historicalCommunitySeeder } from "./historicalCommunitySeeder";
@@ -938,7 +938,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     // Start real data collection from RSS feeds
     console.log("Starting real-time RSS data collection...");
-    startDataCollection();
+    dataCollector.collectAllData(); // Initial run
+    // Schedule collection every 6 hours
+    setInterval(() => {
+      console.log('🔄 Running scheduled data collection...');
+      dataCollector.collectAllData();
+    }, 6 * 60 * 60 * 1000); // Every 6 hours
   }, 5000); // Start after 5 seconds to allow DB connections to establish
   
   const httpServer = createServer(app);
