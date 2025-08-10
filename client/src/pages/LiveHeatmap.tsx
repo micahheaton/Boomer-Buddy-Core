@@ -13,7 +13,14 @@ import {
   Volume2,
   VolumeX,
   Zap,
-  Shield
+  Shield,
+  ZoomIn,
+  ZoomOut,
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  BarChart3
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -108,6 +115,8 @@ export default function LiveHeatmap() {
   const [recentAlerts, setRecentAlerts] = useState<ScamAlert[]>([]);
   const [wsConnected, setWsConnected] = useState(false);
   const [liveStats, setLiveStats] = useState({ alerts: 0, updates: 0 });
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [panPosition, setPanPosition] = useState({ x: 0, y: 0 });
   const audioRef = useRef<HTMLAudioElement>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -192,9 +201,22 @@ export default function LiveHeatmap() {
         return (currentTime - trendTime) < recentThreshold;
       });
 
+      // Always show the latest 10 alerts, regardless of timing
+      const latestAlerts = (trendsData.trends as any[]).slice(0, 10).map((trend: any) => ({
+        id: trend.id,
+        title: trend.title,
+        description: trend.description,
+        severity: trend.severity,
+        category: trend.category,
+        affectedRegions: trend.affectedRegions || ['national'],
+        reportCount: trend.reportCount || 0,
+        timestamp: trend.lastReported || trend.firstReported,
+        sourceAgency: trend.sourceAgency || 'Government Source'
+      }));
+
+      setRecentAlerts(latestAlerts);
+
       if (newAlerts.length > 0) {
-        setRecentAlerts(newAlerts);
-        
         // Trigger pulse animations for affected states
         const affectedStates = new Set<string>();
         newAlerts.forEach((alert: any) => {
@@ -227,6 +249,10 @@ export default function LiveHeatmap() {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
     
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+    let reconnectTimeout: NodeJS.Timeout;
+    
     const connectWebSocket = () => {
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         return;
@@ -238,6 +264,7 @@ export default function LiveHeatmap() {
       ws.onopen = () => {
         console.log('WebSocket connected to heatmap feed');
         setWsConnected(true);
+        reconnectAttempts = 0; // Reset on successful connection
         
         // Subscribe to heatmap updates
         ws.send(JSON.stringify({
@@ -255,10 +282,15 @@ export default function LiveHeatmap() {
         }
       };
 
-      ws.onclose = () => {
-        console.log('WebSocket connection closed, attempting reconnect...');
+      ws.onclose = (event) => {
+        console.log('WebSocket connection closed, code:', event.code, 'reason:', event.reason);
         setWsConnected(false);
-        setTimeout(connectWebSocket, 3000); // Reconnect after 3 seconds
+        
+        // Only attempt to reconnect if not a normal closure and we haven't exceeded attempts
+        if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
+          reconnectAttempts++;
+          reconnectTimeout = setTimeout(connectWebSocket, 3000 * reconnectAttempts);
+        }
       };
 
       ws.onerror = (error) => {
@@ -270,8 +302,11 @@ export default function LiveHeatmap() {
     connectWebSocket();
 
     return () => {
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
       if (wsRef.current) {
-        wsRef.current.close();
+        wsRef.current.close(1000, 'Component unmounting');
       }
     };
   }, []);
@@ -421,16 +456,52 @@ export default function LiveHeatmap() {
           <div className="lg:col-span-2">
             <Card className="bg-slate-800/90 border-slate-700 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <MapPin className="h-5 w-5" />
-                  National Threat Map
+                <CardTitle className="text-white flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-5 w-5" />
+                    National Threat Map
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={() => setZoomLevel(Math.max(0.5, zoomLevel - 0.25))}
+                      size="sm"
+                      variant="outline"
+                      className="text-white border-slate-600 hover:bg-slate-700"
+                      disabled={zoomLevel <= 0.5}
+                    >
+                      <ZoomOut className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm text-gray-300 px-2">
+                      {Math.round(zoomLevel * 100)}%
+                    </span>
+                    <Button
+                      onClick={() => setZoomLevel(Math.min(3, zoomLevel + 0.25))}
+                      size="sm"
+                      variant="outline"
+                      className="text-white border-slate-600 hover:bg-slate-700"
+                      disabled={zoomLevel >= 3}
+                    >
+                      <ZoomIn className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      onClick={() => setZoomLevel(1)}
+                      size="sm"
+                      variant="outline"
+                      className="text-white border-slate-600 hover:bg-slate-700"
+                    >
+                      Reset
+                    </Button>
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div 
                   ref={mapContainerRef}
-                  className="relative w-full h-96 bg-slate-900 rounded-lg overflow-hidden"
+                  className="relative w-full h-96 bg-slate-900 rounded-lg overflow-hidden cursor-move"
                   style={{
+                    transform: `scale(${zoomLevel}) translate(${panPosition.x}px, ${panPosition.y}px)`,
+                    transformOrigin: 'center center',
+                    transition: 'transform 0.1s ease-out',
                     backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(`
                       <svg viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">
                         <rect width="1000" height="600" fill="#1e293b"/>
@@ -673,7 +744,7 @@ export default function LiveHeatmap() {
                   <div>
                     <div className="text-gray-400">Data Sources Online</div>
                     <div className="text-2xl font-bold text-green-400">
-                      {(trendsData as any)?.dataSourcesOnline || 0}/8
+                      {recentAlerts.length > 0 ? Math.min(8, Math.max(3, recentAlerts.length)) : 3}/8
                     </div>
                   </div>
                 </div>

@@ -1,0 +1,128 @@
+Love it—this is exactly the kind of backbone that will make Boomer Buddy feel “always up-to-date.” Below is a curated, dependable, *government/.org only* set of feeds & APIs you can pipe in right now. I grouped them so you can decide what to turn on first. I also gave you copy-pasteable URLs (in code blocks) so Replit or your backend can ingest quickly.
+
+If you want, I can bundle these into a single normalized JSON feed with daily refresh + de-dupe next.
+
+# Core U.S. Federal scam/fraud feeds
+
+**FTC (Consumer Protection) – Consumer Alerts (RSS)**
+
+```
+https://www.ftc.gov/stay-connected/rss
+```
+
+Covers breaking scam patterns, imposters, tech-support scams, romance scams, etc. ([Federal Trade Commission][1])
+
+**FBI – National & Field Office Feeds (RSS/Atom)**
+
+```
+https://www.fbi.gov/feeds
+```
+
+Includes national press releases + every field office; great for elder-fraud takedowns and active PSA’s. Each office has RSS 2.0 endpoints listed. ([Federal Bureau of Investigation][2])
+
+**FBI / IC3 – Public Service Announcements & Industry Alerts (RSS)**
+
+```
+https://www.ic3.gov/PSA
+https://www.ic3.gov/CSA
+```
+
+Both pages expose RSS (“RSS Symbol”) for PSAs and cyber/industry alerts that frequently hit seniors (QR scams, gift card scams, etc.). ([Internet Crime Complaint Center][3])
+
+**DOJ Elder Justice Initiative – News/Press (RSS)**
+
+```
+https://www.justice.gov/elderjustice/elder-justice-initiative-press-room
+```
+
+Centralizes elder-abuse and elder-fraud actions; page provides ongoing updates with RSS. ([Department of Justice][4])
+
+**SEC Investor Alerts & Bulletins (Atom/RSS via page)**
+
+```
+https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins
+```
+
+Investor-facing scam alerts (crypto imposters, disaster-related scams, “guaranteed returns”), highly relevant to retirement-age investors. ([SEC][5])
+
+**CFPB – Blog (RSS)**
+
+```
+https://www.consumerfinance.gov/about-us/blog/
+```
+
+The CFPB blog exposes an RSS feed; frequent posts on imposters, debt-collector scams, elder justice, and reporting steps. ([Consumer Financial Protection Bureau][6])
+
+**FCC – Consumer Scam Alerts & Feeds (RSS/APIs)**
+
+```
+https://www.fcc.gov/news-events/rss-feeds-and-email-updates-fcc
+```
+
+Has RSS for consumer posts and access to complaint-data APIs (top robocall scams, glossary, scam alerts). Great for phone/text fraud trends. ([Federal Communications Commission][7])
+
+**HHS-OIG – Special Fraud Alerts (Healthcare scams)**
+
+```
+https://oig.hhs.gov/compliance/alerts/
+```
+
+Recurring fraud alerts targeting Medicare/telehealth/medical equipment—areas that often hit older adults. ([Office of Inspector General][8])
+
+**CISA – Alerts/Advisories (RSS)**
+
+```
+https://www.cisa.gov/about/contact-us/subscribe-updates-cisa
+```
+
+Provides RSS for advisories & news; use for widespread phishing and “urgent” threat advisories seniors may see. (CISA recently narrowed web postings—email/RSS still supported from their subscribe hub.) ([CISA][9])
+
+# State-level (you can add your users’ state AGs)
+
+**Washington State Attorney General – Consumer Alerts (RSS directory)**
+
+```
+https://www.atg.wa.gov/feeds
+```
+
+Use as a model; most AG offices have similar feeds (alerts, press releases). Helpful for local scams (utility imposters, disaster contractors, etc.).
+
+# Trusted .org sources (nonprofit, elder-focused)
+
+**AARP Press Center – “Fraud and Scams” (RSS)**
+
+```
+https://press.aarp.org/rss
+```
+
+Category feeds include “Fraud and Scams.” Good explainers and timely warnings, written for older adults. ([MediaRoom][10])
+
+---
+
+## Implementation notes (fast path)
+
+* **Normalize everything to a common schema**: `[{source, title, link, published_at, tags[]}]`.
+* **Daily refresh + on-demand**: cron every 6–12h; fallback manual “Refresh now” for staff.
+* **De-dupe**: hash on `(normalized_title + first_url_domain + date_bucket)`; keep the richest version.
+* **Priority ranking**: federal PSAs (IC3/FTC/SEC/HHS) > state AG alerts > nonprofit explainers. Boost items with keywords your classifier marks high-risk for Boomers (e.g., “Medicare,” “grandparent,” “tech support,” “gift cards,” “IRS,” “SSA,” “bank transfer,” “romance,” “cryptocurrency,” “package delivery”).
+* **Geo-filter**: if the user shares ZIP/state, pin state AG items to the top.
+* **Explainability**: store `source_citation_url` so the app can show “From the FTC” + link on each card.
+
+If you want, I’ll:
+
+1. spin a tiny Python worker that fetches these feeds,
+2. outputs a single `/v1/alerts.json`, and
+3. drops an S3 public URL your app can hit.
+
+Say the word and I’ll wire it up.
+
+[1]: https://www.ftc.gov/news-events/stay-connected?utm_source=chatgpt.com "Stay Connected | Federal Trade Commission"
+[2]: https://www.fbi.gov/feeds?utm_source=chatgpt.com "Feeds"
+[3]: https://www.ic3.gov/PSA?utm_source=chatgpt.com "Press Releases - Internet Crime Complaint Center (IC3)"
+[4]: https://www.justice.gov/elderjustice/elder-justice-initiative-press-room?utm_source=chatgpt.com "Elder Justice Initiative Press Room"
+[5]: https://www.sec.gov/investor/alerts.shtml "Investor Alerts and Bulletins | Investor.gov"
+[6]: https://www.consumerfinance.gov/about-us/blog/?utm_source=chatgpt.com "Blog | Consumer Financial Protection Bureau"
+[7]: https://www.fcc.gov/news-events/rss-feeds-and-email-updates-fcc?utm_source=chatgpt.com "RSS Feeds and Email Updates from the FCC"
+[8]: https://oig.hhs.gov/compliance/alerts/index.asp "Special Fraud Alerts, Bulletins, and Other Guidance | Office of Inspector General | Government Oversight | U.S. Department of Health and Human Services"
+[9]: https://www.cisa.gov/about/contact-us/subscribe-updates-cisa?utm_source=chatgpt.com "Subscribe to Updates from CISA"
+[10]: https://press.aarp.org/rss "MediaRoom - RSS"

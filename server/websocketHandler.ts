@@ -50,6 +50,13 @@ export class WebSocketHandler {
         this.clients.delete(ws);
       });
 
+      ws.on('pong', () => {
+        const client = this.clients.get(ws);
+        if (client) {
+          client.lastPing = Date.now();
+        }
+      });
+
       ws.on('error', (error) => {
         console.error('WebSocket error:', error);
         this.clients.delete(ws);
