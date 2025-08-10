@@ -1,6 +1,6 @@
 # Overview
 
-**Boomer Buddy** is a senior-friendly web application designed to help users analyze suspicious messages, emails, phone calls, and screenshots for potential scam patterns. The application uses OpenAI's API to provide AI-powered scam detection with confidence scoring and actionable recommendations. Users can upload images, paste text, or describe phone call transcripts, and receive detailed analysis with specific next steps and relevant contact information. The branding features a friendly shield logo with two people representing protection and assistance, using a navy blue, teal, and orange color scheme to create a trustworthy and approachable interface.
+**Boomer Buddy** is a comprehensive anti-scam platform consisting of a web application and companion mobile app. The web app allows users to upload screenshots, paste text, or input phone call transcripts for AI-powered scam analysis. The mobile app provides live call transcription with one-button activation, screenshot capture of emails/texts, user profiles with "Boomer Buddy Score", and access to Facebook group integration. Both platforms feature PII filtering, contextual contact recommendations, and integration with the same backend system. The branding features a friendly shield logo with two people representing protection and assistance, using a navy blue, teal, and orange color scheme to create a trustworthy and approachable interface.
 
 # User Preferences
 
@@ -9,7 +9,21 @@ Preferred communication style: Simple, everyday language.
 # System Architecture
 
 ## Frontend Architecture
-The frontend is built with React, TypeScript, and Vite, utilizing a modern component-based architecture. The UI framework is based on shadcn/ui components with Radix UI primitives and Tailwind CSS for styling. The application uses Wouter for client-side routing and TanStack Query for state management and API communication. The design follows a single-page application pattern with modular components for different input types (upload, text, transcript) and result display. The interface features Boomer Buddy branding with a custom SVG logo component and a color scheme of navy blue (#17948E), teal (#1F748C), and orange (#E3400B) to create a senior-friendly, trustworthy appearance.
+The platform consists of two frontend applications:
+
+### Web Application
+Built with React, TypeScript, and Vite, utilizing a modern component-based architecture. The UI framework is based on shadcn/ui components with Radix UI primitives and Tailwind CSS for styling. The application uses Wouter for client-side routing and TanStack Query for state management and API communication. The design follows a single-page application pattern with modular components for different input types (upload, text, transcript) and result display.
+
+### Mobile Application  
+Built with Expo and React Native for cross-platform iOS and Android support. Features include:
+- Live call transcription with one-button activation
+- Screenshot capture and analysis functionality
+- User profiles with "Boomer Buddy Score" tracking
+- PII filtering system that strips sensitive data client-side before transmission
+- Integration with the same backend API as the web app
+- Facebook group access and community features
+
+Both interfaces feature Boomer Buddy branding with a shield logo and color scheme of navy blue (#17948E), teal (#1F748C), and orange (#E3400B) to create a senior-friendly, trustworthy appearance.
 
 ## Backend Architecture
 The backend is an Express.js server written in TypeScript that provides RESTful API endpoints. The main analysis endpoint accepts multipart form data for image uploads or JSON for text-based submissions. The server integrates with OpenAI's API for scam analysis using structured prompts and JSON schema validation. OCR functionality is implemented using Tesseract.js for extracting text from uploaded images. The application follows a layered architecture with separate modules for database operations, external API calls, and business logic.
@@ -21,7 +35,9 @@ The application uses PostgreSQL as the primary database with Drizzle ORM for dat
 The application implements optional magic link authentication via email, allowing both authenticated and anonymous usage. User sessions are managed through standard HTTP mechanisms. The system is designed to work primarily without authentication for the MVP, with user accounts being optional for saving and sharing reports.
 
 ## External Service Integrations
-The primary external integration is with OpenAI's GPT-4o model for scam analysis. The application uses structured prompts with a scoring rubric to evaluate content and return standardized JSON responses. A knowledge base of federal, state, and financial institution contacts is stored as static JSON files and integrated into the analysis results. The system is designed to avoid additional paid services beyond OpenAI for the MVP phase.
+The primary external integration is with OpenAI's GPT-4o model for scam analysis. The application uses structured prompts with a scoring rubric to evaluate content and return standardized JSON responses. A knowledge base of federal, state, and financial institution contacts is stored as static JSON files and integrated into the analysis results. 
+
+The mobile app integrates with device capabilities including camera access for screenshot capture, microphone access for call transcription, and local storage for user profiles and analysis history. PII filtering is performed entirely client-side before any data transmission. The system is designed to avoid additional paid services beyond OpenAI for the MVP phase.
 
 # External Dependencies
 
