@@ -125,18 +125,18 @@ export default function EnhancedTrendsPage() {
     return `${diffInWeeks}w ago`;
   };
 
-  const filteredTrends = trends.filter(trend => {
+  const filteredTrends = (trends || []).filter(trend => {
     const matchesSearch = searchQuery === "" || 
-      trend.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      trend.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      trend.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+      (trend.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (trend.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (trend.tags || []).some(tag => (tag || '').toLowerCase().includes(searchQuery.toLowerCase()));
     
-    const matchesCategory = selectedCategory === "all" || trend.category.toLowerCase().includes(selectedCategory.toLowerCase());
+    const matchesCategory = selectedCategory === "all" || (trend.category || '').toLowerCase().includes(selectedCategory.toLowerCase());
     
     return matchesSearch && matchesCategory;
   });
 
-  const categories = ["all", ...Array.from(new Set(trends.map(trend => trend.category)))];
+  const categories = ["all", ...Array.from(new Set((trends || []).map(trend => trend.category).filter(Boolean)))];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -302,14 +302,14 @@ export default function EnhancedTrendsPage() {
                           Affected Regions
                         </div>
                         <div className="flex flex-wrap gap-1">
-                          {trend.affectedRegions.slice(0, 3).map(region => (
+                          {(trend.affectedRegions || []).slice(0, 3).map(region => (
                             <Badge key={region} variant="outline" className="text-xs">
                               {region}
                             </Badge>
                           ))}
-                          {trend.affectedRegions.length > 3 && (
+                          {(trend.affectedRegions || []).length > 3 && (
                             <Badge variant="outline" className="text-xs">
-                              +{trend.affectedRegions.length - 3} more
+                              +{(trend.affectedRegions || []).length - 3} more
                             </Badge>
                           )}
                         </div>
@@ -319,10 +319,10 @@ export default function EnhancedTrendsPage() {
                       <div>
                         <div className="flex items-center gap-2 text-sm font-medium mb-2">
                           <Shield className="h-4 w-4 text-green-500" />
-                          Verified Sources ({trend.sources.length})
+                          Verified Sources ({(trend.sources || []).length})
                         </div>
                         <div className="space-y-1">
-                          {trend.sources.slice(0, 2).map((source, idx) => (
+                          {(trend.sources || []).slice(0, 2).map((source, idx) => (
                             <div key={idx} className="flex items-center justify-between">
                               <a 
                                 href={source.url}
@@ -343,7 +343,7 @@ export default function EnhancedTrendsPage() {
 
                       {/* Tags */}
                       <div className="flex flex-wrap gap-1">
-                        {trend.tags.slice(0, 4).map(tag => (
+                        {(trend.tags || []).slice(0, 4).map(tag => (
                           <Badge key={tag} variant="secondary" className="text-xs">
                             #{tag}
                           </Badge>
@@ -420,9 +420,9 @@ export default function EnhancedTrendsPage() {
                           </span>
                         </div>
                         
-                        {item.relatedTrends.length > 0 && (
+                        {(item.relatedTrends || []).length > 0 && (
                           <Badge variant="outline">
-                            Related to {item.relatedTrends.length} trend(s)
+                            Related to {(item.relatedTrends || []).length} trend(s)
                           </Badge>
                         )}
                       </div>
