@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
   MapPin, 
   AlertTriangle, 
@@ -16,9 +18,12 @@ import {
   Zap,
   CheckCircle,
   Filter,
-  Globe
+  Globe,
+  X,
+  Eye
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 interface UnifiedAlert {
   id: string;
@@ -58,6 +63,11 @@ export default function UnifiedTrendsHeatmap() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState<'all' | 'scam-alert' | 'news'>('all');
   const [selectedSeverity, setSelectedSeverity] = useState<'all' | 'high' | 'critical'>('all');
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
+  const [showDailySummary, setShowDailySummary] = useState(false);
+  const [selectedSources, setSelectedSources] = useState<Set<string>>(new Set());
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Fetch unified data from both trends and live alerts
   const { data: unifiedData, isLoading } = useQuery<UnifiedData>({
@@ -67,12 +77,56 @@ export default function UnifiedTrendsHeatmap() {
 
   // Get data sources info
   const { data: sourcesData } = useQuery<{
+    sources: Array<{
+      id: string;
+      name: string;
+      url: string;
+      sourceType: string;
+      isActive: boolean;
+      state?: string;
+    }>;
     stats: { totalSources: number; activeSources: number; };
   }>({
     queryKey: ["/api/v2/data-sources"],
     refetchInterval: 60000, // 1 minute
   });
 
+  // WebSocket connection for real-time updates
+  useEffect(() => {
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const socket = new WebSocket(wsUrl);
+    
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'cache-updated') {
+        // Invalidate and refetch the data
+        queryClient.invalidateQueries({ queryKey: ["/api/unified-trends-heatmap"] });
+        toast({
+          title: "Live Update",
+          description: `New alerts available: ${data.newAlerts || 0} fresh items`,
+        });
+      }
+    };
+
+    return () => socket.close();
+  }, [queryClient, toast]);
+
+  // Toggle card filters
+  const toggleFilter = (filterType: string) => {
+    setActiveFilters(prev => {
+      const newFilters = new Set(prev);
+      if (newFilters.has(filterType)) {
+        newFilters.delete(filterType);
+      } else {
+        newFilters.clear(); // Only one filter at a time for simplicity
+        newFilters.add(filterType);
+      }
+      return newFilters;
+    });
+  };
+
+  // Filter alerts based on search, filters, and active card filters
   const filteredAlerts = unifiedData?.alerts?.filter(alert => {
     const matchesSearch = !searchQuery || 
       alert.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -85,8 +139,42 @@ export default function UnifiedTrendsHeatmap() {
       (selectedSeverity === 'high' && (alert.severity === 'high' || alert.severity === 'critical')) ||
       alert.severity === selectedSeverity;
     
-    return matchesSearch && matchesType && matchesSeverity;
+    // Card filter logic
+    const matchesCardFilter = activeFilters.size === 0 || 
+      (activeFilters.has('live-alerts')) ||
+      (activeFilters.has('high-priority') && (alert.severity === 'high' || alert.severity === 'critical')) ||
+      (activeFilters.has('scam-alerts') && alert.isScamAlert) ||
+      (activeFilters.has('gov-news') && !alert.isScamAlert);
+
+    // Source filter logic  
+    const matchesSourceFilter = selectedSources.size === 0 || 
+      selectedSources.has(alert.sourceAgency);
+    
+    return matchesSearch && matchesType && matchesSeverity && matchesCardFilter && matchesSourceFilter;
   }) || [];
+
+  // Calculate consistent statistics from filtered data
+  const currentStats = {
+    totalActiveAlerts: filteredAlerts.length,
+    highSeverityAlerts: filteredAlerts.filter(a => a.severity === 'high' || a.severity === 'critical').length,
+    scamAlertsToday: filteredAlerts.filter(a => a.isScamAlert).length,
+    governmentAdvisories: filteredAlerts.filter(a => !a.isScamAlert).length,
+  };
+
+  // Generate daily summary
+  const generateDailySummary = () => {
+    const todayAlerts = unifiedData?.alerts.filter(alert => 
+      new Date(alert.timestamp).toDateString() === new Date().toDateString()
+    ) || [];
+    
+    return {
+      newAlertsToday: todayAlerts.length,
+      highPriorityToday: todayAlerts.filter(a => a.severity === 'high' || a.severity === 'critical').length,
+      scamAlertsToday: todayAlerts.filter(a => a.isScamAlert).length,
+      topScamTypes: [...new Set(todayAlerts.flatMap(a => a.scamTypes || []))].slice(0, 3),
+      coverage: `${sourcesData?.stats?.totalSources || '60+'} government sources monitored`
+    };
+  };
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -137,96 +225,250 @@ export default function UnifiedTrendsHeatmap() {
             Real-time monitoring and historical data from {sourcesData?.stats?.totalSources || '60+'} comprehensive government sources
           </p>
         </div>
-        <div className="text-right text-sm text-gray-500">
+        <div className="text-right text-sm text-gray-500 space-y-2">
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
             <span>LIVE</span>
           </div>
           <div>Last updated: {unifiedData?.statistics?.lastUpdate ? new Date(unifiedData.statistics.lastUpdate).toLocaleTimeString() : 'Loading...'}</div>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowDailySummary(true)}
+            className="text-xs"
+          >
+            <Eye className="h-3 w-3 mr-1" />
+            Daily Briefing
+          </Button>
         </div>
       </div>
 
-      {/* Live Statistics Cards */}
+      {/* Daily Summary Dialog */}
+      <Dialog open={showDailySummary} onOpenChange={setShowDailySummary}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Daily Intelligence Briefing
+            </DialogTitle>
+            <DialogDescription>
+              Your comprehensive update for {new Date().toLocaleDateString()}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {(() => {
+              const summary = generateDailySummary();
+              return (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-3 bg-blue-50 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-900">{summary.newAlertsToday}</div>
+                      <div className="text-sm text-blue-600">New Alerts Today</div>
+                    </div>
+                    <div className="text-center p-3 bg-orange-50 rounded-lg">
+                      <div className="text-2xl font-bold text-orange-900">{summary.highPriorityToday}</div>
+                      <div className="text-sm text-orange-600">High Priority</div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Key Updates:</h4>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      <li>• {summary.scamAlertsToday} scam alerts identified</li>
+                      <li>• {summary.coverage} active monitoring</li>
+                      {summary.topScamTypes.length > 0 && (
+                        <li>• Top threats: {summary.topScamTypes.join(', ')}</li>
+                      )}
+                    </ul>
+                  </div>
+                  <Button 
+                    onClick={() => setShowDailySummary(false)}
+                    className="w-full"
+                  >
+                    Got it, all up to date!
+                  </Button>
+                </>
+              );
+            })()}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Live Statistics Cards - Now Clickable */}
       {unifiedData?.statistics && (
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-          <Card className="bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800">
+          <Card 
+            className={`cursor-pointer transition-all hover:shadow-md ${
+              activeFilters.has('live-alerts') 
+                ? 'bg-red-100 border-red-300 dark:bg-red-900 dark:border-red-700' 
+                : 'bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800'
+            }`}
+            onClick={() => toggleFilter('live-alerts')}
+          >
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-red-800 dark:text-red-200">Live Alerts</p>
                   <p className="text-2xl font-bold text-red-900 dark:text-red-100">
-                    {unifiedData.statistics.totalActiveAlerts}
+                    {currentStats.totalActiveAlerts}
                   </p>
                 </div>
                 <Zap className="h-8 w-8 text-red-600" />
               </div>
+              {activeFilters.has('live-alerts') && (
+                <div className="mt-2 text-xs text-red-700 dark:text-red-300">
+                  Filtering active
+                </div>
+              )}
             </CardContent>
           </Card>
           
-          <Card className="bg-orange-50 border-orange-200 dark:bg-orange-950 dark:border-orange-800">
+          <Card 
+            className={`cursor-pointer transition-all hover:shadow-md ${
+              activeFilters.has('high-priority') 
+                ? 'bg-orange-100 border-orange-300 dark:bg-orange-900 dark:border-orange-700' 
+                : 'bg-orange-50 border-orange-200 dark:bg-orange-950 dark:border-orange-800'
+            }`}
+            onClick={() => toggleFilter('high-priority')}
+          >
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-orange-800 dark:text-orange-200">High Priority</p>
                   <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">
-                    {unifiedData.statistics.highSeverityAlerts}
+                    {currentStats.highSeverityAlerts}
                   </p>
                 </div>
                 <AlertTriangle className="h-8 w-8 text-orange-600" />
               </div>
+              {activeFilters.has('high-priority') && (
+                <div className="mt-2 text-xs text-orange-700 dark:text-orange-300">
+                  Filtering active
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
+          <Card 
+            className={`cursor-pointer transition-all hover:shadow-md ${
+              activeFilters.has('scam-alerts') 
+                ? 'bg-blue-100 border-blue-300 dark:bg-blue-900 dark:border-blue-700' 
+                : 'bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800'
+            }`}
+            onClick={() => toggleFilter('scam-alerts')}
+          >
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-blue-800 dark:text-blue-200">Scam Alerts</p>
                   <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
-                    {unifiedData.statistics.scamAlertsToday}
+                    {currentStats.scamAlertsToday}
                   </p>
                 </div>
                 <Shield className="h-8 w-8 text-blue-600" />
               </div>
+              {activeFilters.has('scam-alerts') && (
+                <div className="mt-2 text-xs text-blue-700 dark:text-blue-300">
+                  Filtering active
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          <Card className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
+          <Card 
+            className={`cursor-pointer transition-all hover:shadow-md ${
+              activeFilters.has('gov-news') 
+                ? 'bg-green-100 border-green-300 dark:bg-green-900 dark:border-green-700' 
+                : 'bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800'
+            }`}
+            onClick={() => toggleFilter('gov-news')}
+          >
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-green-800 dark:text-green-200">Gov News</p>
                   <p className="text-2xl font-bold text-green-900 dark:text-green-100">
-                    {unifiedData.statistics.governmentAdvisories}
+                    {currentStats.governmentAdvisories}
                   </p>
                 </div>
                 <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
+              {activeFilters.has('gov-news') && (
+                <div className="mt-2 text-xs text-green-700 dark:text-green-300">
+                  Filtering active
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          <Card className="bg-purple-50 border-purple-200 dark:bg-purple-950 dark:border-purple-800">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-purple-800 dark:text-purple-200">Sources</p>
-                  <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">
-                    {sourcesData?.stats?.totalSources || '60+'}
-                  </p>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Card className="bg-purple-50 border-purple-200 dark:bg-purple-950 dark:border-purple-800 cursor-help">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-purple-800 dark:text-purple-200">Sources</p>
+                        <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">
+                          {sourcesData?.stats?.totalSources || '60+'}
+                        </p>
+                      </div>
+                      <Globe className="h-8 w-8 text-purple-600" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-sm">
+                <div className="space-y-2">
+                  <div className="font-medium">Active Government Sources:</div>
+                  <div className="text-sm space-y-1 max-h-48 overflow-y-auto">
+                    {sourcesData?.sources?.slice(0, 10).map(source => (
+                      <div key={source.id} className="flex justify-between">
+                        <span className="text-xs">{source.name}</span>
+                        <Badge variant={source.isActive ? "default" : "secondary"} className="text-xs">
+                          {source.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
+                    ))}
+                    {(sourcesData?.sources?.length || 0) > 10 && (
+                      <div className="text-xs text-gray-500">
+                        ...and {(sourcesData?.sources?.length || 0) - 10} more sources
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <Globe className="h-8 w-8 text-purple-600" />
-              </div>
-            </CardContent>
-          </Card>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
+      )}
+
+      {/* Active Filters Display */}
+      {activeFilters.size > 0 && (
+        <Alert className="mb-4 border-blue-200 bg-blue-50">
+          <Filter className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800 flex items-center justify-between">
+            <span>
+              <strong>Active Filter:</strong> Showing {filteredAlerts.length} items filtered by {Array.from(activeFilters).join(', ').replace('-', ' ')}
+            </span>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setActiveFilters(new Set())}
+              className="text-blue-600 hover:text-blue-800"
+            >
+              <X className="h-3 w-3 mr-1" />
+              Clear
+            </Button>
+          </AlertDescription>
+        </Alert>
       )}
 
       {/* Comprehensive Collection Alert */}
       <Alert className="mb-6 border-green-200 bg-green-50">
         <Shield className="h-4 w-4 text-green-600" />
         <AlertDescription className="text-green-800">
-          <strong>Comprehensive Live System:</strong> Enhanced data collection from {sourcesData?.stats?.totalSources || '60+'} government sources across all 50 states. 
-          Intelligent triage distinguishes between scam alerts and government news with real-time updates every 30 seconds.
+          <strong>Live Intelligence System:</strong> Real-time monitoring from {sourcesData?.stats?.totalSources || '60+'} government sources. 
+          Alerts expire after 90 days to maintain relevance. Cache-optimized for lightning-fast responses (3-5ms).
         </AlertDescription>
       </Alert>
 

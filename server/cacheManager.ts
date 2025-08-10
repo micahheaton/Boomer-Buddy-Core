@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { scamTrends, newsItems, dataSources } from "@shared/schema";
-import { desc, eq, gt, sql } from "drizzle-orm";
+import { desc, eq, gt, sql, and, gte } from "drizzle-orm";
 import { WebSocketServer, WebSocket } from 'ws';
 
 interface CachedData {
@@ -96,16 +96,30 @@ export class CacheManager {
   }
 
   private async buildCache(): Promise<void> {
-    // Get all active data
+    // Calculate 3-month cutoff date for alert expiry
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    
+    // Get all active data - only alerts within 3 months
     const trendsData = await db.select()
       .from(scamTrends)
-      .where(eq(scamTrends.isActive, true))
+      .where(
+        and(
+          eq(scamTrends.isActive, true),
+          gte(scamTrends.lastReported, threeMonthsAgo)
+        )
+      )
       .orderBy(desc(scamTrends.lastReported))
       .limit(100);
 
     const newsItemsData = await db.select()
       .from(newsItems)
-      .where(eq(newsItems.isVerified, true))
+      .where(
+        and(
+          eq(newsItems.isVerified, true),
+          gte(newsItems.publishDate, threeMonthsAgo)
+        )
+      )
       .orderBy(desc(newsItems.publishDate))
       .limit(50);
 
