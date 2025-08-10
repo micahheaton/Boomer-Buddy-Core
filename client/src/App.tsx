@@ -19,7 +19,7 @@ import CommunityEnhanced from "@/pages/community-enhanced";
 import FeaturesPage from "@/pages/features";
 import About from "@/pages/About";
 import VulnerabilityAssessment from "@/pages/VulnerabilityAssessment";
-import LiveHeatmap from "@/pages/LiveHeatmap";
+import LiveHeatmapV2 from "@/pages/LiveHeatmapV2";
 import ScamTrendsV2 from "@/pages/ScamTrendsV2";
 import DataSourcesV2 from "@/pages/DataSourcesV2";
 
@@ -39,7 +39,7 @@ function Router() {
       <Route path="/features" component={FeaturesPage} />
       <Route path="/about" component={About} />
       <Route path="/assessment" component={VulnerabilityAssessment} />
-      <Route path="/heatmap" component={LiveHeatmap} />
+      <Route path="/heatmap" component={LiveHeatmapV2} />
       <Route component={NotFound} />
     </Switch>
   );
