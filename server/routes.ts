@@ -947,6 +947,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const { webSocketHandler } = await import('./websocketHandler.js');
   webSocketHandler.initialize(httpServer);
   
+  // Data collection schedule status endpoint
+  app.get("/api/schedule-status", async (req: Request, res: Response) => {
+    try {
+      const { scheduledDataCollection } = await import('./scheduledDataCollection.js');
+      const status = scheduledDataCollection.getScheduleStatus();
+      
+      res.json({
+        success: true,
+        schedule: {
+          ...status,
+          dataSourcesCount: 9, // FTC, FBI-IC3, SSA, HHS-OIG, CISA, WA-AG, CA-AG, AARP, BBB
+          collectionFrequency: "Every 6 hours (4x daily)",
+          nextCollectionIn: Math.ceil((new Date(status.nextCollectionTime).getTime() - Date.now()) / 1000 / 60) + " minutes",
+          officialSourcesOnly: true,
+          personalizedNotifications: true,
+          weeklyMiniGames: true,
+          sources: [
+            "Federal Trade Commission (FTC) Consumer Alerts",
+            "FBI Internet Crime Complaint Center (IC3)",
+            "Social Security Administration Blog",
+            "HHS Office of Inspector General Consumer Alerts",
+            "CISA Cybersecurity Advisories",
+            "Washington State Attorney General Consumer Alerts",
+            "California Attorney General Consumer Alerts",
+            "AARP Fraud Watch Network",
+            "Better Business Bureau Scam Tracker"
+          ]
+        }
+      });
+    } catch (error) {
+      console.error("Error getting schedule status:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to get schedule status" 
+      });
+    }
+  });
+
   // Initialize mobile notification service
   mobileNotificationService.initialize(httpServer);
   console.log("Mobile notification service initialized");

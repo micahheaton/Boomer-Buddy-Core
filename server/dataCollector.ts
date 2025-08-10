@@ -15,43 +15,73 @@ interface RSSFeed {
   agency: string;
 }
 
-// Convert boomer-focused data sources to RSS feed format with working RSS URLs
+// Official Government and Nonprofit Sources (.gov, .us, authorized nonprofits)
 const TRUSTED_FEEDS: RSSFeed[] = [
-  // High-priority boomer-focused sources with known working RSS feeds
+  // Federal Government Sources
+  {
+    name: 'Federal Trade Commission Consumer Alerts',
+    url: 'https://www.ftc.gov/news-events/stay-connected/ftc-rss-feeds/ftc-consumer-blog',
+    category: 'government-consumer',
+    reliability: 0.98,
+    agency: 'FTC'
+  },
+  {
+    name: 'FBI Internet Crime Complaint Center',
+    url: 'https://www.ic3.gov/rss/PSA.xml',
+    category: 'government-security',
+    reliability: 0.97,
+    agency: 'FBI-IC3'
+  },
   {
     name: 'Social Security Administration',
     url: 'https://blog.ssa.gov/feed/',
-    category: 'government',
-    reliability: 0.93,
+    category: 'government-benefits',
+    reliability: 0.98,
     agency: 'SSA'
   },
   {
-    name: 'Google Security Blog',
-    url: 'https://security.googleblog.com/feeds/posts/default',
-    category: 'tech-security',
-    reliability: 0.88,
-    agency: 'Google'
+    name: 'HHS Office of Inspector General Consumer Alerts',
+    url: 'https://oig.hhs.gov/fraud/consumer-alerts/rss.xml',
+    category: 'government-healthcare',
+    reliability: 0.97,
+    agency: 'HHS-OIG'
   },
   {
-    name: 'Krebs on Security',
-    url: 'https://krebsonsecurity.com/feed/',
-    category: 'security-research',
-    reliability: 0.90,
-    agency: 'Independent'
+    name: 'CISA Cybersecurity Alerts',
+    url: 'https://www.cisa.gov/cybersecurity-advisories.xml',
+    category: 'government-cybersecurity',
+    reliability: 0.96,
+    agency: 'CISA'
+  },
+  // State Government Sources
+  {
+    name: 'Washington State Attorney General Consumer Alerts',
+    url: 'https://www.atg.wa.gov/rss/consumer-alerts',
+    category: 'state-consumer',
+    reliability: 0.95,
+    agency: 'WA-AG'
   },
   {
-    name: 'Microsoft Security Response Center',
-    url: 'https://msrc.microsoft.com/blog/feed',
-    category: 'tech-security',
-    reliability: 0.87,
-    agency: 'Microsoft'
+    name: 'California Attorney General Consumer Alerts',
+    url: 'https://oag.ca.gov/consumers/alerts/rss',
+    category: 'state-consumer',
+    reliability: 0.95,
+    agency: 'CA-AG'
+  },
+  // Authorized Nonprofits (specifically elder-focused)
+  {
+    name: 'AARP Fraud Watch Network',
+    url: 'https://www.aarp.org/money/scams-fraud/rss.xml',
+    category: 'nonprofit-elder',
+    reliability: 0.94,
+    agency: 'AARP'
   },
   {
-    name: 'SANS Internet Security',
-    url: 'https://isc.sans.edu/rssfeed.xml',
-    category: 'security-research',
-    reliability: 0.91,
-    agency: 'SANS'
+    name: 'Better Business Bureau Scam Tracker',
+    url: 'https://www.bbb.org/scamtracker/rss',
+    category: 'nonprofit-business',
+    reliability: 0.92,
+    agency: 'BBB'
   }
 ];
 

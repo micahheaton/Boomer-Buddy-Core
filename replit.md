@@ -42,23 +42,34 @@ The application uses PostgreSQL as the primary database with Drizzle ORM for dat
 The application implements optional magic link authentication via email, allowing both authenticated and anonymous usage. User sessions are managed through standard HTTP mechanisms. The system is designed to work primarily without authentication for the MVP, with user accounts being optional for saving and sharing reports.
 
 ## External Service Integrations
-The platform integrates with verified RSS feeds from trusted government sources for real-time scam intelligence:
+The platform integrates with official government (.gov/.us) and authorized nonprofit RSS feeds for verified scam intelligence:
 
-**Live RSS Data Sources:**
-- Federal Trade Commission (FTC) Consumer Alerts RSS Feed
-- FBI Internet Crime Complaint Center (IC3) Press Releases RSS
-- Better Business Bureau Scam Tracker RSS Feed
-- AARP Fraud Watch Network RSS Feed  
+**Official Government Data Sources (4x Daily Collection):**
+- Federal Trade Commission (FTC) Consumer Alerts RSS
+- FBI Internet Crime Complaint Center (IC3) Public Service Announcements
 - Social Security Administration Blog RSS Feed
-- Automated collection every 6 hours with database storage and mobile notifications
+- HHS Office of Inspector General Consumer Alerts RSS
+- CISA Cybersecurity Advisories RSS
+- Washington State Attorney General Consumer Alerts RSS
+- California Attorney General Consumer Alerts RSS
+
+**Authorized Elder-Focused Nonprofits:**
+- AARP Fraud Watch Network RSS Feed
+- Better Business Bureau Scam Tracker RSS
+
+**Data Collection Schedule:**
+- Automated collection every 6 hours (6 AM, 12 PM, 6 PM, 12 AM)
+- Personalized mobile notifications based on user vulnerability assessments
+- Weekly mini-games/questionnaires on Sundays at 10 AM
+- Daily vulnerability-based reminders at 2 PM
 
 **AI and ML Services:**
-- OpenAI GPT-4o for scam analysis with structured JSON responses
-- Advanced Content Moderation System with dual-layer AI + rule-based filtering
-- Elder-targeted social engineering detection with 95%+ accuracy
-- Real-time vulnerability assessment and threat correlation
-- Automatic PII detection and filtering
-- Intelligent Source Manager with performance metrics and quality scoring
+- OpenAI GPT-4o for scam analysis with structured JSON responses (minimal usage to control costs)
+- Advanced Content Moderation System filtering only official government sources
+- Elder-targeted social engineering detection focused on vulnerability assessments
+- Personalized notification service based on individual risk profiles
+- Automatic content validation from trusted .gov/.us domains only
+- Weekly mini-games tailored to user's primary vulnerabilities
 
 **Data Processing:**
 - Automated daily trend archiving with weekly/monthly summaries
