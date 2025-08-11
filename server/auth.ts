@@ -125,8 +125,8 @@ export function setupAuthRoutes(app: Express) {
   app.get('/auth/google/callback',
     passport.authenticate('google', { failureRedirect: '/' }),
     (req: Request, res: Response) => {
-      // Successful authentication
-      res.redirect('/dashboard');
+      // Successful authentication - redirect to home page
+      res.redirect('/');
     }
   );
 
