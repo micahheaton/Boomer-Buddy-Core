@@ -1,5 +1,180 @@
 openapi: 3.0.3
 info:
+  title: Boomer Buddy Core API
+  version: 1.0.0
+  description: |
+    Backend routes used by the mobile app. Privacy: no PII, feature vectors only.
+servers:
+  - url: http://localhost:3001
+    description: Local dev
+paths:
+  /v1/model:
+    get:
+      summary: Get current model metadata and signed URLs
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version: { type: string }
+                  checksum: { type: string }
+                  createdAt: { type: string, format: date-time }
+                  requiredRulesVersion: { type: string }
+                  downloadUrls:
+                    type: object
+                    properties:
+                      android: { type: string }
+                      ios: { type: string }
+                  rulesUrl: { type: string }
+        '500':
+          description: Model information unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string }
+      security: [] # TODO: optional auth for metadata
+  /v1/feeds.json:
+    get:
+      summary: Get merged alerts from federal/state/nonprofit sources
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lastUpdated: { type: string, format: date-time }
+                  sources:
+                    type: array
+                    items: { type: string }
+                  alerts:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        source: { type: string }
+                        title: { type: string }
+                        link: { type: string }
+                        published_at: { type: string, format: date-time }
+                        tags:
+                          type: array
+                          items: { type: string }
+                        state:
+                          type: string
+                          nullable: true
+        '500':
+          description: Feeds unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string }
+      security: []
+  /v1/numberlist:
+    get:
+      summary: Get signed scam number list for device caching
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version: { type: string }
+                  checksum: { type: string }
+                  updatedAt: { type: string, format: date-time }
+                  numbers:
+                    type: array
+                    items: { type: string, description: E.164 format }
+        '500':
+          description: Number list unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string }
+      security: []
+  /v1/analyze:
+    post:
+      summary: Analyze feature vector (no PII)
+      description: |
+        Accepts on-device feature vector. Rejects if format invalid or PII detected.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                v:
+                  type: integer
+                  enum: [1]
+              additionalProperties: true # TODO: document full feature vector schema
+      responses:
+        '200':
+          description: Analysis result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  label: { type: string }
+                  score: { type: number }
+                  confidence: { type: number }
+                  top_reasons:
+                    type: array
+                    items: { type: string }
+                  recommended_actions:
+                    type: array
+                    items: { type: string }
+                  contacts:
+                    type: array
+                    items: { type: object }
+                  legal_note: { type: string }
+        '400':
+          description: Invalid request or PII detected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string }
+        '500':
+          description: Analysis unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string }
+      security: [] # TODO: consider signed requests
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version: { type: string }
+                  commit: { type: string }
+      security: []
+components:
+  securitySchemes: {}
+openapi: 3.0.3
+info:
   title: Boomer Buddy Mobile API
   description: |
     Stateless, logless API for mobile companion apps.

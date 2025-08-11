@@ -28,11 +28,24 @@ app.use((req, res, next) => {
 // Disable logging
 app.set('trust proxy', false);
 
-// CORS for mobile apps only
-app.use(cors({
-  origin: false, // No web origins - mobile only
-  credentials: false
-}));
+// CORS configuration
+// Default: block web origins (mobile native fetches do not need CORS)
+// If CORS_ORIGINS is set (comma-separated), allow only those origins (e.g., Expo dev ports)
+const allowedOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map(o => o.trim())
+  .filter(Boolean);
+
+if (allowedOrigins.length > 0) {
+  app.use(cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error('CORS not allowed'), false);
+    },
+    credentials: false
+  }));
+}
 
 // Body parsing with size limits
 app.use(express.json({ limit: '1kb' })); // Small limit for feature vectors only
@@ -149,10 +162,9 @@ app.post('/v1/analyze', async (req, res) => {
  * Health check endpoint
  */
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok',
-    timestamp: Date.now(),
-    version: '1.0.0'
+  res.json({
+    version: process.env.npm_package_version || '1.0.0',
+    commit: process.env.GIT_COMMIT || 'unknown'
   });
 });
 

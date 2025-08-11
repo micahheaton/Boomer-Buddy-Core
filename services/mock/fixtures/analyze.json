@@ -1,0 +1,11 @@
+{
+  "label": "low_risk",
+  "score": 0.1,
+  "confidence": 0.95,
+  "top_reasons": ["fixture"],
+  "recommended_actions": [],
+  "contacts": [],
+  "legal_note": "Guidance only; not legal or financial advice."
+}
+
+

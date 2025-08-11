@@ -1,0 +1,16 @@
+{
+  "lastUpdated": "2025-01-01T00:00:00.000Z",
+  "sources": ["FTC", "SSA"],
+  "alerts": [
+    {
+      "source": "FTC",
+      "title": "Gift card scam alert",
+      "link": "https://example.com/ftc/gift-card",
+      "published_at": "2025-01-01T00:00:00.000Z",
+      "tags": ["gift-card"],
+      "state": null
+    }
+  ]
+}
+
+

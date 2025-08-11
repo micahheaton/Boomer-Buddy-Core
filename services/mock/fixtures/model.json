@@ -1,0 +1,10 @@
+{
+  "version": "2025.01",
+  "checksum": "abc123",
+  "createdAt": "2025-01-01T00:00:00.000Z",
+  "requiredRulesVersion": "1.0.0",
+  "downloadUrls": { "android": "https://example.com/model.tflite", "ios": "https://example.com/model.mlpackage" },
+  "rulesUrl": "https://example.com/rules.json"
+}
+
+
