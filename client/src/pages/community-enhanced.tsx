@@ -86,6 +86,10 @@ export default function CommunityEnhanced() {
     enabled: true
   });
 
+  // Provide default structure for API response
+  const reports = reportsData?.reports || [];
+  const hasMore = reportsData?.hasMore || false;
+
   const form = useForm({
     resolver: zodResolver(reportSchema),
     defaultValues: {
@@ -149,19 +153,24 @@ export default function CommunityEnhanced() {
       return (
         <Badge className="bg-green-100 text-green-800 border-green-200">
           <CheckCircle className="w-3 h-3 mr-1" />
-          Verified by {report.verificationSource}
+          Verified{report.verificationSource ? ` by ${report.verificationSource}` : ''}
         </Badge>
       );
     }
-    if (report.verificationStatus === 'pending') {
+    if (report.moderationStatus === 'pending') {
       return (
-        <Badge variant="outline" className="text-yellow-700 border-yellow-300">
+        <Badge variant="outline" className="text-yellow-600">
           <Clock className="w-3 h-3 mr-1" />
-          Verification Pending
+          Under Review
         </Badge>
       );
     }
-    return null;
+    return (
+      <Badge variant="outline">
+        <AlertTriangle className="w-3 h-3 mr-1" />
+        Unverified
+      </Badge>
+    );
   };
 
   return (
@@ -477,14 +486,14 @@ export default function CommunityEnhanced() {
           <div className="flex items-center justify-center p-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
-        ) : reportsData?.reports?.length === 0 ? (
+        ) : reports?.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
               <p className="text-muted-foreground">No reports found matching your criteria.</p>
             </CardContent>
           </Card>
         ) : (
-          (reportsData?.reports || []).map((report: CommunityReport) => (
+          reports.map((report: CommunityReport) => (
             <Card key={report.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -573,7 +582,7 @@ export default function CommunityEnhanced() {
       </div>
 
       {/* Pagination */}
-      {(reportsData?.hasMore || false) && (
+      {hasMore && (
         <div className="flex justify-center">
           <Button 
             variant="outline" 
