@@ -64,8 +64,8 @@ const reportSchema = z.object({
 
 export default function CommunityEnhanced() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [verificationFilter, setVerificationFilter] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [verificationFilter, setVerificationFilter] = useState("all");
   const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const { toast } = useToast();
@@ -78,8 +78,8 @@ export default function CommunityEnhanced() {
   const { data: reportsData, isLoading } = useQuery({
     queryKey: ["/api/community/reports", {
       q: searchQuery,
-      category: selectedCategory,
-      verified: verificationFilter,
+      category: selectedCategory === "all" ? "" : selectedCategory,
+      verified: verificationFilter === "all" ? "" : verificationFilter,
       limit: 20,
       offset: currentPage * 20
     }],
@@ -457,7 +457,7 @@ export default function CommunityEnhanced() {
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="phone-scam">Phone Scams</SelectItem>
                 <SelectItem value="email-scam">Email Scams</SelectItem>
                 <SelectItem value="online-scam">Online Scams</SelectItem>
@@ -471,7 +471,7 @@ export default function CommunityEnhanced() {
                 <SelectValue placeholder="All Reports" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Reports</SelectItem>
+                <SelectItem value="all">All Reports</SelectItem>
                 <SelectItem value="true">Verified Only</SelectItem>
                 <SelectItem value="false">Unverified Only</SelectItem>
               </SelectContent>
