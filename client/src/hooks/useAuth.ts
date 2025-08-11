@@ -53,8 +53,19 @@ export function useAuth() {
     }
   };
 
-  const loginWithGoogle = () => {
-    window.location.href = "/auth/google";
+  const loginWithDemo = async () => {
+    try {
+      const response = await fetch("/auth/demo-login", {
+        method: "POST",
+        credentials: 'include',
+      });
+      if (response.ok) {
+        // Refresh user data
+        queryClient.invalidateQueries({ queryKey: ["/auth/user"] });
+      }
+    } catch (error) {
+      console.error("Demo login error:", error);
+    }
   };
 
   return {
@@ -63,6 +74,7 @@ export function useAuth() {
     isAuthenticated: !!user,
     error,
     logout,
-    loginWithGoogle,
+    loginWithDemo,
+    loginWithGoogle: loginWithDemo, // Alias for compatibility
   };
 }
